@@ -23,8 +23,11 @@
 Simply runs a process on the local machine.
 Allows specifying environment variables.
 
-example: 
-./simply_run -c glxgears -e DISPLAY :0.0
+examples: 
+
+ ./simply_run -c glxgears -e DISPLAY :0.0
+ 
+ ssh -X brrr rxvt -e "/home/aalex/src/postures/trunk/py/simply_run -c \"glxgears\" -e DISPLAY :0.0"
 """
 
 import os
@@ -44,8 +47,8 @@ def execute(command_str, variables_dict={}):
     environment.update(variables_dict)
     try:
         p = subprocess.Popen(command_str, shell=True, env=environment)
-        print("STARTED AS %s" % (p.pid))
-        retcode = p.wait()
+        print("PID: %s" % (p.pid))
+        retcode = p.wait() # blocking
         if retcode < 0:
             err = "Child was terminated by signal %d\n" % (retcode)
             sys.stderr.write(err)
