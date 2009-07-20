@@ -21,3 +21,13 @@
 
 __all__ = ["launcher"]
 
+def read_config_file(config_file):
+    """ Executes a Python file. """
+    if os.path.exists(config_file):
+        try:
+            execfile(config_file)
+        except Exception, e:
+            print("Error in user configuration file.")
+            raise
+    else:
+        raise

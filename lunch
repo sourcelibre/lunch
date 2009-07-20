@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# 
+# Miville
+# Copyright (C) 2008 Société des arts technologiques (SAT)
+# http://www.sat.qc.ca
+# All rights reserved.
+#
+# This file is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# Miville is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Miville. If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+from optparse import OptionParser
+
+from rocket import launcher
+from rocket import read_config_file 
+
+__version__ = "0.1"
+EPILOG = """Lunch is a process launcher for POSIX Operating systems."""
+CONFIG_FILE = "~/.lunch/config"
+
+if __name__ == "__main__":
+    parser = OptionParser(usage="%prog [options] action identifier", version=__version__, epilog=EPILOG)
+    parser.add_option("-f", "--config-file", type="string", default=os.path.expanduser(CONFIG_FILE))
+    parser.add_option("-v", "--verbose", action="store_true")
+    (options, args) = parser.parse_args()
+    
+    # launcher.VERBOSE = options.verbose
+    config_file = options.config_file
+    if len(args) != 2:
+        print("ERROR: Make sure to provide the required arguments.")
+        parser.print_usage()
+        sys.exit(1)
+    action = args[0]
+    identifier = args[1]
+    read_config_file(config_file)
+    launcher.main(action, identifier)
+    sys.exit(0) # successfully
+    

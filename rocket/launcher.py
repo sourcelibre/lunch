@@ -27,45 +27,69 @@ import grp
 import pwd
 
 # -- module variables --
-_data_dir = None # directory where we store data
+_APP_NAME = "lunch"
+_DATA_DIR = os.path.expanduser("~/.%s/data" % (_APP_NAME)) # directory where we store data
 _processes = {} # processes
 DELAY_AFTER_START = 5.0 # time to wait after start before checking if alive.
 DELAY_AFTER_KILL = 2.0 # time to wait after kill before checking if dead.
+VERBOSE = True
 
 # -- module functions --
 def _is_pid_running(pid):
     return os.path.exists("/proc/%d" % (pid))
 
-def init(data_dir):
-    """ Initiates the module with data directory - where to store pid files."""
-    global _data_dir
-    _data_dir = data_dir
+def set_data_dir(data_dir):
+    """ Sets the data directory for the app.
+        Where to store pid files.
+    """
+    global _DATA_DIR
+    _DATA_DIR = data_dir
+
+def _create_dirs(path):
+    """ Creates data directory if it doesn't exist."""
+    global VERBOSE
+    try:
+        if not os.path.exists(path):
+            os.makedirs(path)
+            if VERBOSE:
+                print('mkdir '+ path)
+    except OSError, e:
+        if VERBOSE:
+            print('Error creating directories ' + path + str(e.message))
+
 
 def _run_action_for_identifier(action, identifier):
     """ Start/stop/restart/status for a process by its identifier. """
-    global _data_dir
+    global _DATA_DIR
     global _processes
     # TODO: support the "all" identifier
-    method = getattr(p, action) # get the method identified by its name
+    _create_dirs(_DATA_DIR)
     try:
-        method()
-    except ProcessStartupError, e:
-        sys.exit(1)
+        p = _processes[identifier]
+    except KeyError, e:
+        print("No such process : " + str(e.message))
+    else:
+        method = getattr(p, action) # get the method identified by its name
+        try:
+            method()
+        except ProcessStartupError, e:
+            # raise e
+            print("Could not launch process %s: %s " % (identifier, e.message))
+            sys.exit(1)
 
 def main(action, identifier):
     """ The main function starts/stops/restart/status for a process. """
     global _processes
-    global _data_dir
-    if _data_dir is None:
-        _data_dir = "/tmp/kourou"
+    global _DATA_DIR
+    
     success = True
     if identifier not in _processes.keys():
         # if identifier == "all":
         #    success = _run_action_for_identifier(action, "all")
         #else:
-        if True: # TODO: support the "all" identifier
-            print("Process identifier %s not found." % (identifier))
-            success = False
+        # TODO: support the "all" identifier
+        print("Process identifier %s not found." % (identifier))
+        success = False
     if action not in ["start", "stop", "restart", "status"]:
         print("Invalid command %s" % (action))
         success = False
@@ -78,7 +102,7 @@ def add(process):
     global _processes
     if _processes.has_key(process.identifier):
         raise ProcessAlreadyManagedError("Process with same identifer is already registered.")
-    _processes[process.name] = process
+    _processes[process.identifier] = process
 
 def _check_priviledges():
     """ Check if run as super user. """
@@ -93,12 +117,13 @@ def _check_priviledges():
 # -- classes --
 
 class ProcessStartupError(Exception):
-
     """ Could not start the process error. """
     pass
 
 class ProcessAlreadyManagedError(Exception):
-    """ Raised when user tries to add two processes with the same identifier."""
+    """ Raised when user tries to add two processes with 
+        the same identifier.
+    """
     pass
 
 class Process(object):
@@ -115,7 +140,9 @@ class Process(object):
             env={},
             stop_signal=None, 
             description=""):
-        """ Initial attributes of the process """
+        """ 
+        Initializes the attributes for the process.
+        """
         if stop_signal is None:
             stop_signal = signal.SIGKILL
         self.stop_signal = stop_signal
@@ -136,7 +163,8 @@ class Process(object):
     
     def _get_pidfile_path(self):
         """ Returns the path to the pidfile for this process. """
-        return os.path.join(_data_dir, "%s.pid" % (self.identifier))
+        global _DATA_DIR
+        return os.path.join(_DATA_DIR, "%s.pid" % (self.identifier))
 
     def _read_pid(self):
         """ Opens pid file and read it. Returns None if there is none. """
@@ -150,7 +178,7 @@ class Process(object):
 
     def status(self):
         """ Prints status. """
-        print("%s %s" % (self.identifier, self._get_status())
+        print("%s %s" % (self.identifier, self._get_status()))
 
     def _get_status(self):
         """ Returns single-word status """
@@ -165,22 +193,28 @@ class Process(object):
     def start(self):
         """ Starts the process """
         pid = self._read_pid()
+        will_start = True
         if pid is not None:
             if _is_pid_running(pid):
                 print("%s is already running." % (self.identifier))
+                wll_start = False
                 return
             else:
-                print("%s has crashed." % (self.identifier))
-        print("Launching %s..." % (self.identifier))
-        self._do_start()
+                print("%s had crashed." % (self.identifier))
+        if will_start:
+            print("Launching %s..." % (self.identifier))
+            self._do_start()
 
     def _do_start(self):
         """ Actually starts the process """
+        global VERBOSE
+        if VERBOSE:
+            print("%s %s" % (self.executable, " ".join(self.args)))
         fork_result = os.fork()
         if fork_result == 0: # child process
             # TODO: manage gid and uid
-            if self.working_dir is not None:
-                os.chdir(self.working_dir)
+            if self.working_directory is not None:
+                os.chdir(self.working_directory)
             null_file = os.open("/dev/null", os.O_RDWR)
             os.dup2(null_file, 0) # replace stdin
             if not self.enable_stdout:
