@@ -42,6 +42,7 @@ __version__ = "0.1"
 EPILOG = """Lunch is a process launcher for POSIX Operating systems."""
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
+_commands = []
 
 class ParentKilledError(Exception):
     """Raised when parent is killed by ctrl-c"""
@@ -73,8 +74,8 @@ def run_command(command_str, variables_dict={}):
         err = "Execution failed: %s\n" % (e.message)
         sys.stderr.write(err)
         retcode = 1
-    except KeyboardInterrupt, e:
-        print("CTRL-C in CHILD")
+#    except KeyboardInterrupt, e:
+#        print("CTRL-C in CHILD")
 #        raise ParentKilledError("Ctrl-C has been pressed !")
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
@@ -86,9 +87,6 @@ def run_command(command_str, variables_dict={}):
 
 def run_slave(command_str, vars={}):
     return run_command(command_str, vars)
-
-_commands = []
-
 
 class Command(object):
     """
@@ -148,15 +146,15 @@ def run_master(config_file):
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
             if command.host is not None:
-                command_str = "ssh -X %s@%s rxvt -T %s -e %s -e %s -c %s" % (user, host, title, bin, env, cmd) 
+                command_str = "ssh -X %s@%s rxvt -T %s -e %s %s -c %s" % (user, host, title, bin, env, cmd) 
             else:
-                command_str = "rxvt -T %s -e %s -e %s -c %s" % (title, bin, env, cmd) 
+                command_str = "rxvt -T %s -e %s %s -c %s" % (title, bin, env, cmd) 
             # create server
-            process = multiprocessing.Process(target=start_worker, args=(command_str,))
+            process = multiprocessing.Process(target=start_worker, args=(command_str, command.env))
             workers.append(process)
             process.start()
     except KeyboardInterrupt:
-        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+        print("Ctrl-C was pressed in master.")
         for worker in workers:
             print("Trying to terminate")
             worker.terminate()
