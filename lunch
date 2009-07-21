@@ -25,23 +25,37 @@ Allows specifying environment variables.
 
 examples: 
 
- ./simply_run -c glxgears -e DISPLAY :0.0
+ ./lunch -c glxgears -e DISPLAY :0.0
  
- ssh -X brrr rxvt -e "/home/aalex/src/postures/trunk/py/simply_run -c \"glxgears\" -e DISPLAY :0.0"
+ ssh -X brrr rxvt -e "/home/aalex/src/postures/trunk/py/lunch -c \"glxgears\" -e DISPLAY :0.0"
 """
 
 import os
 import sys
 from optparse import OptionParser
 import subprocess
+import multiprocessing
+import logging
+import time
 
-def execute(command_str, variables_dict={}):
+__version__ = "0.1"
+EPILOG = """Lunch is a process launcher for POSIX Operating systems."""
+CONFIG_FILE = os.path.expanduser("~/.lunch/config")
+VERBOSE = False
+
+class ParentKilledError(Exception):
+    """Raised when parent is killed by ctrl-c"""
+    pass
+
+def run_command(command_str, variables_dict={}):
     """
     Creates and launches a process. 
     """
-    print("RUNNING: %s" % (command_str))
-    print("ENV: %s" % (str(variables_dict)))
-    
+    global VERBOSE
+    if VERBOSE:
+        print("RUNNING: %s" % (command_str))
+        print("ENV: %s" % (str(variables_dict)))
+    retcode = None
     environment = {}
     environment.update(os.environ)
     environment.update(variables_dict)
@@ -52,49 +66,139 @@ def execute(command_str, variables_dict={}):
         if retcode < 0:
             err = "Child was terminated by signal %d\n" % (retcode)
             sys.stderr.write(err)
-            sys.exit(retcode)
         else:
             err = "Child returned %s\n" % (retcode)
             sys.stderr.write(err)
-            sys.exit(retcode)
     except OSError, e:
         err = "Execution failed: %s\n" % (e.message)
         sys.stderr.write(err)
-        sys.exit(1)
+        retcode = 1
+#    except KeyboardInterrupt, e:
+#        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+#        
+#        raise ParentKilledError("Ctrl-C has been pressed !")
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
         sys.stderr.write(err)
         raise
-        # sys.exit(1)
-    except KeyboardInterrupt, e:
-        err = "Control-C has been pressed.\n"
-        sys.stderr.write(err)
     else:
-        print("Success\n")
-        sys.exit(0)
+        print("Success\n") # retrcode is p.wait() return val
+    return retcode
 
-__version__ = "0.1"
-EPILOG = """Lunch is a process launcher for POSIX Operating systems."""
-#CONFIG_FILE = "~/.lunch/config"
+def run_slave(command_str, vars={}):
+    return run_command(command_str, vars)
+
+_commands = []
+
+
+class Command(object):
+    """
+    One command to run on a remote or local host.
+
+    Class with no method
+    """
+    def __init__(self, command="", env={}, host=None, user=None, priority=0, title=""):
+        self.command = command
+        self.env = env
+        self.host = host
+        self.user = user
+        self.title = title
+        self.priority = priority
+
+def add_command(command="", env={}, host=None, user=None, priority=0, title=""):
+    """
+    This is the only function that users use in the configuration file.
+    """
+    global _commands
+    _commands.append(Command(command, env, host, user, priority, title))
+
+class FileNotFoundError(Exception):
+    """
+    Thrown when a file could not be found.
+    """
+    pass
+
+def run_master(config_file):
+    """
+    Runs the master that calls commands using ssh or so.
+    """
+    global _commands
+    if os.path.exists(config_file):
+        try:
+            execfile(config_file)
+        except Exception, e:
+            print("Error in user configuration file.")
+            raise
+    else:
+        raise FileNotFoundError("Could not find the %s file." % (config_file))
+    # next, let's start the ssh commands.
+    # init multiprocessing
+    multiprocessing.log_to_stderr(level=logging.INFO)
+    log = multiprocessing.get_logger()
+    log.warning("test debug")
+    workers = []
+    try:
+        bin = "~/src/postures/trunk/py/lunch"
+        for command in _commands:
+            user = command.user
+            host = command.host
+            title = command.title
+            cmd = command.command
+            env = "" # make str from dict
+            if len(command.env) > 0:
+                for k, v in command.env.items():
+                    env += " -e %s %s " % (k, v)
+            if command.host is not None:
+                command_str = "ssh -X %s@%s rxvt -T %s -e %s -e %s -c %s" % (user, host, title, bin, env, cmd) 
+            else:
+                command_str = "rxvt -T %s -e %s -e %s -c %s" % (title, bin, env, cmd) 
+            # create server
+            process = multiprocessing.Process(target=start_worker, args=(command_str,))
+            workers.append(process)
+            process.start()
+    except KeyboardInterrupt:
+        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+        for worker in workers:
+            print("Trying to terminate")
+            worker.terminate()
+
+def start_worker(command, vars={}):
+    """ 
+    A multiprocessing worker will run as its own process 
+    """
+    print("Starting command: " + str(command))
+    while True: # runs forever.
+        ret = run_command(command, vars)
+        print("Return value is %s" % (ret))
+        print("running it again")
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version=__version__, epilog=EPILOG)
-    # parser.add_option("-s", "--slave", action="store_true", "Starts a command.")
-    # parser.add_option("-f", "--config-file", type="string", default=os.path.expanduser(CONFIG_FILE), help="If run as master, specifies the python config file.")
+    #parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
     # parser.add_option("-v", "--verbose", action="store_true")
+    parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
     parser.add_option("-c", "--command", type="string", help="command to execute")
     parser.add_option("-e", "--environment", action="append", nargs=2, \
         help="Sets an environment variable with key/value pair.")
     (options, args) = parser.parse_args()
-    
-    if True: # options.slave: # slave
+    if not options.master: # options.master is False: # run as slave
         if not options.command:
             print("You must provide a command to execute. (the -c option) Try -h to get help.")
             parser.print_usage()
+            sys.exit(1)
         else:
             variables_dict = {} # dict of environment variables
             if options.environment:
                 variables_dict = options.environment
-            execute(options.command, variables_dict)
-    # TODO: master mode
+            ret = run_slave(options.command, variables_dict)
+    else:
+        if options.command or options.environment:
+            print("Commands or environment variables can only be set when run in slave mode.")
+            parser.print_usage()
+            sys.exit(1)
+        else:
+            run_master( CONFIG_FILE) #options.config_file)
+        
+            
 
