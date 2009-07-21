@@ -1,0 +1,4 @@
+add_command("xlogo", {"DISPLAY":":0.0"}, title="1")
+#add_command("xlogo", {"DISPLAY":":0.0"}, host="brrr", user="aalex", title="2")
+#add_command("xlogo", {"DISPLAY":":0.0"}, host="brrr", user="aalex", title="3")
+

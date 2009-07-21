@@ -73,9 +73,8 @@ def run_command(command_str, variables_dict={}):
         err = "Execution failed: %s\n" % (e.message)
         sys.stderr.write(err)
         retcode = 1
-#    except KeyboardInterrupt, e:
-#        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-#        
+    except KeyboardInterrupt, e:
+        print("CTRL-C in CHILD")
 #        raise ParentKilledError("Ctrl-C has been pressed !")
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
