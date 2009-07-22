@@ -53,6 +53,8 @@ CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
 HOLD_TERMINAL = False
 RESTART_WHEN_DEAD = True
+ENABLE_MINIMUM_PROCESS_TIME = True
+MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
 _commands = []
 
 #class ParentKilledError(Exception):
@@ -113,7 +115,7 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
 
 def run_slave(command_str, vars={}):
     """
-    Runs a slave. (a command on remote host to start a single process)
+    Runs a slave. (a command (on remote host) to start a single process)
     
     Alias to run_command, but called from 
     either the master on the local host of a slave "lunch" software on a remote host.
@@ -184,16 +186,18 @@ def run_master(config_file):
             env = "" # make str from dict
             hold = ""
             if HOLD_TERMINAL:
-                hold = " -hold "
+                hold = "-hold"
             if len(command.env) > 0:
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
-            command_str = "rxvt -T \"%s\" %s -e lunch %s -s -c \\\"%s\\\"" % (title, hold, env, cmd) 
+            command_str = 'rxvt -T "%s" %s -e lunch %s -s -c "%s"' % (title, hold, env, cmd) 
             if command.host is not None:
                 if command.user is None:
                     print("If you provide a host, you must provide a user." + str(command.__dict__))
                     sys.exit(1)
-                command_str = "ssh -X %s@%s " % (user, host) + command_str # prepend ssh command
+                command_str = 'ssh -X %s@%s rxvt -T "%s" %s -e lunch %s -s -c \\"%s\\"' % (user, host, title, hold, env, cmd) # prepend ssh command
+                # TODO: how to escape commands properly ? 
+                # TODO: Maybe better to use sys.argv for every args after --command
             # create server
             process = multiprocessing.Process(target=start_worker, args=(command_str, command.env, queue))
             workers.append(process)
@@ -201,7 +205,6 @@ def run_master(config_file):
         # waiting for a message from any child.
         message = queue.get()
         raise ChildKilledError("A worker received ctrl-C.")
-
     except ChildKilledError:
         print("Ctrl-C was pressed in master.")
         for worker in workers:
@@ -220,11 +223,15 @@ def start_worker(command, vars={}, queue=None):
     print("Starting command: " + str(command))
     while True: # runs forever.
         try:
-            ret = run_command(command, vars, False) # throw an error on ctrl-C
+            started = time.time()
+            ret = run_command(command, vars, False) # throw an error on ctrl-C (this should be blocking)
             if ret == 1:
                 print("Child process returned an error. Will not try to run it again.")
                 break
-            # this should be blocking
+            if ENABLE_MINIMUM_PROCESS_TIME:
+                if time.time() < (started + MINIMUM_PROCESS_TIME):
+                    print("Process did not last long enough. Will not be run again.")
+                    break
         except ChildKilledError:
             # break
             if queue is not None:
@@ -242,6 +249,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
     #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
     parser.add_option("-s", "--slave", action="store_true", help="Run as slave to launch a single process.")
+    parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the rxvt terminal window once it quit.")
     parser.add_option("-R", "--no-resurrect", action="store_true", help="Do not resurrect processes when they die.")
     parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
@@ -251,6 +259,8 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
     if options.hold:
         HOLD_TERMINAL = True
+    if options.disable_minimum_process_time:
+        MINIMUM_PROCESS_TIME = False
     if options.verbose:
         VERBOSE = True
     else:
@@ -281,5 +291,11 @@ if __name__ == "__main__":
             sys.exit(1)
         else:
             # run_master(CONFIG_FILE)
-            run_master(options.config_file)
+            try:
+                run_master(options.config_file)
+            except FileNotFoundError, e:
+                print("Error starting lunch as master.")
+                print(e.message)
+                print("A configuration file is missing. Try the --help flag.")
+                sys.exit(1)
         
