@@ -44,7 +44,7 @@ import logging
 import time
 
 __version__ = "0.1"
-EPILOG = """Released under the terms of the GNU General Public License 2
+EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology"""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
 It uses the following software packages : rxvt-unicode, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
@@ -52,6 +52,7 @@ Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
 HOLD_TERMINAL = False
+RESTART_WHEN_DEAD = True
 _commands = []
 
 #class ParentKilledError(Exception):
@@ -66,7 +67,7 @@ class ExecutionFailedError(Exception):
     """Raised when a command quickly returns an error, or when shell raises an OSError"""
     pass
 
-def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
+def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
     """
     Creates and launches a process. 
 
@@ -97,11 +98,11 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
         sys.stderr.write(err)
         retcode = 1
     except KeyboardInterrupt, e:
-        if not die_on_ctrl_c:
-            raise ChildKilledError("Ctrl-C has been pressed in the master's terminal and caught by a worker.")
-        else:
+        if die_on_ctrl_c:
             print("Ctrl-C has been pressed in a slave terminal. Dying.")
             sys.exit(1)
+        else:
+            raise ChildKilledError("Ctrl-C has been pressed in the master's terminal and caught by a worker.")
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
         sys.stderr.write(err)
@@ -117,7 +118,7 @@ def run_slave(command_str, vars={}):
     Alias to run_command, but called from 
     either the master on the local host of a slave "lunch" software on a remote host.
     """
-    return run_command(command_str, vars) # Dies on ctrl-C
+    return run_command(command_str, vars, True) # Dies on ctrl-C
 
 class Command(object):
     """
@@ -175,7 +176,6 @@ def run_master(config_file):
     workers = []
     queue = multiprocessing.Queue()
     try:
-        bin = "lunch"
         for command in _commands:
             user = command.user
             host = command.host
@@ -188,7 +188,7 @@ def run_master(config_file):
             if len(command.env) > 0:
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
-            command_str = "rxvt -T %s %s -e %s %s -c \"%s\"" % (title, hold, bin, env, cmd) 
+            command_str = "rxvt -T \"%s\" %s -e lunch %s -s -c \\\"%s\\\"" % (title, hold, env, cmd) 
             if command.host is not None:
                 if command.user is None:
                     print("If you provide a host, you must provide a user." + str(command.__dict__))
@@ -220,7 +220,7 @@ def start_worker(command, vars={}, queue=None):
     print("Starting command: " + str(command))
     while True: # runs forever.
         try:
-            ret = run_command(command, vars, True) # throw an error on ctrl-C
+            ret = run_command(command, vars, False) # throw an error on ctrl-C
             if ret == 1:
                 print("Child process returned an error. Will not try to run it again.")
                 break
@@ -232,36 +232,54 @@ def start_worker(command, vars={}, queue=None):
             # raise
         else:
             print("Return value is %s" % (ret))
-            print("running it again")
-            time.sleep(0.1)
+            if not RESTART_WHEN_DEAD:
+                break
+            else:
+                print("running it again")
+                time.sleep(0.1)
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
-    #parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
-    # parser.add_option("-v", "--verbose", action="store_true")
-    parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
+    #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
+    parser.add_option("-s", "--slave", action="store_true", help="Run as slave to launch a single process.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the rxvt terminal window once it quit.")
+    parser.add_option("-R", "--no-resurrect", action="store_true", help="Do not resurrect processes when they die.")
+    parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
     parser.add_option("-c", "--command", type="string", help="command to execute")
-    parser.add_option("-e", "--environment", action="append", nargs=2, \
-        help="Sets an environment variable with key/value pair.")
+    parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
+    parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
     (options, args) = parser.parse_args()
     if options.hold:
         HOLD_TERMINAL = True
-    if not options.master: # options.master is False: # run as slave
+    if options.verbose:
+        VERBOSE = True
+    else:
+        VERBOSE = False
+    if options.no_resurrect:
+        RESTART_WHEN_DEAD = False
+    #if not options.master or 
+    if options.slave: # run as SLAVE
+        #if len(args) == 0:
         if not options.command:
-            print("You must provide a command to execute. (the -c option) Try -h to get help.")
+            print("lunch --slave: You must provide a command to execute. Try -h to get help.")
             parser.print_usage()
             sys.exit(1)
         else:
+            print("Running Lunch as a slave to launch a single process.")
+            # command = " ".join(args)
+            command = options.command
             variables_dict = {} # dict of environment variables
             if options.environment:
                 variables_dict = options.environment
-            ret = run_slave(options.command, variables_dict)
-    else:
-        if options.command or options.environment:
-            print("Commands or environment variables can only be set when run in slave mode.")
+            print("Additional environment variables: %s" % (str(variables_dict)))
+            ret = run_slave(command, variables_dict)
+    else: # run as MASTER
+        #if options.command or 
+        if options.environment:
+            print("Environment variables can only be set when run in slave mode.")
             parser.print_usage()
             sys.exit(1)
         else:
-            run_master(CONFIG_FILE) #options.config_file)
+            # run_master(CONFIG_FILE)
+            run_master(options.config_file)
         

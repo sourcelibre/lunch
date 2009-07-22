@@ -1,4 +1,20 @@
-add_command("xlogo", {"DISPLAY":":0.0"}, title="1")
-#add_command("xlogo", {"DISPLAY":":0.0"}, host="brrr", user="aalex", title="2")
-#add_command("xlogo", {"DISPLAY":":0.0"}, host="brrr", user="aalex", title="3")
+# lunch example config file.
+# Copy this to ~/.lunch/config
+_host = "brrr"
+_user = "aalex"
+
+# local:
+add_command("mplayer ~/src/postures/inhouse/media/exp_ubuntu.ogg", title="local_mplayer")
+add_command("xlogo", title="local_xlogo")
+add_command("xeyes", title="local_xeyes")
+
+# remote: (on remote host's display)
+#add_command("mplayer ~/src/postures/inhouse/media/exp_ubuntu.ogg", {"DISPLAY":":0.0"}, host=_host, user=_user, title="remote_mplayer")
+#add_command("xlogo", {"DISPLAY":":0.0"}, host=_host, user=_user, title="remote_xlogo")
+# add_command("xeyes", {"DISPLAY":":0.0"}, host=_host, user=_user, title="remote_xeyes")
+
+# remote: (on local display)
+add_command("mplayer /usr/share/example-content/Experience\ ubuntu.ogg ", host=_host, user=_user, title="remote_mplayer")
+add_command("xlogo", host=_host, user=_user, title="remote_xlogo")
+add_command("xeyes", host=_host, user=_user, title="remote_xeyes")
 
