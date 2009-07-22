@@ -24,11 +24,13 @@ Simply runs a process on the local machine.
 Allows specifying environment variables.
 
 examples: 
+ lunch -m
 
- ./lunch -c glxgears -e DISPLAY :0.0
+ lunch -c glxgears -e DISPLAY :0.0
  
- ssh -X brrr rxvt -e "/home/aalex/src/postures/trunk/py/lunch -c \"glxgears\" -e DISPLAY :0.0"
+ ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
 """
+# TODO: use log instead of print
 
 import os
 import sys
@@ -39,12 +41,12 @@ import logging
 import time
 
 __version__ = "0.1"
-EPILOG = """Lunch is a process launcher for GNU/Linux. 
-It uses : 
- * rxvt-unicode
- * ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall)
- * lunch itself must be installed on every host.
-"""
+EPILOG = """Lunch is a distributed process launcher for GNU/Linux
+Released under the terms of the GNU General Public License 2
+Copyright 2009 Society for Arts and Technology"""
+DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
+It uses the following software packages : rxvt-unicode, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
+Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
 _commands = []
@@ -84,21 +86,21 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
             err = "Child returned %s\n" % (retcode)
             sys.stderr.write(err)
     except OSError, e:
-        err = "Execution failed: %s\n" % (e.message)
+        err = "Execution of child failed: %s\n" % (e.message)
         sys.stderr.write(err)
         retcode = 1
     except KeyboardInterrupt, e:
-        if die_on_ctrl_c:
-            print("Ctrl-C has been pressed.")
-            sys.exit(1)
-        else:
+        if not die_on_ctrl_c:
             raise ChildKilledError("Ctrl-C has been pressed.")
+        else:
+            print("Ctrl-C has been pressed in a worker's terminal.")
+            sys.exit(1)
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
         sys.stderr.write(err)
         raise
-    else:
-        print("Success\n") # retrcode is p.wait() return val
+    #else:
+        #print("Success\n") # retrcode is p.wait() return val
     return retcode
 
 def run_slave(command_str, vars={}):
@@ -108,7 +110,7 @@ def run_slave(command_str, vars={}):
     Alias to run_command, but called from 
     either the master of a slave "lunch" software on a remote host.
     """
-    return run_command(command_str, vars) # 3rd arg : False
+    return run_command(command_str, vars) # Dies on ctrl-C
 
 class Command(object):
     """
@@ -159,9 +161,9 @@ def run_master(config_file):
     else:
         raise FileNotFoundError("Could not find the %s file." % (config_file))
     # init multiprocessing
-    multiprocessing.log_to_stderr(level=logging.INFO)
+    multiprocessing.log_to_stderr(level=logging.DEBUG) # level=logging.INFO)
     log = multiprocessing.get_logger()
-    log.warning("test debug")
+    # log.warning("test debug")
     workers = []
     queue = multiprocessing.Queue()
     try:
@@ -193,25 +195,27 @@ def run_master(config_file):
     except ChildKilledError:
         print("Ctrl-C was pressed in a master.")
         for worker in workers:
-            print("Trying to terminate")
+            print("Terminating worker")
             worker.terminate()
     except KeyboardInterrupt:
         print("Ctrl-C was pressed in master.")
         for worker in workers:
-            print("Trying to terminate")
+            print("Terminating worker")
             worker.terminate()
 
-def start_worker(command, vars={}, queue):
+def start_worker(command, vars={}, queue=None):
     """ 
     A multiprocessing worker will run as its own process 
     """
     print("Starting command: " + str(command))
     while True: # runs forever.
         try:
-            ret = run_command(command, vars, True)
+            ret = run_command(command, vars, True) # throw an error on ctrl-C
+            # this should be blocking
         except ChildKilledError:
             # break
-            queue.put(["Ctrl-C !"])
+            if queue is not None:
+                queue.put(["Ctrl-C !"])
             # raise
         else:
             print("Return value is %s" % (ret))
@@ -219,7 +223,7 @@ def start_worker(command, vars={}, queue):
             time.sleep(0.1)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="%prog [options]", version=__version__, epilog=EPILOG)
+    parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
     #parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
     # parser.add_option("-v", "--verbose", action="store_true")
     parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
@@ -243,5 +247,5 @@ if __name__ == "__main__":
             parser.print_usage()
             sys.exit(1)
         else:
-            run_master( CONFIG_FILE) #options.config_file)
+            run_master(CONFIG_FILE) #options.config_file)
         
