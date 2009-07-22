@@ -1,7 +1,14 @@
+#!/usr/bin/env python
 # lunch example config file.
 # Copy this to ~/.lunch/config
-_host = "brrr"
-_user = "aalex"
+# 
+# All you need to do here is to call add_command() for each command you want to add 
+# to the disctributed process launcher. 
+#
+# The following variables are only there to simplify test.
+#
+_host = "brrr" # Remote host for example tests.
+_user = "aalex" # Remote user for example tests.
 
 # local:
 add_command("mplayer ~/src/postures/inhouse/media/exp_ubuntu.ogg", title="local_mplayer")
@@ -14,7 +21,7 @@ add_command("xeyes", title="local_xeyes")
 # add_command("xeyes", {"DISPLAY":":0.0"}, host=_host, user=_user, title="remote_xeyes")
 
 # remote: (on local display)
-add_command("mplayer /usr/share/example-content/Experience\ ubuntu.ogg ", host=_host, user=_user, title="remote_mplayer")
-add_command("xlogo", host=_host, user=_user, title="remote_xlogo")
-add_command("xeyes", host=_host, user=_user, title="remote_xeyes")
+#add_command("mplayer /usr/share/example-content/Experience\ ubuntu.ogg ", host=_host, user=_user, title="remote_mplayer")
+#add_command("xlogo", host=_host, user=_user, title="remote_xlogo")
+#add_command("xeyes", host=_host, user=_user, title="remote_xeyes")
 
