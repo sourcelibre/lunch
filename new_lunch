@@ -31,6 +31,9 @@ examples:
  ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
 """
 # TODO: use log instead of print
+# TODO: allow to override config file
+# TODO: toggle verbose mode
+# TODO: create config dir/file if not found
 
 import os
 import sys
@@ -41,14 +44,14 @@ import logging
 import time
 
 __version__ = "0.1"
-EPILOG = """Lunch is a distributed process launcher for GNU/Linux
-Released under the terms of the GNU General Public License 2
+EPILOG = """Released under the terms of the GNU General Public License 2
 Copyright 2009 Society for Arts and Technology"""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
 It uses the following software packages : rxvt-unicode, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
 Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
+HOLD_TERMINAL = False
 _commands = []
 
 #class ParentKilledError(Exception):
@@ -57,6 +60,10 @@ _commands = []
 
 class ChildKilledError(Exception):
     """Raised when child is killed"""
+    pass
+
+class ExecutionFailedError(Exception):
+    """Raised when a command quickly returns an error, or when shell raises an OSError"""
     pass
 
 def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
@@ -68,16 +75,16 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
     Throws a ChildKilledError if ctrl-C is pressed.
     """
     global VERBOSE
-    if VERBOSE:
-        print("RUNNING: %s" % (command_str))
-        print("ENV: %s" % (str(variables_dict)))
     retcode = None
     environment = {}
     environment.update(os.environ)
     environment.update(variables_dict)
     try:
         p = subprocess.Popen(command_str, shell=True, env=environment)
+        print("COMMAND: %s" % (command_str))
         print("PID: %s" % (p.pid))
+        if VERBOSE:
+            print("ENV: %s" % (str(variables_dict)))
         retcode = p.wait() # blocking
         if retcode < 0:
             err = "Child was terminated by signal %d\n" % (retcode)
@@ -91,9 +98,9 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
         retcode = 1
     except KeyboardInterrupt, e:
         if not die_on_ctrl_c:
-            raise ChildKilledError("Ctrl-C has been pressed.")
+            raise ChildKilledError("Ctrl-C has been pressed in the master's terminal and caught by a worker.")
         else:
-            print("Ctrl-C has been pressed in a worker's terminal.")
+            print("Ctrl-C has been pressed in a slave terminal. Dying.")
             sys.exit(1)
     except ValueError, e:
         err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
@@ -105,10 +112,10 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=False):
 
 def run_slave(command_str, vars={}):
     """
-    Runs a slave. (on remote host to start a single process)
+    Runs a slave. (a command on remote host to start a single process)
     
     Alias to run_command, but called from 
-    either the master of a slave "lunch" software on a remote host.
+    either the master on the local host of a slave "lunch" software on a remote host.
     """
     return run_command(command_str, vars) # Dies on ctrl-C
 
@@ -118,7 +125,7 @@ class Command(object):
 
     Class with no method.
     """
-    def __init__(self, command="", env={}, host=None, user=None, priority=0, title=""):
+    def __init__(self, command="", env={}, host=None, user=None, priority=0, title="rxvt_slave"):
         self.command = command
         self.env = env
         self.host = host
@@ -126,7 +133,7 @@ class Command(object):
         self.title = title
         self.priority = priority
 
-def add_command(command="", env={}, host=None, user=None, priority=0, title=""):
+def add_command(command="", env={}, host=None, user=None, priority=0, title="rxvt_slave"):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -159,6 +166,7 @@ def run_master(config_file):
             print("Error in user configuration file.")
             raise
     else:
+        # create the directory ?
         raise FileNotFoundError("Could not find the %s file." % (config_file))
     # init multiprocessing
     multiprocessing.log_to_stderr(level=logging.DEBUG) # level=logging.INFO)
@@ -167,23 +175,25 @@ def run_master(config_file):
     workers = []
     queue = multiprocessing.Queue()
     try:
-        bin = "~/src/postures/trunk/py/lunch"
+        bin = "lunch"
         for command in _commands:
             user = command.user
             host = command.host
             title = command.title
             cmd = command.command
             env = "" # make str from dict
+            hold = ""
+            if HOLD_TERMINAL:
+                hold = " -hold "
             if len(command.env) > 0:
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
+            command_str = "rxvt -T %s %s -e %s %s -c \"%s\"" % (title, hold, bin, env, cmd) 
             if command.host is not None:
                 if command.user is None:
                     print("If you provide a host, you must provide a user." + str(command.__dict__))
                     sys.exit(1)
-                command_str = "ssh -X %s@%s rxvt -T %s -e %s %s -c %s" % (user, host, title, bin, env, cmd) 
-            else:
-                command_str = "rxvt -T %s -e %s %s -c %s" % (title, bin, env, cmd) 
+                command_str = "ssh -X %s@%s " % (user, host) + command_str # prepend ssh command
             # create server
             process = multiprocessing.Process(target=start_worker, args=(command_str, command.env, queue))
             workers.append(process)
@@ -193,7 +203,7 @@ def run_master(config_file):
         raise ChildKilledError("A worker received ctrl-C.")
 
     except ChildKilledError:
-        print("Ctrl-C was pressed in a master.")
+        print("Ctrl-C was pressed in master.")
         for worker in workers:
             print("Terminating worker")
             worker.terminate()
@@ -211,6 +221,9 @@ def start_worker(command, vars={}, queue=None):
     while True: # runs forever.
         try:
             ret = run_command(command, vars, True) # throw an error on ctrl-C
+            if ret == 1:
+                print("Child process returned an error. Will not try to run it again.")
+                break
             # this should be blocking
         except ChildKilledError:
             # break
@@ -227,10 +240,13 @@ if __name__ == "__main__":
     #parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
     # parser.add_option("-v", "--verbose", action="store_true")
     parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
+    parser.add_option("-H", "--hold", action="store_true", help="Hold the rxvt terminal window once it quit.")
     parser.add_option("-c", "--command", type="string", help="command to execute")
     parser.add_option("-e", "--environment", action="append", nargs=2, \
         help="Sets an environment variable with key/value pair.")
     (options, args) = parser.parse_args()
+    if options.hold:
+        HOLD_TERMINAL = True
     if not options.master: # options.master is False: # run as slave
         if not options.command:
             print("You must provide a command to execute. (the -c option) Try -h to get help.")
