@@ -129,22 +129,29 @@ class Command(object):
     One command to run on a remote or local host.
 
     Class with no method.
+    Default priority is 100
     """
-    def __init__(self, command="", env={}, host=None, user=None, priority=0, title="rxvt_slave"):
+    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.1):
         self.command = command
         self.env = env
         self.host = host
         self.user = user
         self.title = title
         self.priority = priority
+        self.sleep = sleep
 
-def add_command(command="", env={}, host=None, user=None, priority=0, title="rxvt_slave"):
+def add_command(command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.1):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
+    
+    Default priority is 100. The lowest the earliest.
     """
     global _commands
-    _commands.append(Command(command, env, host, user, priority, title))
+    global VERBOSE
+    if VERBOSE:
+        print("adding %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
+    _commands.append(Command(command, env, host, user, priority, title, sleep)) # EDIT ME
 
 class FileNotFoundError(Exception):
     """
@@ -204,6 +211,7 @@ def run_master(config_file):
             process = multiprocessing.Process(target=start_worker, args=(command_str, command.env, queue))
             workers.append(process)
             process.start()
+            time.sleep(command.sleep)
         # waiting for a message from any child.
         message = queue.get()
         raise ChildKilledError("A worker received ctrl-C.")
@@ -246,6 +254,21 @@ def start_worker(command, vars={}, queue=None):
             else:
                 print("running it again")
                 time.sleep(0.1)
+
+def sorting_callback(x, y):
+    """
+    Sorts Command objects.
+    
+    To define a compare function for sort(), you must follow certain pattern.
+    1. Compare function must take TWO param: x and y,
+    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
+    """
+    if x.priority > y.priority:
+        return 1
+    elif x.priority < y.priority:
+        return -1
+    else:
+        return 0
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
