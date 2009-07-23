@@ -45,7 +45,7 @@ import time
 
 __version__ = "0.1"
 EPILOG = """Released under the terms of the GNU General Public License 2.
-Copyright 2009 Society for Arts and Technology"""
+Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
 It uses the following software packages : rxvt-unicode, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
 Lunch itself must be installed on every host. """
@@ -248,15 +248,18 @@ def start_worker(command, vars={}, queue=None):
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
     #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
-    parser.add_option("-s", "--slave", action="store_true", help="Run as slave to launch a single process.")
+    parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
     parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the rxvt terminal window once it quit.")
+    parser.add_option("-t", "--minimum-time", type="float", help="Sets the minimum time that a process must last to be considered crashed. Only in slave mode for now. Default is %f seconds." % (MINIMUM_PROCESS_TIME))
     parser.add_option("-R", "--no-resurrect", action="store_true", help="Do not resurrect processes when they die.")
     parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
-    parser.add_option("-c", "--command", type="string", help="command to execute")
+    parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
     parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
     parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
     (options, args) = parser.parse_args()
+    if options.minimum_time:
+        MINIMUM_PROCESS_TIME = options.minimum_time
     if options.hold:
         HOLD_TERMINAL = True
     if options.disable_minimum_process_time:
