@@ -34,6 +34,8 @@ examples:
 # TODO: allow to override config file
 # TODO: toggle verbose mode
 # TODO: create config dir/file if not found
+# TODO: sleep after launch
+# TODO: process order priority
 
 import os
 import sys

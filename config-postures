@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+# lunch config file for postures/NTA
+# lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
+# -------------------------------------------------------------------
+# some variables
+_hosts = ["posture01", "postures03"]
+_user = "postures" # Remote user for example tests.
+_src = "/home/%s/src" % (_user)
+
+# more variables for the paths
+_nta = "%s/nta" % (_src)
+_postures = "%s/postures/trunk" % (_src)
+_spinwidgets = "%s/spinwidgets" % (_src)
+_spin = "%s/spinframework/trunk" % (_src)
+_osg_wrappers = "%s/src/osgWrappers" % (_spin)
+_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
+# -------------------------------------------------------------------
+# local:
+add_command("%s/src/vess/vessServer" % (_spin), title="local_vess_server") # TODO: should sleep 3 seconds !
+add_command("%s/panoViewer/panoViewer", env={"LD_LIBRARY_PATH":_osg_wrappers}, title="local_panoViewer") 
+add_command(_nta_client, title="local_pd")
+
+for _host in _hosts:
+     # TODO : killall pd panoViewer ?
+    add_command("%s/panoViewer/panoViewer", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_panoViewer" % (_host))
+    add_command(_nta_client, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_panoViewer" % (_host))
+
