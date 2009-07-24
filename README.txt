@@ -13,6 +13,8 @@ Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
  sudo make install
 
+There should be a Lunch icon in the Application/Other Gnome menu.
+
 Start the lunch master::
 
  lunch
@@ -20,6 +22,7 @@ Start the lunch master::
 A remote lunch as a slave is started this way::
 
  lunch -s -c "xlogo"
+
 
 DOCUMENTATION
 =============
