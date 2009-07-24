@@ -16,15 +16,21 @@ _osg_wrappers = "%s/src/osgWrappers" % (_spin)
 _nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
 _pano_viewer = "%s/panoViewer/panoViewer" % (_src)
 _vess_server = "%s/src/vess/vessServer" % (_spin)
+_spin_viewer = "%s/spinframework/trunk/src/vess/spinViewer" % (_src)
 # -------------------------------------------------------------------
 # local:
-add_command(_vess_server, title="local_vess_server", sleep=3.0, priority=1) # TODO: should sleep 3 seconds !
 
-add_command(_pano_viewer, env={"LD_LIBRARY_PATH":_osg_wrappers}, title="local_panoViewer") 
-add_command(_nta_client, title="local_pd")
+# TODO : killall pd panoViewer ?
+# add_command(_pano_viewer, env={"LD_LIBRARY_PATH":_osg_wrappers}, title="local_panoViewer") 
+# add_command(_nta_client, title="local_pd")
 
+# le serveur VESS sur posture 2,
+add_command(_vess_server, env={"LD_LIBRARY_PATH":_osg_wrappers}, title="local_vess_server", sleep=3.0, priority=1) 
+# les ntaClient sur posture 1 et 3,
 for _host in _hosts:
-     # TODO : killall pd panoViewer ?
-    add_command(_pano_viewer, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_panoViewer" % (_host))
     add_command(_nta_client, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_panoViewer" % (_host))
-
+#     * les viewers (panoViewer pour posture 1 et spinViewer pour posture 3),
+add_command("/home/postures/src/postures/trunk/panoViewer/panoViewer", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host="posture01", title="01_panoViewer")
+add_command("/home/postures/src/spinframework/trunk/src/vess/spinViewer", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host="posture03", title="03_spinViewer")
+#     * et spin (entrer commande "spin" dans le terminal) sur posture 2 
+add_command("/home/postures/src/spinframework/trunk/src/vess/spin", title="local_spin") 
