@@ -55,4 +55,6 @@ You should have received a copy of the GNU General Public License
 along with Lunch. If not, see <http://www.gnu.org/licenses/>.
 
 
-
+IMAGES 
+=======
+The source of Lunch's icon is http://commons.wikimedia.org/wiki/File:Fruit-cherries.svg and is in the public domain. Thank you Rocket000 !

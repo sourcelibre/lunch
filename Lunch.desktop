@@ -1,3 +1,5 @@
+#!/usr/bin/env xdg-open
+
 [Desktop Entry]
 Encoding=UTF-8
 Version=1.0
@@ -6,9 +8,7 @@ Type=Application
 Terminal=true
 Name=Lunch
 Name[en_CA]=Lunch
-Name[fr]=Lunch
 Comment=The Lunch distributed process manager
 Comment[en_CA]=The Lunch distributed process manager
-Comment[fr]=Lunch est un gestionnaire de processus
-Icon=apport
+Icon=/usr/local/share/icons/Fruit-cherries.svg
 Icon[en_CA]=apport
