@@ -31,11 +31,7 @@ examples:
  ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
 """
 # TODO: use log instead of print
-# TODO: allow to override config file
-# TODO: toggle verbose mode
 # TODO: create config dir/file if not found
-# TODO: sleep after launch
-# TODO: process order priority
 
 import os
 import sys
@@ -45,7 +41,7 @@ import multiprocessing
 import logging
 import time
 
-__version__ = "0.1"
+__version__ = "0.1 alpha"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
@@ -293,8 +289,6 @@ if __name__ == "__main__":
         MINIMUM_PROCESS_TIME = False
     if options.verbose:
         VERBOSE = True
-    else:
-        VERBOSE = False
     if options.no_resurrect:
         RESTART_WHEN_DEAD = False
     #if not options.master or 
