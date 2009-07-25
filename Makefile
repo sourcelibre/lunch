@@ -4,7 +4,7 @@ all:
 install:
 	install lunch /usr/local/bin/lunch
 	install Lunch.desktop /usr/local/share/applications/Lunch.desktop
-	install Fruit-cherries.svg /usr/local/share/icons/Fruit-cherries.svg
+	install Lunch.svg /usr/local/share/icons/Lunch.svg
 
 uninstall:
 	rm -f /usr/local/bin/lunch

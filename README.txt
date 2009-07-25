@@ -22,7 +22,16 @@ Start the lunch master::
 A remote lunch as a slave is started this way::
 
  lunch -s -c "xlogo"
+ lunch -s -c "xdg-open /usr/local/share/icons/Lunch.svg"
 
+The .lunch/config file is written in Python and the only function needed is add_command. Here are some examples::
+
+ add_command(command="xlogo", env={}, title="xlogo")
+ add_command(command="mplayer /usr/share/example-content/Ubuntu_Free_Culture_Showcase/StopMotionUbuntu.ogv", env={}, title="mplayer")
+
+Setting the user and host arguments make it be issued through SSH to a remote host::
+ 
+ add_command(command="xlogo", env={"DISPLAY":":0.0"}, user=_user, host="example.org", title="remote_xlogo")
 
 DOCUMENTATION
 =============
@@ -33,6 +42,10 @@ You can generate HTML out of this README.txt file using rst2html::
 Pydoc can generate HTML documentation out of the Python script::
 
  pydoc -w ./lunch
+
+See the Makefile for more installation options::
+
+ make doc
 
 LICENSE 
 =========

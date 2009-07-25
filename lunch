@@ -23,16 +23,18 @@
 Simply runs a process on the local machine.
 Allows specifying environment variables.
 
-examples: 
- lunch -m
+Can be run as a server controlling remote computers with ssh security:: 
+ lunch
 
+Can also be run as a single process launcher in a rxvt terminal.
  lunch -c glxgears -e DISPLAY :0.0
  
  ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
 """
 # TODO: use log instead of print
 # TODO: create config dir/file if not found
-
+# TODO: change config file to .lunch
+# TODO: allow xterm terminal
 import os
 import sys
 from optparse import OptionParser
@@ -81,11 +83,14 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
     environment.update(os.environ)
     environment.update(variables_dict)
     try:
-        p = subprocess.Popen(command_str, shell=True, env=environment)
+        if VERBOSE:
+            print("--------")
         print("COMMAND: %s" % (command_str))
+        p = subprocess.Popen(command_str, shell=True, env=environment)
         print("PID: %s" % (p.pid))
         if VERBOSE:
             print("ENV: %s" % (str(variables_dict)))
+            print("--------")
         retcode = p.wait() # blocking
         if retcode < 0:
             err = "Child was terminated by signal %d\n" % (retcode)
@@ -146,7 +151,7 @@ def add_command(command="", env={}, host=None, user=None, priority=100, title="r
     global _commands
     global VERBOSE
     if VERBOSE:
-        print("adding %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
+        print("adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
     _commands.append(Command(command, env, host, user, priority, title, sleep)) # EDIT ME
 
 def sorting_callback(x, y):
