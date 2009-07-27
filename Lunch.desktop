@@ -3,7 +3,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Version=1.0
-Exec=/usr/local/bin/lunch --hold
+Exec=/usr/local/bin/lunch 
 Type=Application
 Terminal=true
 Name=Lunch
@@ -11,4 +11,3 @@ Name[en_CA]=Lunch
 Comment=The Lunch distributed process manager
 Comment[en_CA]=The Lunch distributed process manager
 Icon=/usr/local/share/icons/Lunch.svg
-Icon[en_CA]=apport
