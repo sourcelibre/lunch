@@ -15,7 +15,7 @@ _spin = "%s/spinframework/trunk" % (_src)
 _osg_wrappers = "%s/src/osgWrappers" % (_spin)
 _nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
 _pano_viewer = "%s/panoViewer/panoViewer" % (_src)
-_vess_server = "%s/src/vess/vessServer" % (_spin)
+_vess_server = "%s/src/vess/vess" % (_spin)
 _spin_viewer = "%s/spinframework/trunk/src/vess/spinViewer" % (_src)
 # -------------------------------------------------------------------
 # local:
