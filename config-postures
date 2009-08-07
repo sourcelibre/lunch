@@ -33,4 +33,4 @@ for _host in _hosts:
 add_command("/home/postures/src/postures/trunk/panoViewer/panoViewer", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host="posture01", title="01_panoViewer")
 add_command("/home/postures/src/spinframework/trunk/src/vess/spinViewer", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host="posture03", title="03_spinViewer")
 #     * et spin (entrer commande "spin" dans le terminal) sur posture 2 
-add_command("/home/postures/src/spinframework/trunk/src/vess/spin", title="local_spin") 
+add_command("/home/postures/src/spinframework/trunk/src/vess/spin", env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, title="local_spin") 
