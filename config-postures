@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-# lunch config file for postures/NTA
+# lunch config file for the custom project postures/NTA
+# Copy this to ~/.lunch/config
+# 
+# All you need to do here is to call add_command() for each command you want to add 
+# to the distributed process launcher. 
 # lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
 # -------------------------------------------------------------------
 # some variables

@@ -3,7 +3,7 @@
 # Copy this to ~/.lunch/config
 # 
 # All you need to do here is to call add_command() for each command you want to add 
-# to the disctributed process launcher. 
+# to the distributed process launcher. 
 #
 # The following variables are only there to simplify test.
 #
