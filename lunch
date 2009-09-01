@@ -35,6 +35,7 @@ Can also be run as a single process launcher in a rxvt terminal.
 # TODO: create config dir/file if not found
 # TODO: change config file to .lunch
 # TODO: allow xterm terminal
+# TODO: get rid of the ~/.lunch directory and simply use it as a file.
 import os
 import sys
 from optparse import OptionParser
