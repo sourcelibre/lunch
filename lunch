@@ -55,6 +55,7 @@ HOLD_TERMINAL = False
 RESTART_WHEN_DEAD = True
 ENABLE_MINIMUM_PROCESS_TIME = True
 MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
+LOGGING_ENABLED = False
 _commands = []
 
 #class ParentKilledError(Exception):
@@ -197,9 +198,10 @@ def run_master(config_file):
         # create the directory ?
         raise FileNotFoundError("Could not find the %s file." % (config_file))
     # init multiprocessing
-    multiprocessing.log_to_stderr(level=logging.DEBUG) # level=logging.INFO)
-    log = multiprocessing.get_logger()
-    # log.warning("test debug")
+    if LOGGING_ENABLED:
+        multiprocessing.log_to_stderr(level=logging.INFO) # level=logging.DEBUG)
+        log = multiprocessing.get_logger()
+        # log.warning("test debug")
     workers = []
     queue = multiprocessing.Queue()
     _commands.sort(sorting_callback)
@@ -225,7 +227,7 @@ def run_master(config_file):
                 # TODO: how to escape commands properly ? 
                 # TODO: Maybe better to use sys.argv for every args after --command
             # create server
-            process = multiprocessing.Process(target=start_worker, args=(command_str, command.env, queue))
+            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, command.env, queue))
             workers.append(process)
             process.start()
             time.sleep(command.sleep)
