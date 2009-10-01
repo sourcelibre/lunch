@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+# lunch config file for the custom project postures/NTA
+# Copy this to ~/.lunch/config
+# 
+# All you need to do here is to call add_command() for each command you want to add 
+# to the distributed process launcher. 
+# lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
+# -------------------------------------------------------------------
+
+# some variables
+_user = "postures"
+_src = "/home/%s/src" % (_user)
+_nta = "%s/nta" % (_src)
+_postures = "%s/postures/trunk" % (_src)
+_spinwidgets = "%s/spinwidgets" % (_src)
+_spin = "%s/spinframework/trunk" % (_src)
+_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
+_spinEditor = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd" % (_src, _spinwidgets)
+
+
+# -------------------------------------------------------------------
+
+add_command("spinServer", title="local_spinServer", sleep=1.0, priority=1) 
+add_command("spinViewer", title="local_spinViewer")
+add_command(_spinEditor, title="local_spinEditor")
+
+#add_command(_nta_client, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_ntaClient" % (_host))
+
+#     * et spin gui (entrer commande "spin" dans le terminal) sur posture 2 
+#add_command(_spinWX, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, title="local_spinWX")

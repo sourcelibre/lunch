@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+# lunch config file for the custom project postures/NTA
+# Copy this to ~/.lunch/config
+# 
+# All you need to do here is to call add_command() for each command you want to add 
+# to the distributed process launcher. 
+# lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
+# -------------------------------------------------------------------
+# some variables
+#_hosts = ["posture01", "posture03"]
+_hosts = ["posture03"]
+_user = "postures" # Remote user for example tests.
+_src = "/home/%s/src" % (_user)
+
+# camera -> receiver relationships:
+_milhouses = [ {"sender":"posture03", "camera":0, "receiver":"posture03" },
+               {"sender":"posture03", "camera":1, "receiver":"posture03" } ]
+
+# more variables for the paths
+_nta = "%s/nta" % (_src)
+_postures = "%s/postures/trunk" % (_src)
+_spinwidgets = "%s/spinwidgets" % (_src)
+_spin = "%s/spinframework/trunk" % (_src)
+_osg_wrappers = "%s/src/osgWrappers" % (_spin)
+_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
+_pano_viewer = "%s/postures/trunk/panoViewer/panoViewer" % (_src)
+#_spin_server = "%s/src/spin/spinServer" % (_spin)
+#_spin_viewer = "%s/src/spin/spinViewer" % (_spin)
+#_spinWX = "%s/src/spin/spin" % (_spin)
+_spinEditor = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd %s/milhouseTest.pd" % (_src, _spinwidgets, _nta)
+
+
+# -------------------------------------------------------------------
+# local:
+
+# TODO : killall pd panoViewer ?
+# add_command(_pano_viewer, env={"LD_LIBRARY_PATH":_osg_wrappers}, title="local_panoViewer") 
+# add_command(_nta_client, title="local_pd")
+
+# le serveur (local):
+add_command("spinServer", title="local_spinServer", sleep=1.0, priority=1) 
+
+# les ntaClient sur posture 1 et 3,
+for _host in _hosts:
+    add_command(_nta_client, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_ntaClient" % (_host))
+
+# milhouse invocations:
+for m in _milhouses:
+    add_command("firereset", user=_user, host=m['sender'], title="%s_firereset" % (m['sender']))
+    add_command("milhouse -s --videoport %s --address %s --videocodec h263 --videosource dc1394src --videobitrate 750000 --camera-number %d" % (10000 + (20*m['camera']), m['receiver'], m['camera']), user=_user, host=m['sender'], title="%s_milhouse_sender%d_to_%s" % (m['sender'], m['camera'], m['receiver']))
+    add_command("milhouse -r --videoport %d --videocodec h263 --address %s --videosink sharedvideosink --shared-video-id %s_%d" % (10000+(20*m['camera']), m['sender'], m['sender'], m['camera']), user=_user, host=m['receiver'], title="%s_milhouse_receiver_from_%s_%d" % (m['receiver'],m['sender'],m['camera']))
+
+#     * les viewers (panoViewer pour posture 1 et spinViewer pour posture 3),
+#add_command(_pano_viewer, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host="posture01", title="01_panoViewer")
+add_command("spinViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture03", title="03_spinViewer")
+
+#     * et spin gui (entrer commande "spin" dans le terminal) sur posture 2 
+#add_command(_spinWX, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, title="local_spinWX")
+add_command(_spinEditor, env={"DISPLAY":":0.0"}, title="local_spinEditor")
