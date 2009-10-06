@@ -240,11 +240,13 @@ def run_master(config_file):
         for worker in workers:
             print("Terminating worker")
             worker.terminate()
+            #os.kill(worker.pid(), signal.SIGINT)
     except KeyboardInterrupt:
         print("Ctrl-C was pressed in master.")
         for worker in workers:
             print("Terminating worker")
             worker.terminate()
+            #os.kill(worker.pid(), signal.SIGINT)
 
 def start_worker(command, vars={}, queue=None):
     """ 
