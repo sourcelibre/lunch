@@ -17,7 +17,7 @@ _src = "/home/%s/src" % (_user)
 _milhouses = [ {"sender":_host, "camera":0, "receiver":_host },
                {"sender":_host, "camera":1, "receiver":_host } ]
 
-_milhouses = []
+#_milhouses = []
 
 # more variables for the paths
 _nta = "%s/nta" % (_src)
