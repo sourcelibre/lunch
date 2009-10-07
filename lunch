@@ -23,6 +23,9 @@
 Simply runs a process on the local machine.
 Allows specifying environment variables.
 
+Usage 
+-----
+
 Can be run as a server controlling remote computers with ssh security:: 
  lunch
 
@@ -30,6 +33,12 @@ Can also be run as a single process launcher in a rxvt terminal.
  lunch -c glxgears -e DISPLAY :0.0
  
  ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
+
+Notes 
+-----
+We use lunch slave in order to add environment variables to the remote process.
+
+Lunch needs rxvt (or soon xterm), ssh and /bin/sh.
 """
 # TODO: use log instead of print
 # TODO: create config dir/file if not found
@@ -87,7 +96,7 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
     try:
         if VERBOSE:
             print("--------")
-        print("COMMAND: %s" % (command_str))
+        print("RUNNING: %s" % (command_str))
         p = subprocess.Popen(command_str, shell=True, env=environment)
         print("PID: %s" % (p.pid))
         if VERBOSE:
@@ -95,23 +104,23 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
             print("--------")
         retcode = p.wait() # blocking
         if retcode < 0:
-            err = "Child was terminated by signal %d\n" % (retcode)
+            err = "EXITED: Child was terminated by signal %d. Its command was \"%s\".\n" % (retcode, command_str)
             sys.stderr.write(err)
         else:
-            err = "Child returned %s\n" % (retcode)
+            err = "EXITED: Child returned %s Its command was \"%s\"." % (retcode, command_str)
             sys.stderr.write(err)
     except OSError, e:
-        err = "Execution of child failed: %s\n" % (e.message)
+        err = "EXITED: Execution of child failed: %s. Its command was \"%s\"\n" % (e.message, command_str)
         sys.stderr.write(err)
         retcode = 1
     except KeyboardInterrupt, e:
         if die_on_ctrl_c:
-            print("Ctrl-C has been pressed in a slave terminal. Dying.")
+            print("INTERRUPTED: Ctrl-C has been pressed in a slave terminal. Dying. Its command was \"%s\"" % (command_str))
             sys.exit(1)
         else:
-            raise ChildKilledError("Ctrl-C has been pressed in the master's terminal and caught by a worker.")
+            raise ChildKilledError("INTERRUPTED: Ctrl-C has been pressed in the master's terminal and caught by a worker. Its command was \"%s\"" % (command_str))
     except ValueError, e:
-        err = "Wrong arguments to subprocess.Popen: %s\n" % (e.message)
+        err = "ERROR: Wrong arguments to subprocess.Popen: %s Its command was \"%s\"" % (e.message, command_str)
         sys.stderr.write(err)
         raise
     #else:
@@ -153,7 +162,7 @@ def add_command(command="", env={}, host=None, user=None, priority=100, title="r
     global _commands
     global VERBOSE
     if VERBOSE:
-        print("adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
+        print("DEBUG: adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
     _commands.append(Command(command, env, host, user, priority, title, sleep)) # EDIT ME
 
 def sorting_callback(x, y):
@@ -193,11 +202,11 @@ def run_master(config_file):
         try:
             execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
         except Exception, e:
-            print("Error in user configuration file.")
+            print("ERROR: Error in user configuration file.")
             raise
     else:
         # create the directory ?
-        raise FileNotFoundError("Could not find the %s file." % (config_file))
+        raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
     # init multiprocessing
     if LOGGING_ENABLED:
         multiprocessing.log_to_stderr(level=logging.INFO) # level=logging.DEBUG)
@@ -219,10 +228,11 @@ def run_master(config_file):
             if len(command.env) > 0:
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
+            # we use lunch slave in order to add environment variables to the remote process.
             command_str = 'rxvt -T "%s" %s -e lunch %s -s -c "%s"' % (title, hold, env, cmd) 
             if command.host is not None:
                 if command.user is None:
-                    print("If you provide a host, you must provide a user." + str(command.__dict__))
+                    print("ERROR: If you provide a host, you must provide a user." + str(command.__dict__))
                     sys.exit(1)
                 command_str = 'ssh -X %s@%s rxvt -T "%s" %s -e lunch %s -s -c \\"%s\\"' % (user, host, title, hold, env, cmd) # prepend ssh command
                 # TODO: how to escape commands properly ? 
@@ -233,18 +243,18 @@ def run_master(config_file):
             process.start()
             time.sleep(command.sleep)
         # waiting for a message from any child.
-        message = queue.get()
-        raise ChildKilledError("A worker received ctrl-C.")
+        message = queue.get() # excepts the message "CTRL-C !", see below
+        raise ChildKilledError("INTERRUPTED: A worker received ctrl-C.")
     except ChildKilledError:
-        print("Ctrl-C was pressed in master.")
+        print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
         for worker in workers:
-            print("Terminating worker")
+            print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
             worker.terminate()
             #os.kill(worker.pid(), signal.SIGINT)
     except KeyboardInterrupt:
-        print("Ctrl-C was pressed in master.")
+        print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
         for worker in workers:
-            print("Terminating worker")
+            print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
             worker.terminate()
             #os.kill(worker.pid(), signal.SIGINT)
 
@@ -252,31 +262,32 @@ def start_worker(command, vars={}, queue=None):
     """ 
     A multiprocessing worker will run as its own process 
     """
-    print("Starting command: " + str(command))
+    # print("Starting command: " + str(command))
     while True: # runs forever.
         try:
             started = time.time()
             ret = run_command(command, vars, False) # throw an error on ctrl-C (this should be blocking)
             if ret == 1:
-                print("Child process returned an error. Will not try to run it again.")
+                print("Child process returned an error. Will not try to run it again. Its command was %s" % (command))
                 break
             if ENABLE_MINIMUM_PROCESS_TIME:
                 if time.time() < (started + MINIMUM_PROCESS_TIME):
-                    print("Process did not last long enough. Will not be run again.")
+                    print("ERROR: Process did not last long enough. Will not be run again. Its command was %s" % (command))
                     break
         except ChildKilledError:
             # break
             if queue is not None:
-                queue.put(["Ctrl-C !"])
+                queue.put(["Ctrl-C !"]) # communicates with the master
             # raise
         else:
-            print("Return value is %s" % (ret))
+            print("EXITED: Return value is %s" % (ret))
             if not RESTART_WHEN_DEAD:
+                print("DEBUG: Will not restart it.")
                 break
             else:
-                print("running it again")
-                time.sleep(0.1)
-
+                DELAY = 0.1
+                print("DEBUG: Running it again in %f seconds." % (DELAY))
+                time.sleep(DELAY)
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
@@ -289,7 +300,7 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
     parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
     parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
-    parser.add_option("-f", "--config-file", type="string", default=CONFIG_FILE, help="If run as master, specifies the python config file.")
+    parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
     (options, args) = parser.parse_args()
     if options.minimum_time:
         MINIMUM_PROCESS_TIME = options.minimum_time
@@ -325,8 +336,16 @@ if __name__ == "__main__":
             sys.exit(1)
         else:
             # run_master(CONFIG_FILE)
+            # you can now provide a config file as an argument.
+            config_file = options.config_file
+            if len(args) == 1 and not options.config_file: # and not options.config_file == CONFIG_FILE:
+                print("DEBUG: overriding config_file with %s" % (args[0]))
+                config_file = args[0]
+            else:
+                config_file = CONFIG_FILE # default value
             try:
-                run_master(options.config_file)
+                print("DEBUG: using config_file %s" % (config_file))
+                run_master(config_file)
             except FileNotFoundError, e:
                 print("Error starting lunch as master.")
                 print(e.message)
