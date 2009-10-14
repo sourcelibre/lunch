@@ -14,17 +14,14 @@ _nta = "%s/nta" % (_src)
 _postures = "%s/postures/trunk" % (_src)
 _spinwidgets = "%s/spinwidgets" % (_src)
 _spin = "%s/spinframework/trunk" % (_src)
-_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
-_spinEditor = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd" % (_src, _spinwidgets)
-
+_pdClient = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd %s/ntaClient.pd" % (_src, _spinwidgets, _nta)
 
 # -------------------------------------------------------------------
 
 add_command("spinServer", title="local_spinServer", sleep=1.0, priority=1) 
-add_command("spinViewer", title="local_spinViewer")
-add_command(_spinEditor, title="local_spinEditor")
 
-#add_command(_nta_client, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, user=_user, host=_host, title="%s_ntaClient" % (_host))
+#add_command("spinViewer", title="local_spinViewer")
+add_command("panoViewer", title="panoViewer")
 
-#     * et spin gui (entrer commande "spin" dans le terminal) sur posture 2 
-#add_command(_spinWX, env={"DISPLAY":":0.0", "LD_LIBRARY_PATH":_osg_wrappers}, title="local_spinWX")
+add_command(_pdClient, title="local_Pd")
+
