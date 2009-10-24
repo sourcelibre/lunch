@@ -11,22 +11,30 @@ _hosts = ["posture01", "posture03"]
 _user = "postures" # Remote user for example tests.
 _src = "/home/%s/src" % (_user)
 
-_doMilhouse = 1
+_doMilhouse = True
 
 # milhouse sender -> receiver relationships:
 _milhouses = [ {"sender":"posture01", "receiver":"posture03", "camera":0, "audio":True },
-               {"sender":"posture01", "receiver":"posture03", "camera":1, "audio":False },
+               #{"sender":"posture01", "receiver":"posture03", "camera":1, "audio":False },
                {"sender":"posture03", "receiver":"posture01", "camera":0, "audio":True },
                {"sender":"posture03", "receiver":"posture01", "camera":1, "audio":False } ]
+
 
 # more variables for the paths
 _nta = "%s/nta" % (_src)
 _postures = "%s/postures/trunk" % (_src)
 _spinwidgets = "%s/spinwidgets" % (_src)
 _spin = "%s/spinframework/trunk" % (_src)
-_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
+
+# pd launch command
+#  - 3 inputs representing a mono input from each client
+#  - 3 outputs: first goes out to network, the next are for the audio display (stereo)
+_pd = "%s/pd-0.41-4/bin/pd -jack -r 44100 -inchannels 3 -outchannels 3" % (_src)
+
+# other clients:
+_nta_client = "%s %s/ntaClient.pd" % (_pd, _nta)
 _pano_viewer = "%s/postures/trunk/panoViewer/panoViewer" % (_src)
-_spinEditor = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd %s/milhouseTest.pd" % (_src, _spinwidgets, _nta)
+_spinEditor = "%s %s/patches/spinEdit.pd %s/milhouseTest.pd" % (_pd, _spinwidgets, _nta)
 
 
 # -------------------------------------------------------------------
@@ -49,6 +57,7 @@ for _host in _hosts:
 
 # milhouse invocations:
 if _doMilhouse:
+    
     for m in _milhouses:
         add_command("firereset", user=_user, host=m['sender'], title="%s_firereset" % (m['sender']))
 
@@ -59,14 +68,10 @@ if _doMilhouse:
             add_command("jack.plumbing", user=_user, host=m['sender'], title="jack.plumbing")
             add_command("jack.plumbing", user=_user, host=m['receiver'], title="jack.plumbing")
             sendOpt += " --audioport %d --audiocodec raw --audiosource jackaudiosrc --disable-jack-autoconnect --jack-client-name %s" % (10010 + (20*m['camera']), m['sender'])
-            recvOpt += " --audioport %d --audiocodec raw --audiosink jackaudiosnk --disable-jack-autoconnect --jack-client-name %s" % (10010 + (20*m['camera']), m['sender'])
+            recvOpt += " --audioport %d --audiocodec raw --audiosink jackaudiosink --disable-jack-autoconnect --jack-client-name %s" % (10010 + (20*m['camera']), m['sender'])
 
         add_command("milhouse %s"%(sendOpt), user=_user, host=m['sender'], title="milhouse_sender_%s_%d_to_%s" % (m['sender'], m['camera'], m['receiver']))
         add_command("milhouse %s"%(recvOpt), user=_user, host=m['receiver'], title="milhouse_receiver_%s_%d_from_%s" % (m['sender'],m['camera'],m['receiver']))
-
-#out_<jack-client-name>_1
-#add_command("milhouse -s --audioport %s --address %s --audiocodec raw --audiosource jackaudiosrc --disable-jack-autoconnect --jack-client-name %s" % (10000 + (20*m['camera']), m['receiver'], m['camera']), user=_user, host=m['sender'], title="milhouse_sender_%s_%d_to_%s" % (m['sender'], m['camera'], m['receiver']))
-
 
 
 # local editor
