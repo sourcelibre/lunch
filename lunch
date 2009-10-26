@@ -53,7 +53,7 @@ import multiprocessing
 import logging
 import time
 
-__version__ = "0.1 alpha"
+__version__ = "0.1.1"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
@@ -96,6 +96,10 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_nam
     environment.update(variables_dict)
     log_file = None
     if log_file_name is not None:
+        try:
+            os.remove(log_file_name) # cleans it up from last time we ran it. TAKE CARE !
+        except OSError, e:
+            pass
         try:
             log_file = open(log_file_name, 'a') # append mode
         except IOError, e:
@@ -324,7 +328,7 @@ if __name__ == "__main__":
     parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
     parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
     parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
-    parser.add_option("-l", "--log-file", type="string", help="If run as slave, specifies the log file to write to.", default=DEFAULT_LOG_FILE)
+    parser.add_option("-l", "--log-file", type="string", help="If run as slave, specifies the log file to write to. WARNING : That file will be removed and written to it with the children standard output. You can read this file with the command 'tail -F %s'" % (DEFAULT_LOG_FILE), default=DEFAULT_LOG_FILE)
     (options, args) = parser.parse_args()
     if options.minimum_time:
         MINIMUM_PROCESS_TIME = options.minimum_time
