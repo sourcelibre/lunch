@@ -16,5 +16,5 @@ doc:
 	pydoc -w ./lunch
 	rst2html README.txt lunch-readme.html
 clean:
-	rm -f lunch-readme.html lunch.html lunchc
+	rm -f lunch-readme.html lunch.html lunchc lunch.1
 
