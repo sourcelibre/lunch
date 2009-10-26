@@ -146,7 +146,8 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_nam
         raise
     #else:
         #print("Success\n") # retrcode is p.wait() return val
-    log_file.close()
+    if log_file is not None:
+        log_file.close()
     return retcode
 
 def run_slave(command_str, vars={}, log_file_name=DEFAULT_LOG_FILE):
