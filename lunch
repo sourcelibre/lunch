@@ -66,6 +66,7 @@ RESTART_WHEN_DEAD = True
 ENABLE_MINIMUM_PROCESS_TIME = True
 MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
 LOGGING_ENABLED = False
+DEFAULT_LOG_FILE = "/var/tmp/lunch.log" # For slaves. In append mode, so that many slaves can write to it.
 _commands = []
 
 #class ParentKilledError(Exception):
@@ -80,7 +81,7 @@ class ExecutionFailedError(Exception):
     """Raised when a command quickly returns an error, or when shell raises an OSError"""
     pass
 
-def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
+def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_name=None):
     """
     Creates and launches a process. 
 
@@ -93,29 +94,49 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
     environment = {}
     environment.update(os.environ)
     environment.update(variables_dict)
+    log_file = None
+    if log_file_name is not None:
+        try:
+            log_file = open(log_file_name, 'a') # append mode
+        except IOError, e:
+            log_file = None
+            raise # !!!
     try:
+        def verb(txt, log_file=None):
+            """
+            Local function
+            Writes to a log file debug messages and prints it too.
+            """
+            if log_file is not None:
+                log_file.write("%s\n" % (txt))
+                log_file.flush()
+            print(txt)
+        
         if VERBOSE:
-            print("--------")
-        print("RUNNING: %s" % (command_str))
-        p = subprocess.Popen(command_str, shell=True, env=environment)
-        print("PID: %s" % (p.pid))
+            verb("--------", log_file)
+        verb("RUNNING: %s" % (command_str), log_file)
+        p = subprocess.Popen(command_str, shell=True, env=environment, stderr=subprocess.STDOUT, stdout=log_file)
+        verb("PID: %s" % (p.pid), log_file)
         if VERBOSE:
-            print("ENV: %s" % (str(variables_dict)))
-            print("--------")
+            verb("ENV: %s" % (str(variables_dict)), log_file)
+            verb("--------", log_file)
         retcode = p.wait() # blocking
         if retcode < 0:
             err = "EXITED: Child was terminated by signal %d. Its command was \"%s\".\n" % (retcode, command_str)
             sys.stderr.write(err)
         else:
             err = "EXITED: Child returned %s Its command was \"%s\"." % (retcode, command_str)
+            verb(err, log_file)
             sys.stderr.write(err)
     except OSError, e:
         err = "EXITED: Execution of child failed: %s. Its command was \"%s\"\n" % (e.message, command_str)
         sys.stderr.write(err)
+        verb(err, log_file)
         retcode = 1
     except KeyboardInterrupt, e:
         if die_on_ctrl_c:
-            print("INTERRUPTED: Ctrl-C has been pressed in a slave terminal. Dying. Its command was \"%s\"" % (command_str))
+            msg = "INTERRUPTED: Ctrl-C has been pressed in a slave terminal. Dying. Its command was \"%s\"" % (command_str, log_file)
+            verb(msg, log_file)
             sys.exit(1)
         else:
             raise ChildKilledError("INTERRUPTED: Ctrl-C has been pressed in the master's terminal and caught by a worker. Its command was \"%s\"" % (command_str))
@@ -125,16 +146,17 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True):
         raise
     #else:
         #print("Success\n") # retrcode is p.wait() return val
+    log_file.close()
     return retcode
 
-def run_slave(command_str, vars={}):
+def run_slave(command_str, vars={}, log_file_name=DEFAULT_LOG_FILE):
     """
     Runs a slave. (a command (on remote host) to start a single process)
     
     Alias to run_command, but called from 
     either the master on the local host of a slave "lunch" software on a remote host.
     """
-    return run_command(command_str, vars, True) # Dies on ctrl-C
+    return run_command(command_str, vars, True, log_file_name) # Dies on ctrl-C
 
 class Command(object):
     """
@@ -301,6 +323,7 @@ if __name__ == "__main__":
     parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
     parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
     parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
+    parser.add_option("-l", "--log-file", type="string", help="If run as slave, specifies the log file to write to.", default=DEFAULT_LOG_FILE)
     (options, args) = parser.parse_args()
     if options.minimum_time:
         MINIMUM_PROCESS_TIME = options.minimum_time
@@ -322,12 +345,13 @@ if __name__ == "__main__":
         else:
             print("Running Lunch as a slave to launch a single process.")
             # command = " ".join(args)
+            log_file_name = options.log_file
             command = options.command
             variables_dict = {} # dict of environment variables
             if options.environment:
                 variables_dict = options.environment
             print("Additional environment variables: %s" % (str(variables_dict)))
-            ret = run_slave(command, variables_dict)
+            ret = run_slave(command, variables_dict, log_file_name)
     else: # run as MASTER
         #if options.command or 
         if options.environment:
