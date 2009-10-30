@@ -64,6 +64,7 @@ VERBOSE = False
 HOLD_TERMINAL = False
 RESTART_WHEN_DEAD = True
 ENABLE_MINIMUM_PROCESS_TIME = True
+DELAY_BEFORE_LAUNCHING_AGAIN = 0.1
 MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
 LOGGING_ENABLED = False
 DEFAULT_LOG_FILE = "/var/tmp/lunch.log" # For slaves. In append mode, so that many slaves can write to it.
@@ -179,7 +180,7 @@ class Command(object):
         self.priority = priority
         self.sleep = sleep
 
-def add_command(command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.1):
+def add_command(command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.25):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -268,7 +269,7 @@ def run_master(config_file):
             process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, command.env, queue))
             workers.append(process)
             process.start()
-            time.sleep(command.sleep)
+            time.sleep(command.sleep + random.random() * 0.05)
         # waiting for a message from any child.
         message = queue.get() # excepts the message "CTRL-C !", see below
         raise ChildKilledError("INTERRUPTED: A worker received ctrl-C.")
@@ -312,9 +313,8 @@ def start_worker(command, vars={}, queue=None):
                 print("DEBUG: Will not restart it.")
                 break
             else:
-                DELAY = 0.1
-                print("DEBUG: Running it again in %f seconds." % (DELAY))
-                time.sleep(DELAY)
+                print("DEBUG: Running it again in %f seconds." % (DELAY_BEFORE_LAUNCHING_AGAIN ))
+                time.sleep(DELAY_BEFORE_LAUNCHING_AGAIN )
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
