@@ -47,6 +47,7 @@ Lunch needs rxvt (or soon xterm), ssh and /bin/sh.
 # TODO: get rid of the ~/.lunch directory and simply use it as a file.
 import os
 import sys
+import random
 from optparse import OptionParser
 import subprocess
 import multiprocessing
