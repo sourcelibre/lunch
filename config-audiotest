@@ -17,7 +17,10 @@ _doMilhouse = True
 _milhouses = [ {"sender":"posture01", "receiver":"posture03", "camera":0, "audio":True },
                #{"sender":"posture01", "receiver":"posture03", "camera":1, "audio":False },
                {"sender":"posture03", "receiver":"posture01", "camera":0, "audio":True },
-               {"sender":"posture03", "receiver":"posture01", "camera":1, "audio":False } ]
+               {"sender":"posture03", "receiver":"posture01", "camera":1, "audio":False },
+               {"sender":"posture03", "receiver":"posture01", "camera":2, "audio":False },
+               {"sender":"posture03", "receiver":"posture01", "camera":3, "audio":False },
+             ]
 
 
 # more variables for the paths
@@ -29,10 +32,11 @@ _spin = "%s/spinframework/trunk" % (_src)
 # pd launch command
 #  - 3 inputs representing a mono input from each client
 #  - 3 outputs: first goes out to network, the next are for the audio display (stereo)
-_pd = "%s/pd-0.41-4/bin/pd -jack -r 44100 -inchannels 3 -outchannels 3" % (_src)
+_pd = "%s/pd-0.41-4/bin/pd -jack -r 16000 -inchannels 3 -outchannels 3" % (_src)
 
 # other clients:
 _nta_client = "%s %s/ntaClient.pd" % (_pd, _nta)
+#_nta_client = "%s %s/audiotest.pd" % (_pd, _nta)
 _pano_viewer = "%s/postures/trunk/panoViewer/panoViewer" % (_src)
 _spinEditor = "%s %s/patches/spinEdit.pd %s/milhouseTest.pd" % (_pd, _spinwidgets, _nta)
 
@@ -46,20 +50,17 @@ add_command("spinServer", title="spinServer (local)", sleep=1.0, priority=1)
 # les ntaClient sur posture 1 et 3,
 for _host in _hosts:
     add_command(_nta_client, env={"DISPLAY":":0.0"}, user=_user, host=_host, title="ntaClient")
-    add_command("spinViewer", env={"DISPLAY":":0.0"}, user=_user, host=_host, title="spinViewer")
-    #add_command("rm /dev/shm/posture*", user=_user, host=_host)
+    #add_command("spinViewer", env={"DISPLAY":":0.0"}, user=_user, host=_host, title="spinViewer")
 
-#add_command("spinViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture03", title="spinViewer")
-#add_command("panoViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture01", title="panoViewer")
+add_command("spinViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture03", title="spinViewer")
+add_command("panoViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture01", title="panoViewer")
 
 
 
 
 # milhouse invocations:
 if _doMilhouse:
-    
     for m in _milhouses:
-        add_command("firereset", user=_user, host=m['sender'], title="%s_firereset" % (m['sender']))
 
         sendOpt = "-s --videoport %s --address %s --videocodec h263 --videosource dc1394src --videobitrate 750000 --camera-number %d" % (10000 + (20*m['camera']), m['receiver'], m['camera'])
         recvOpt = "-r --videoport %d --videocodec h263 --address %s --videosink sharedvideosink --shared-video-id %s_%d" % (10000+(20*m['camera']), m['sender'], m['sender'], m['camera'])
@@ -70,6 +71,7 @@ if _doMilhouse:
             sendOpt += " --audioport %d --audiocodec raw --audiosource jackaudiosrc --disable-jack-autoconnect --jack-client-name %s" % (10010 + (20*m['camera']), m['sender'])
             recvOpt += " --audioport %d --audiocodec raw --audiosink jackaudiosink --disable-jack-autoconnect --jack-client-name %s" % (10010 + (20*m['camera']), m['sender'])
 
+        #add_command("firereset", user=_user, host=m['sender'], title="%s_firereset" % (m['sender']))
         add_command("milhouse %s"%(sendOpt), user=_user, host=m['sender'], title="milhouse_sender_%s_%d_to_%s" % (m['sender'], m['camera'], m['receiver']))
         add_command("milhouse %s"%(recvOpt), user=_user, host=m['receiver'], title="milhouse_receiver_%s_%d_from_%s" % (m['sender'],m['camera'],m['receiver']))
 
