@@ -6,21 +6,11 @@
 # to the distributed process launcher. 
 # lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
 # -------------------------------------------------------------------
-# some variables
-_user = "postures" # Remote user for example tests.
-_src = "/home/%s/src" % (_user)
 
-# more variables for the paths
-_nta = "%s/nta" % (_src)
-_postures = "%s/postures/trunk" % (_src)
-_spinwidgets = "%s/spinwidgets" % (_src)
-_spin = "%s/spinframework/trunk" % (_src)
-_nta_client = "%s/pd-0.41-4/bin/pd -jack %s/ntaClient.pd" % (_src, _nta)
-_pano_viewer = "%s/postures/trunk/panoViewer/panoViewer" % (_src)
-_spinEditor = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd %s/milhouseTest.pd" % (_src, _spinwidgets, _nta)
-
+import os
+execfile(os.path.join(os.path.dirname(__file__), "postures.py"))
 
 add_command("spinServer", title="spinServer (local)", sleep=1.0, priority=1) 
-add_command(_nta_client, env={"DISPLAY":":0.0"}, user=_user, host="posture01", title="ntaClient")
-add_command("panoViewer", env={"DISPLAY":":0.0"}, user=_user, host="posture01", title="panoViewer")
-add_command(_spinEditor, env={"DISPLAY":":0.0"}, title="spinEditor (local)")
+add_command(postures.ntaClient, env={"DISPLAY":":0.0"}, user=postures.user, host="posture01", title="ntaClient")
+add_command("panoViewer", env={"DISPLAY":":0.0"}, user=postures.user, host="posture01", title="panoViewer")
+add_command(postures.spinEditor, env={"DISPLAY":":0.0"}, title="spinEditor (local)")
