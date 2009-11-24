@@ -368,9 +368,8 @@ if __name__ == "__main__":
             # run_master(CONFIG_FILE)
             # you can now provide a config file as an argument.
             config_file = options.config_file
-            if len(args) == 1 and not options.config_file: # and not options.config_file == CONFIG_FILE:
-                print("DEBUG: overriding config_file with %s" % (args[0]))
-                config_file = args[0]
+            if config_file: # config file as an argument have been provided
+                print("DEBUG: overriding config_file with %s" % (config_file))
             else:
                 config_file = CONFIG_FILE # default value
             try:
