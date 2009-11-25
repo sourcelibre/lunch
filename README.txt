@@ -2,7 +2,7 @@ INSTALLATION
 ============
 You will need a few software. On Ubuntu, install them using the following command ::
 
-  sudo apt-get install rxvt-unicode build-essential rxvt-unicode openssh-client openssh-server python-setuptools help2man
+  sudo apt-get install build-essential openssh-client openssh-server python-setuptools help2man
   sudo easy_install multiprocessing
 
 Copy the "config-sample" example config file to the local ~/.lunch/config::

@@ -29,16 +29,16 @@ Usage
 Can be run as a server controlling remote computers with ssh security:: 
  lunch
 
-Can also be run as a single process launcher in a rxvt terminal.
+Can also be run as a single process launcher in a xterm terminal.
  lunch -c glxgears -e DISPLAY :0.0
  
- ssh -X brrr rxvt -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
+ ssh -X brrr xterm -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
 
 Notes 
 -----
 We use lunch slave in order to add environment variables to the remote process.
 
-Lunch needs rxvt (or soon xterm), ssh and /bin/sh.
+Lunch needs xterm, ssh and /bin/sh.
 """
 # TODO: use log instead of print
 # TODO: create config dir/file if not found
@@ -58,7 +58,7 @@ __version__ = "0.1.1"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
-It uses the following software packages : rxvt-unicode, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
+It uses the following software packages : xterm, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
 Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
@@ -172,7 +172,7 @@ class Command(object):
     Class with no method.
     Default priority is 100
     """
-    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.1):
+    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1):
         self.command = command
         self.env = env
         self.host = host
@@ -181,7 +181,7 @@ class Command(object):
         self.priority = priority
         self.sleep = sleep
 
-def add_command(command="", env={}, host=None, user=None, priority=100, title="rxvt_slave", sleep=0.25):
+def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -222,7 +222,7 @@ def run_master(config_file):
     This happens only on the master computer.
      * reads config file
      * uses multiprocessing to create many workers. (calling start_worker)
-       Those worker launch the "lunch" program in a rxvt terminal.
+       Those worker launch the "lunch" program in a xterm terminal.
        (maybe through ssh, if on a remote host)
      * If ctrl-C is pressed from any worker, dies.
     """
@@ -258,16 +258,16 @@ def run_master(config_file):
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
             # we use lunch slave in order to add environment variables to the remote process.
-            command_str = 'rxvt -T "%s" %s -e lunch %s -s -c "%s"' % (title, hold, env, cmd) 
+            command_str = 'xterm -T "%s" %s -e lunch %s -s -c "%s"' % (title, hold, env, cmd) 
             if command.host is not None:
-                if command.user is None:
-                    print("ERROR: If you provide a host, you must provide a user." + str(command.__dict__))
-                    sys.exit(1)
-                command_str = 'ssh -X %s@%s rxvt -T "%s" %s -e lunch %s -s -c \\"%s\\"' % (user, host, title, hold, env, cmd) # prepend ssh command
+                user_args = ""
+                if command.user is not None:
+                    user_args = "-l %s " % (command.user)
+                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch %s -s -c \\"%s\\"' % (user_args, host, title, hold, env, cmd) # prepend ssh command
                 # TODO: how to escape commands properly ? 
                 # TODO: Maybe better to use sys.argv for every args after --command
             # create server
-            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, command.env, queue))
+            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, os.environ, queue))
             workers.append(process)
             process.start()
             time.sleep(command.sleep + random.random() * 0.05)
@@ -322,7 +322,7 @@ if __name__ == "__main__":
     #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
     parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
     parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
-    parser.add_option("-H", "--hold", action="store_true", help="Hold the rxvt terminal window once it quit.")
+    parser.add_option("-H", "--hold", action="store_true", help="Hold the xterm terminal window once it quit.")
     parser.add_option("-t", "--minimum-time", type="float", help="Sets the minimum time that a process must last to be considered crashed. Only in slave mode for now. Default is %f seconds." % (MINIMUM_PROCESS_TIME))
     parser.add_option("-R", "--no-resurrect", action="store_true", help="Do not resurrect processes when they die.")
     parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
