@@ -8,6 +8,9 @@ install:
 	install lunch.svg /usr/local/share/icons/lunch.svg
 	help2man -N -n "The Lunch distributed process manager" lunch > lunch.1
 	install lunch.1 /usr/local/share/man/man1/lunch.1
+	rm -f /usr/local/share/icons/Lunch.svg
+	rm -f /usr/local/share/applications/Lunch.desktop
+	
 uninstall:
 	rm -f /usr/local/bin/lunch
 	rm -f /usr/local/share/applications/lunch.desktop
