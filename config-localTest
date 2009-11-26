@@ -7,21 +7,14 @@
 # lunch is a distributed process launcher for GNU/Linux. see postures/trunk/py/
 # -------------------------------------------------------------------
 
-# some variables
-_user = "postures"
-_src = "/home/%s/src" % (_user)
-_nta = "%s/nta" % (_src)
-_postures = "%s/postures/trunk" % (_src)
-_spinwidgets = "%s/spinwidgets" % (_src)
-_spin = "%s/spinframework/trunk" % (_src)
-_pdClient = "%s/pd-0.41-4/bin/pd -jack %s/patches/spinEdit.pd %s/ntaClient.pd" % (_src, _spinwidgets, _nta)
-
-# -------------------------------------------------------------------
+import os
+execfile(os.path.join(os.path.dirname(__file__), "postures.py"))
 
 add_command("spinServer", title="local_spinServer", sleep=1.0, priority=1) 
 
-#add_command("spinViewer", title="local_spinViewer")
-add_command("panoViewer", title="panoViewer")
+add_command("spinViewer", title="spinViewer")
+#add_command("panoViewer", title="panoViewer")
 
-add_command(_pdClient, title="local_Pd")
+add_command("%s %s/patches/spinEdit.pd %s/ntaClient.pd" % (postures.pd, postures.spinwidgetsPath, postures.ntaPath), title="Pd editors")
+
 

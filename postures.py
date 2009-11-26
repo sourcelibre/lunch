@@ -20,9 +20,10 @@ class postures:
     spinPath = "%s/spinframework/trunk" % (srcPath)
 
     pd = "%s/pd-0.41-4/bin/pd -jack -r 16000 -inchannels 3 -outchannels 3" % (srcPath)
-    ntaClient = "%s %s/ntaClient.pd" % (pd, ntaPath)
-    panoViewer = "%s/postures/trunk/panoViewer/panoViewer" % (srcPath)
-    spinEditor = "%s %s/patches/spinEdit.pd %s/milhouseTest.pd" % (pd, spinwidgetsPath, ntaPath)
+    ntaClientDebug = "%s %s/ntaClient.pd" % (pd, ntaPath)
+    ntaClient = "%s -send 'init! bang' %s/ntaClient.pd" % (pd, ntaPath)
+    spinEditorDebug = "%s %s/patches/spinEdit.pd %s/milhouseTest.pd" % (pd, spinwidgetsPath, ntaPath)
+    spinEditor = "%s -send 'init! bang' %s/patches/spinEdit.pd %s/milhouseTest.pd" % (pd, spinwidgetsPath, ntaPath)
 
 
 

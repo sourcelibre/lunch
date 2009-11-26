@@ -340,8 +340,8 @@ if __name__ == "__main__":
         MINIMUM_PROCESS_TIME = False
     if options.verbose:
         VERBOSE = True
-    if options.no_resurrect:
-        AUTORESPAWN = False
+    if options.no_respawn:
+        RESPAWN = False
     #if not options.master or 
     if options.slave: # run as SLAVE
         #if len(args) == 0:

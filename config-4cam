@@ -8,9 +8,13 @@
 # -------------------------------------------------------------------
 
 import os
-execfile(os.path.join(os.path.dirname(__file__), "postures.py"))
+#execfile(os.path.join(os.path.dirname(__file__), "postures.py"))
+execfile(os.path.join(os.getcwd(), "postures.py"))
 
-_hosts = ["posture01", "posture03"]
+_hosts = ["posture01", "posture02", "posture03", "streamer01", "streamer03"]
+_clients = ["posture01", "posture03"]
+
+Debug = True
 
 
 # camera -> receiver relationships:
@@ -26,18 +30,22 @@ _milhouses = [ {"sender":"streamer01", "camera":"df44", "receiver":"posture03" }
                {"sender":"posture01", "audio":True, "receiver":"posture03" },
                {"sender":"posture03", "audio":True, "receiver":"posture01" },
              ]
+_milhouses = []
 
 # clear log files:
 for h in _hosts:
     add_command("rm /var/tmp/lunch.log", user=postures.user, host=h)
-    add_command("killall milhouse", user=postures.user, host=h, sleep=0.25, priority=0)
+    add_command("killall milhouse", user=postures.user, host=h, priority=1)
 
 # server:
-add_command("spinServer", title="spinServer (local)", sleep=1.0, priority=1) 
+add_command("spinServer", title="spinServer (local)", sleep=1.0, priority=2) 
 
 # ntaClients:
-for h in _hosts:
-    add_command(postures.ntaClient, env={"DISPLAY":":0.0"}, user=postures.user, host=h, title="ntaClient")
+for c in _clients:
+    if Debug:    
+        add_command(postures.ntaClientDebug, env={"DISPLAY":":0.0"}, user=postures.user, host=c, title="ntaClient")
+    else:
+        add_command(postures.ntaClient, env={"DISPLAY":":0.0"}, user=postures.user, host=c, title="ntaClient")
 
 # viewers:
 add_command("spinViewer", env={"DISPLAY":":0.0"}, user=postures.user, host="posture03", title="spinViewer")
@@ -63,10 +71,10 @@ for m in _milhouses:
         sendOpt += " --framerate 15"
         
         recvOpt += " --videoport %d" % (_port)
-        recvOpt += " --videocodec h263 --videosink xvimagesink"
-        #recvOpt += " --videocodec h263 --videosink sharedvideosink"
+        #recvOpt += " --videocodec h263 --videosink xvimagesink"
+        recvOpt += " --videocodec h263 --videosink sharedvideosink"
         #recvOpt += " --shared-video-id %s_%s" % (m['sender'], m['camera'])
-        #recvOpt += " --shared-video-id %s" % (m['camera'])
+        recvOpt += " --shared-video-id %s" % (m['camera'])
 
         _title += "_VID\(%s\)" % (m['camera'])
 
@@ -84,4 +92,7 @@ for m in _milhouses:
     _port += 20
 
 # local editor
-add_command(postures.spinEditor, env={"DISPLAY":":0.0"}, title="spinEditor (local)")
+if Debug:
+    add_command(postures.spinEditorDebug, env={"DISPLAY":":0.0"}, title="spinEditor (local)")
+else:
+    add_command(postures.spinEditor, env={"DISPLAY":":0.0"}, title="spinEditor (local)")
