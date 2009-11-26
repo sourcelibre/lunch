@@ -13,6 +13,6 @@ XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends}, python (>= 2.4), python-central (>= 0.6.7), python-dev, openssh-client, openssh-server 
 Description: Lunch is a distributed process manager.
  .
- Lunch is a simple disctibuted process manager for GNU/Linux.
+ Lunch is a simple distributed process manager for GNU/Linux.
  .
  See https://svn.sat.qc.ca/trac/postures/wiki/Lunch for more infos.

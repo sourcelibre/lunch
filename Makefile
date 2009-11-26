@@ -20,4 +20,6 @@ doc:
 	rst2html README.txt lunch-readme.html
 clean:
 	rm -f lunch-readme.html lunch.html lunchc lunch.1
+deb:
+	dpkg-buildpackage -r 
 
