@@ -54,7 +54,7 @@ import multiprocessing
 import logging
 import time
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
