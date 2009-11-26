@@ -10,5 +10,5 @@ binary-install/lunch::
 	dh_pycentral -plunch
 	dh_install lunch.desktop usr/share/applications
 	dh_install lunch.svg usr/share/icons/hicolor/scalable/lunch.svg
-	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./lunch > lunch.1 
+	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./lunch --output=lunch.1 
 	dh_installman lunch.1
