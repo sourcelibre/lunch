@@ -63,7 +63,7 @@ Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunch/config")
 VERBOSE = False
 HOLD_TERMINAL = False
-RESTART_WHEN_DEAD = True
+RESPAWN = True # Respawn all KILL/INT/TERM'ed process
 ENABLE_MINIMUM_PROCESS_TIME = True
 DELAY_BEFORE_LAUNCHING_AGAIN = 0.1
 MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
@@ -172,7 +172,7 @@ class Command(object):
     Class with no method.
     Default priority is 100
     """
-    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1):
+    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1, respawn=True):
         self.command = command
         self.env = env
         self.host = host
@@ -180,8 +180,9 @@ class Command(object):
         self.title = title
         self.priority = priority
         self.sleep = sleep
+        self.respawn = respawn
 
-def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25):
+def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25, respawn=True):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -191,8 +192,8 @@ def add_command(command="", env={}, host=None, user=None, priority=100, title="x
     global _commands
     global VERBOSE
     if VERBOSE:
-        print("DEBUG: adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep)) # EDIT ME
-    _commands.append(Command(command, env, host, user, priority, title, sleep)) # EDIT ME
+        print("DEBUG: adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep, respawn)) # EDIT ME
+    _commands.append(Command(command, env, host, user, priority, title, sleep, respawn)) # EDIT ME
 
 def sorting_callback(x, y):
     """
@@ -267,7 +268,7 @@ def run_master(config_file):
                 # TODO: how to escape commands properly ? 
                 # TODO: Maybe better to use sys.argv for every args after --command
             # create server
-            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, os.environ, queue))
+            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, os.environ, queue, command.respawn))
             workers.append(process)
             process.start()
             time.sleep(command.sleep + random.random() * 0.05)
@@ -287,7 +288,7 @@ def run_master(config_file):
             worker.terminate()
             #os.kill(worker.pid(), signal.SIGINT)
 
-def start_worker(command, vars={}, queue=None):
+def start_worker(command, vars={}, queue=None, respawn=True):
     """ 
     A multiprocessing worker will run as its own process 
     """
@@ -310,7 +311,7 @@ def start_worker(command, vars={}, queue=None):
             # raise
         else:
             print("EXITED: Return value is %s" % (ret))
-            if not RESTART_WHEN_DEAD:
+            if not RESPAWN or not respawn:
                 print("DEBUG: Will not restart it.")
                 break
             else:
@@ -324,7 +325,7 @@ if __name__ == "__main__":
     parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the xterm terminal window once it quit.")
     parser.add_option("-t", "--minimum-time", type="float", help="Sets the minimum time that a process must last to be considered crashed. Only in slave mode for now. Default is %f seconds." % (MINIMUM_PROCESS_TIME))
-    parser.add_option("-R", "--no-resurrect", action="store_true", help="Do not resurrect processes when they die.")
+    parser.add_option("-R", "--no-respawn", action="store_true", help="Do not respawn processes when they die.")
     parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
     parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
     parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
@@ -340,7 +341,7 @@ if __name__ == "__main__":
     if options.verbose:
         VERBOSE = True
     if options.no_resurrect:
-        RESTART_WHEN_DEAD = False
+        AUTORESPAWN = False
     #if not options.master or 
     if options.slave: # run as SLAVE
         #if len(args) == 0:
