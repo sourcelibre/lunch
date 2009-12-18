@@ -42,9 +42,6 @@ Lunch needs xterm, ssh and /bin/sh.
 """
 # TODO: use log instead of print
 # TODO: create config dir/file if not found
-# TODO: change config file to .lunch
-# TODO: allow xterm terminal
-# TODO: get rid of the ~/.lunch directory and simply use it as a file.
 import os
 import sys
 import random
@@ -117,7 +114,6 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_nam
                 log_file.write("%s\n" % (txt))
                 log_file.flush()
             print(txt)
-        
         if VERBOSE:
             verb("--------", log_file)
         verb("RUNNING: %s" % (command_str), log_file)
@@ -172,7 +168,7 @@ class Command(object):
     Class with no method.
     Default priority is 100
     """
-    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1, respawn=True):
+    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1, respawn=True, log_file=DEFAULT_LOG_FILE):
         self.command = command
         self.env = env
         self.host = host
@@ -181,8 +177,9 @@ class Command(object):
         self.priority = priority
         self.sleep = sleep
         self.respawn = respawn
+        self.log_file = log_file
 
-def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25, respawn=True):
+def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25, respawn=True, log_file=DEFAULT_LOG_FILE):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -193,7 +190,7 @@ def add_command(command="", env={}, host=None, user=None, priority=100, title="x
     global VERBOSE
     if VERBOSE:
         print("DEBUG: adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep, respawn)) # EDIT ME
-    _commands.append(Command(command, env, host, user, priority, title, sleep, respawn)) # EDIT ME
+    _commands.append(Command(command=command, env=env, host=host, user=user, priority=priority, title=title, sleep=sleep, respawn=respawn, log_file=log_file)) # EDIT ME
 
 def sorting_callback(x, y):
     """
@@ -250,6 +247,7 @@ def run_master(config_file):
             user = command.user
             host = command.host
             title = command.title
+            log_file = command.log_file
             cmd = command.command
             env = "" # make str from dict
             hold = ""
@@ -259,12 +257,12 @@ def run_master(config_file):
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
             # we use lunch slave in order to add environment variables to the remote process.
-            command_str = 'xterm -T "%s" %s -e lunch %s -s -c "%s"' % (title, hold, env, cmd) 
+            command_str = 'xterm -T "%s" %s -e lunch %s -s --log-file %s -c "%s"' % (title, hold, env, log_file, cmd) 
             if command.host is not None:
                 user_args = ""
                 if command.user is not None:
                     user_args = "-l %s " % (command.user)
-                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch %s -s -c \\"%s\\"' % (user_args, host, title, hold, env, cmd) # prepend ssh command
+                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch %s -s --log-file %s -c \\"%s\\"' % (user_args, host, title, hold, env, log_file, cmd) # prepend ssh command
                 # TODO: how to escape commands properly ? 
                 # TODO: Maybe better to use sys.argv for every args after --command
             # create server
@@ -383,4 +381,3 @@ if __name__ == "__main__":
                 print(e.message)
                 print("A configuration file is missing. Try the --help flag.")
                 sys.exit(1)
-        
