@@ -1,3 +1,9 @@
+lunch (0.1.3) unstable; urgency=low
+
+  * Moved around files to prepare the lunch package.
+
+ -- Alexandre Quessy <alexandre@quessy.net> Tue, 05 Jan 2010 14:33:17 -0500
+
 lunch (0.1.2) unstable; urgency=low
 
   * initial packaging

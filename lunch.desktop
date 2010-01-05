@@ -2,13 +2,13 @@
 
 [Desktop Entry]
 Encoding=UTF-8
-Version=1.0
+Version=0.1.2
 Exec=lunch 
 Type=Application
 Terminal=true
 Categories=System;RemoteAccess;Network;
 Name=Lunch
 Name[en_CA]=Lunch
-Comment=The Lunch distributed process manager
-Comment[en_CA]=The Lunch distributed process manager
-Icon=lunch.svg
+Comment=The Lunch Distributed Process Manager
+Comment[fr]=Le gestionnaire de processus distribué Lunch
+Icon=lunch.png
