@@ -24,5 +24,7 @@ debian/files
 debian/pycompat
 python-build-stamp-*
 
-# ------- tmp dia files ----------
+# ------- extra dia files ----------
 *.autosave
+*~
+~.ps
