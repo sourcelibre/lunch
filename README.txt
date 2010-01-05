@@ -2,17 +2,16 @@ INSTALLATION
 ============
 You will need a few software. On Ubuntu, install them using the following command ::
 
-  sudo apt-get install build-essential openssh-client openssh-server python-setuptools help2man
+  sudo apt-get install openssh-client openssh-server python-setuptools help2man
   sudo easy_install multiprocessing
 
-Copy the "config-sample" example config file to the local ~/.lunch/config::
+Copy the "config-sample" example config file to the local ~/.lunchrc ::
 
- mkdir ~/.lunch 
- cp config-sample ~/.lunch/config
+ cp config-sample ~/.lunchrc
 
 Edit the configuration file to suit your needs::
 
- edit ~/.lunch/config
+ edit ~/.lunchrc
 
 Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
@@ -27,7 +26,7 @@ Start the lunch master::
 A remote lunch as a slave is started this way::
 
  lunch -s -c "xlogo"
- lunch -s -c "xdg-open /usr/local/share/icons/Lunch.svg"
+ lunch -s -c "xdg-open /usr/local/share/pixmaps/lunch.png"
 
 The .lunch/config file is written in Python and the only function needed is add_command. Here are some examples::
 
