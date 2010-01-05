@@ -16,13 +16,14 @@ uninstall:
 	rm -f /usr/local/share/applications/lunch.desktop
 	rm -f /usr/local/share/icons/hicolor/48x48/apps/lunch.png
 
-doc:
-	#pydoc -w ./lunch
+doc: all
+	mkdir -p html
 	epydoc --html --output=html --verbose --show-imports --name=Lunch lunch
 	rst2html README.txt lunch-readme.html
 
 clean:
 	rm -f lunch-readme.html lunch.html lunchc lunch.1 lunch.png
+	rm -rf html
 
 deb:
 	dpkg-buildpackage -r 

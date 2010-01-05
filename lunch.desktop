@@ -2,7 +2,7 @@
 
 [Desktop Entry]
 Encoding=UTF-8
-Version=0.1.2
+Version=0.1.3
 Exec=lunch 
 Type=Application
 Terminal=true
