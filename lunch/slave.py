@@ -19,19 +19,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch. If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
+"""
+Simply runs a process on the local machine.
+Allows specifying environment variables.
+"""
+# TODO: use log instead of print
+# TODO: create config dir/file if not found
+from lunch import common
 
-def _is_in_devel():
-    d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
-    return (
-        os.path.exists(os.path.join(d, ".hg")) or
-        os.path.exists(os.path.join(d, ".svn"))
-        )
-
-if __name__ == "__main__":
-    if _is_in_devel():
-        d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
-        sys.path.insert(0, d)
-    from lunch import runner
-    runner.run()
+def run_slave(command_str, vars={}, log_file_name=None):
+    """
+    Runs a slave. (a command (on remote host) to start a single process)
+    
+    Alias to run_command, but called from 
+    either the master on the local host of a slave "lunch" software on a remote host.
+    """
+    return common.run_command(command_str, vars, True, log_file_name) # Dies on ctrl-C
