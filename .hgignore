@@ -27,4 +27,4 @@ python-build-stamp-*
 # ------- extra dia files ----------
 *.autosave
 *~
-~.ps
+*.ps
