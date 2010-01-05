@@ -9,6 +9,6 @@ setup(
     author_email="alexandre@sat.qc.ca",
     url="http://svn.sat.qc.ca/trac/postures/wiki/Lunch",
     packages=[],
-    scripts=["lunch"]
+    scripts=["lunch", "scripts/ssh-keyinstall"]
     )
 
