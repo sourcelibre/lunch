@@ -8,7 +8,6 @@ Type=Application
 Terminal=true
 Categories=System;RemoteAccess;Network;
 Name=Lunch
-Name[en_CA]=Lunch
 Comment=The Lunch Distributed Process Manager
 Comment[fr]=Le gestionnaire de processus distribué Lunch
 Icon=lunch.png
