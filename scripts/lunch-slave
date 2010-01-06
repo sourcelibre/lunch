@@ -55,13 +55,7 @@ if __name__ == "__main__":
         sys.path.insert(0, d)
 
 from lunch import sig
-
-STATE_IDLE = "IDLE" 
-STATE_STARTING = "STARTING"
-STATE_RUNNING = "RUNNING" # success
-STATE_STOPPING = "STOPPING"
-STATE_STOPPED = "STOPPED" # success
-STATE_ERROR = "ERROR"
+from lunch import constants as const
 
 class SlaveError(Exception):
     """
@@ -150,7 +144,7 @@ class Slave(object):
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
-        self.state = STATE_IDLE
+        self.state = const.STATE_IDLE
         self.command = command
         self.identifier = identifier
         self.env = {}
@@ -192,35 +186,35 @@ class Slave(object):
                     environ[key] = os.environ[key]
             for key, val in self.env.iteritems():
                 environ[key] = val # override
-            self.set_state(STATE_STARTING)
+            self.set_state(const.STATE_STARTING)
             self.log("Identifier: %s" % (self.identifier))
             self.log("Environment variables: %s" % (str(environ)))
             self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
         #except TypeError, e:
         #    self.log("while spawning process: %s" % (e), logging.ERROR)
-        #    self.set_state(STATE_ERROR)
+        #    self.set_state(const.STATE_ERROR)
         #    raise SlaveError(str(e))
         #else:
             self.log("Process is started.")
     
     def _on_connection_made(self):
-        if STATE_STARTING:
-            self.set_state(STATE_RUNNING)
+        if const.STATE_STARTING:
+            self.set_state(const.STATE_RUNNING)
         else:
-            self.set_state(STATE_ERROR)
+            self.set_state(const.STATE_ERROR)
     
     def stop(self):
         """
         Stops the managed process
         """
-        if self.state == STATE_RUNNING:
-            self.set_state(STATE_STOPPING)
+        if self.state == const.STATE_RUNNING:
+            self.set_state(const.STATE_STOPPING)
             self.log('Will stop process.')
             self._process_transport.loseConnection()
             self._once_done()
         else:
             msg = "Cannot stop a process that is \"%s\" state." % (self.state)
-            self.set_state(STATE_ERROR)
+            self.set_state(const.STATE_ERROR)
             raise SlaveError(msg)
 
     def _once_done(self):
@@ -236,19 +230,19 @@ class Slave(object):
             self.log_signal(msg, level)
 
     def _on_process_ended(self, reason):
-        if self.state == STATE_STARTING:
-            self.set_state(STATE_ERROR)
-        elif self.state == STATE_RUNNING:
+        if self.state == const.STATE_STARTING:
+            self.set_state(const.STATE_ERROR)
+        elif self.state == const.STATE_RUNNING:
             """ Don't error out if we exitted with exit code 0 (for now) """
             if str(reason).find('exit code 0') != -1:
                 self.log('Process exited cleanly.')
                 self.exitted_itself_signal()
             else:
                 self.log('Process exited with error.')
-                self.set_state(STATE_ERROR)
-        if self.state == STATE_STOPPING:
+                self.set_state(const.STATE_ERROR)
+        if self.state == const.STATE_STOPPING:
             self.log('Process exited as expected.')
-            self.set_state(STATE_STOPPED)
+            self.set_state(const.STATE_STOPPED)
         #if self.verbose:
         #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
         self._once_done()
@@ -257,6 +251,7 @@ class Slave(object):
         if self.state != new_state:
             self.state = new_state
             self.state_changed_signal(self.state)
+            self.command_protocol.sendLine("%s: %s" % (const.MESSAGE_STATE, self.state))
         
 class SlaveCommandProtocol(basic.LineReceiver):
     """
@@ -264,15 +259,6 @@ class SlaveCommandProtocol(basic.LineReceiver):
     """
     delimiter = '\n' # unix terminal style newlines. remove this line
                      # for use with Telnet
-    # keys of the messages it sends
-    KEY_INFO = "INFO"
-    KEY_OK = "OK"
-    KEY_ERROR = "ERROR"
-    KEY_QUIT = "BYE"
-    KEY_PONG = "PONG"
-    KEY_STOPPING = "STOPPING"
-    KEY_STARTING = "STARTING"
-    KEY_STATUS = "STATUS"
     
     log_keys = {
         logging.DEBUG: "DEBUG",
@@ -283,15 +269,19 @@ class SlaveCommandProtocol(basic.LineReceiver):
         }
 
     # TODO: create constructor and pass it slave.
-
+    
+    def __init__(self, slave):
+        self.slave = slave
+        slave.command_protocol = self
+    
     def connectionMade(self):
-        self.sendLine("%s: Lunch slave console. Type 'help' for help." % (self.KEY_INFO))
+        self.sendLine("%s: Lunch slave console. Type 'help' for help." % (const.MESSAGE_MSG))
         # XXX: self.slave needs to be set
         self.slave.log_signal.connect(self._on_log)
 
     def _on_log(self, msg, level=logging.INFO):
         key = self.log_keys[level]
-        self.sendLine("%s: %s" % (key, msg))
+        self.sendLine("%s: (%s) %s" % (const.MESSAGE_LOG, key, msg))
 
     def lineReceived(self, line):
         """
@@ -303,20 +293,21 @@ class SlaveCommandProtocol(basic.LineReceiver):
             return
         
         # Parse the command
-        command_words = line.split()
+        command_words = line.split() #TODO: use shlex and drop json
         command = command_words[0].lower()
         args = command_words[1:]
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another do_* method.
+        
         try:
             method = getattr(self, 'do_' + command)
         except AttributeError, e:
-            self.sendLine('%s: no such command.' % (self.KEY_ERROR))
+            self.sendLine('%s: no such command.' % (const.MESSAGE_ERROR))
         else:
             #try:
             method(*args)
             #except Exception, e:
-            #    self.sendLine('%s: %s' % (self.KEY_ERROR, e))
+            #    self.sendLine('%s: %s' % (const.MESSAGE_ERROR, e))
 
     def do_help(self, *args):
         """
@@ -327,11 +318,14 @@ class SlaveCommandProtocol(basic.LineReceiver):
             self.sendLine(getattr(self, 'do_' + command).__doc__)
         else:
             commands = [cmd[3:] for cmd in dir(self) if cmd.startswith('do_')]
-            self.sendLine("%s: Valid commands: %s" %  (self.KEY_INFO, " ".join(commands)))
+            self.sendLine("%s: Valid commands: %s" %  (const.MESSAGE_MSG, " ".join(commands)))
 
     def do_quit(self, *args):
         """quit: Quit this session"""
-        self.sendLine('%s: Goodbye.' % (self.KEY_QUIT))
+        if self.slave.state == const.STATE_RUNNING:
+            self.slave.log("Slave is still running. Need to stop it.") # XXX
+            self.slave.stop()
+        self.sendLine('%s: Goodbye.' % (const.ANSWER_QUIT))
         self.transport.loseConnection()
         
     def do_set(self, name, value=None):
@@ -341,12 +335,12 @@ class SlaveCommandProtocol(basic.LineReceiver):
             try:
                 setattr(self.slave, _type(value))
             except ValueError, e:
-                self.sendLine("%s: Bad type for %s. \"%s\" is not a valid %s." % (self.KEY_ERROR, name, value, _type.__name__))
+                self.sendLine("%s: Bad type for %s. \"%s\" is not a valid %s." % (const.MESSAGE_ERROR, name, value, _type.__name__))
     
     def do_command(self, *args):
         """command: sets the shell command to be run."""
         self.slave.command = list(args) # FIXME: use shlex or json?
-        self.sendLine(self.KEY_OK)
+        self.sendLine(const.ANSWER_OK)
 
     def do_env(self, *args):
         """Sets the env vars for the process. Must be in the JSON format."""
@@ -354,51 +348,54 @@ class SlaveCommandProtocol(basic.LineReceiver):
         try:
             data = json.loads(json_string)
         except ValueError, e:
-            self.sendLine("%s: (json) %s" % (self.KEY_ERROR, e))
+            self.sendLine("%s: (json) %s" % (const.MESSAGE_ERROR, e))
         else:
             if type(data) is dict:
                 self.slave.env = data
             else:
-                self.sendLine("%s: %s" % (self.KEY_ERROR, "Data should be a dict."))
+                self.sendLine("%s: %s" % (const.MESSAGE_ERROR, "Data should be a dict."))
 
     def do_run(self):
         """run: Starts the process."""
         try:
             self.slave.start()
         except SlaveError, e:
-            self.sendLine("%s: %s" % (self.KEY_ERROR, e))
+            self.sendLine("%s: %s" % (const.MESSAGE_ERROR, e))
         else:
-            self.sendLine(self.KEY_STARTING)
+            self.sendLine(const.ANSWER_STARTING)
     
     def do_stop(self, *args):
         """stop: Stops the process."""
         try:
             self.slave.stop()
         except SlaveError, e:
-            self.sendLine("%s: %s" % (self.KEY_ERROR, e))
+            self.sendLine("%s: %s" % (const.MESSAGE_ERROR, e))
         else:
-            self.sendLine(self.KEY_STOPPING)
+            self.sendLine(const.ANSWER_STOPPING)
 
     def do_ping(self, *args):
         """ping: Answers with PONG"""
         #TODO : check if slave process is running
-        self.sendLine(self.KEY_PONG)
+        self.sendLine(const.ANSWER_PONG)
 
     def do_status(self, *args):
         """status: prints the status and all info about the slave."""
-        self.sendLine("%s: %s" % (self.KEY_STATUS, self.slave.__dict__))
+        self.sendLine("%s: %s" % (const.ANSWER_STATUS, self.slave.__dict__))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
-        if self.slave.state != STATE_STOPPED:
+        if self.slave.state != const.STATE_STOPPED:
             try:
                 self.slave.stop()
             except SlaveError, e:
-                self.sendLine("%s: %s" % (self.KEY_ERROR, e))
+                self.sendLine("%s: %s" % (const.MESSAGE_ERROR, e))
         if reactor.running != 0:
             reactor.stop()
 
 def run_slave():
+    """
+    Runs the slave application.
+    """
     from optparse import OptionParser
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-i", "--id", type="string", help="Identifier of this lunch slave.")
@@ -407,8 +404,7 @@ def run_slave():
     if options.id:
         kwargs["identifier"] = options.id
     slave = Slave(**kwargs)
-    slave_protocol = SlaveCommandProtocol()
-    slave_protocol.slave = slave
+    slave_protocol = SlaveCommandProtocol(slave)
     stdio.StandardIO(slave_protocol)
     try:
         reactor.run()
