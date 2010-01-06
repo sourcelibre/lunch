@@ -7,7 +7,7 @@ You will need a few software. On Ubuntu, install them using the following comman
 
 Copy the "config-sample" example config file to the local ~/.lunchrc ::
 
- cp config-sample ~/.lunchrc
+ cp doc/examples/config-sample ~/.lunchrc
 
 Edit the configuration file to suit your needs::
 

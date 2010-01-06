@@ -6,9 +6,9 @@ setup(
     version="0.1.3",
     description="The Lunch Distributed Process Manager",
     author="SAT",
-    author_email="alexandre@sat.qc.ca",
+    author_email="alexandre@quessy.net",
     url="https://svn.sat.qc.ca/trac/lunch",
     packages=["lunch"],
-    scripts=["bin/lunch"]
+    scripts=["scripts/lunch"]
     )
 

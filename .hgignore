@@ -28,3 +28,6 @@ python-build-stamp-*
 *.autosave
 *~
 *.ps
+
+# --------- trial files ----------
+_trial_temp/*
