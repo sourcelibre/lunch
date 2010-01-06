@@ -8,7 +8,7 @@ setup(
     author="SAT",
     author_email="alexandre@sat.qc.ca",
     url="https://svn.sat.qc.ca/trac/lunch",
-    packages=[],
+    packages=["lunch"],
     scripts=["bin/lunch"]
     )
 

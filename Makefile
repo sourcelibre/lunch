@@ -3,6 +3,7 @@ all:
 	@echo sudo make install
 	help2man -N -n "The Lunch Distributed Process Manager" bin/lunch > lunch.1
 	convert -geometry 48x48 -background none lunch.svg lunch.png
+	python setup.py build
 	
 install: all
 	install bin/lunch /usr/local/bin/lunch
@@ -10,11 +11,14 @@ install: all
 	mkdir -p /usr/local/share/pixmaps/
 	install lunch.png /usr/local/share/pixmaps/
 	install lunch.1 /usr/local/share/man/man1/lunch.1
-	
+	python setup.py install --prefix=/usr/local
+
 uninstall:
 	rm -f /usr/local/bin/lunch
 	rm -f /usr/local/share/applications/lunch.desktop
-	rm -f /usr/local/share/icons/hicolor/48x48/apps/lunch.png
+	rm -f /usr/local/share/pixmaps/lunch.png
+	@echo You need to manually uninstall lunch from /usr/local/lib/python2.5/site-packages
+	@echo Do not forget to remove it from the easy-install.pth
 
 doc: all
 	mkdir -p html
