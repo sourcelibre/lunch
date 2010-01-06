@@ -32,3 +32,6 @@ clean:
 deb:
 	dpkg-buildpackage -r 
 
+check:
+	trial lunch/test
+
