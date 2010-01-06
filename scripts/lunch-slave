@@ -1,0 +1,410 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Lunch
+# Copyright (C) 2009 Société des arts technologiques (SAT)
+# http://www.sat.qc.ca
+# All rights reserved.
+#
+# This file is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# Lunch is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Tools for process management.
+"""
+__version__ = "0.2.0"
+DESCRIPTION = "Launches a process. This program is interactive and is intended to be used by the lunch master."
+
+import os
+import sys
+import logging
+
+from twisted.internet import protocol
+from twisted.internet import reactor
+from twisted.internet import stdio
+from twisted.protocols import basic
+from twisted.python import procutils
+from twisted.web import client
+
+try:
+    import json # python 2.6
+except ImportError:
+    import simplejson as json # python 2.4 to 2.5
+try:
+    _tmp = json.loads
+except AttributeError:
+    sys.modules.pop('json') # get rid of the bad json module
+    import simplejson as json
+
+def _is_in_devel():
+    d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[1]
+    return d == "scripts"
+
+if __name__ == "__main__":
+    if _is_in_devel():
+        d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
+        sys.path.insert(0, d)
+
+from lunch import sig
+
+STATE_IDLE = "IDLE" 
+STATE_STARTING = "STARTING"
+STATE_RUNNING = "RUNNING" # success
+STATE_STOPPING = "STOPPING"
+STATE_STOPPED = "STOPPED" # success
+STATE_ERROR = "ERROR"
+
+class SlaveError(Exception):
+    """
+    Raised by the Slave
+    """
+    pass
+
+class CommandProcessProtocol(protocol.ProcessProtocol):
+    """
+    Process managed by a Lunch Slave.
+ 
+    Its stdout and stderr streams are logged to a file.    
+    """
+    def __init__(self, slave):
+        """
+        @param slave: Slave instance.
+        """
+        self.slave = slave
+
+    def connectionMade(self):
+        """
+        Called once the process is started.
+        """
+        self.slave._on_connection_made()
+
+    def outReceived(self, data):
+        """
+        Called when text is received from the managed process stdout
+        Twisted will not splitlines, it gives an arbitrary amount of
+        data at a time. This way, our manager only gets one line at 
+        a time.
+        """
+        for line in data.splitlines():
+            if line != "":
+                self.slave._stdout_file.write(line + "\n")
+
+    def errReceived(self, data):
+        """
+        Called when text is received from the managed process stderr
+        """
+        for line in data.splitlines().strip():
+            if line != "":
+                self.slave._stdout_file.write(line + "\n")
+
+    def processEnded(self, status):
+        """
+        Called when the managed process has exited.
+        status is probably a twisted.internet.error.ProcessTerminated
+        "A process has ended with a probable error condition: process ended by signal 1"
+        
+        This is called when all the file descriptors associated with the child 
+        process have been closed and the process has been reaped. This means it 
+        is the last callback which will be made onto a ProcessProtocol. 
+        The status parameter has the same meaning as it does for processExited.
+        """
+        self.slave._on_process_ended(status)
+    
+    def inConnectionLost(self, data):
+        self.slave.log("stdin pipe has closed." + str(data))
+
+    def outConnectionLost(self, data):
+        self.slave.log("stdout pipe has closed." + str(data))
+    
+    def errConnectionLost(self, data):
+        self.slave.log("stderr pipe has closed." + str(data))
+
+    def processExited(self, reason):
+        """
+        This is called when the child process has been reaped, and receives 
+        information about the process' exit status. The status is passed in the form 
+        of a Failure instance, created with a .value that either holds a ProcessDone 
+        object if the process terminated normally (it died of natural causes instead 
+        of receiving a signal, and if the exit code was 0), or a ProcessTerminated 
+        object (with an .exitCode attribute) if something went wrong.
+        """
+        self.slave.log("process has exited " + str(reason))
+    
+class Slave(object):
+    """
+    Slave that manages a process. 
+    
+    The command, identifier and env can be set after object creation.
+    """
+    def __init__(self, command=None, identifier=None, env=None):
+        """
+        @param command: Shell string. The first item is the name of the name of the executable.
+        @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
+        """
+        self.state = STATE_IDLE
+        self.command = command
+        self.identifier = identifier
+        self.env = {}
+        if env is not None:
+            self.env.update(env)
+        self.log_dir = os.path.join(os.getcwd(), "lunch")
+        self._stdout_file = None
+        self.pid = None
+        self.log_signal = sig.Signal()
+        self.state_changed_signal = sig.Signal()
+        self.exitted_itself_signal = sig.Signal()
+        if self.identifier is None:
+            self.identifier = "default"
+        self.log_level = logging.DEBUG
+    
+    def start(self):
+        if self.command is None:
+            raise SlaveError("You must provide a command to be run.")
+        else:
+            try:
+                self.command[0] = procutils.which(self.command[0])[0]
+            except IndexError:
+                raise SlaveError("Could not find path of executable %s." % (self.command[0]))
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+            self.log("Creating directory %s" % (self.log_dir))
+        stdout_file_name = os.path.join(self.log_dir, "%s.log" % (self.identifier))
+        self.log("Writing to %s" % (stdout_file_name))
+        self._stdout_file = file(stdout_file_name, "a") # open in append mode
+        self.log("Will run command %s" % (str(self.command)))
+        self._process_protocol = CommandProcessProtocol(self)
+        #try:
+        if True:
+            proc_path = self.command[0]
+            args = self.command
+            environ = {}
+            for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
+                if os.environ.has_key(key):
+                    environ[key] = os.environ[key]
+            for key, val in self.env.iteritems():
+                environ[key] = val # override
+            self.set_state(STATE_STARTING)
+            self.log("Identifier: %s" % (self.identifier))
+            self.log("Environment variables: %s" % (str(environ)))
+            self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
+        #except TypeError, e:
+        #    self.log("while spawning process: %s" % (e), logging.ERROR)
+        #    self.set_state(STATE_ERROR)
+        #    raise SlaveError(str(e))
+        #else:
+            self.log("Process is started.")
+    
+    def _on_connection_made(self):
+        if STATE_STARTING:
+            self.set_state(STATE_RUNNING)
+        else:
+            self.set_state(STATE_ERROR)
+    
+    def stop(self):
+        """
+        Stops the managed process
+        """
+        if self.state == STATE_RUNNING:
+            self.set_state(STATE_STOPPING)
+            self.log('Will stop process.')
+            self._process_transport.loseConnection()
+            self._once_done()
+        else:
+            msg = "Cannot stop a process that is \"%s\" state." % (self.state)
+            self.set_state(STATE_ERROR)
+            raise SlaveError(msg)
+
+    def _once_done(self):
+        self.log("Closing stdout file.")
+        self._stdout_file.close()
+
+    def log(self, msg, level=logging.DEBUG):
+        """
+        Logs to Master.
+        (through stdout)
+        """
+        if level >= self.log_level:
+            self.log_signal(msg, level)
+
+    def _on_process_ended(self, reason):
+        if self.state == STATE_STARTING:
+            self.set_state(STATE_ERROR)
+        elif self.state == STATE_RUNNING:
+            """ Don't error out if we exitted with exit code 0 (for now) """
+            if str(reason).find('exit code 0') != -1:
+                self.log('Process exited cleanly.')
+                self.exitted_itself_signal()
+            else:
+                self.log('Process exited with error.')
+                self.set_state(STATE_ERROR)
+        if self.state == STATE_STOPPING:
+            self.log('Process exited as expected.')
+            self.set_state(STATE_STOPPED)
+        #if self.verbose:
+        #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
+        self._once_done()
+        
+    def set_state(self, new_state):
+        if self.state != new_state:
+            self.state = new_state
+            self.state_changed_signal(self.state)
+        
+class SlaveCommandProtocol(basic.LineReceiver):
+    """
+    Interactive commands for the slave using its stdio
+    """
+    delimiter = '\n' # unix terminal style newlines. remove this line
+                     # for use with Telnet
+    # keys of the messages it sends
+    KEY_INFO = "INFO"
+    KEY_OK = "OK"
+    KEY_ERROR = "ERROR"
+    KEY_QUIT = "BYE"
+    KEY_PONG = "PONG"
+    KEY_STOPPING = "STOPPING"
+    KEY_STARTING = "STARTING"
+    KEY_STATUS = "STATUS"
+    
+    log_keys = {
+        logging.DEBUG: "DEBUG",
+        logging.INFO: "INFO",
+        logging.WARNING: "WARNING",
+        logging.CRITICAL: "CRITICAL",
+        logging.ERROR: "ERROR",
+        }
+
+    # TODO: create constructor and pass it slave.
+
+    def connectionMade(self):
+        self.sendLine("%s: Lunch slave console. Type 'help' for help." % (self.KEY_INFO))
+        # XXX: self.slave needs to be set
+        self.slave.log_signal.connect(self._on_log)
+
+    def _on_log(self, msg, level=logging.INFO):
+        key = self.log_keys[level]
+        self.sendLine("%s: %s" % (key, msg))
+
+    def lineReceived(self, line):
+        """
+        Commands are in the form "command arg"
+        Answers are in the form "key: message"
+        """
+        # Ignore blank lines
+        if not line: 
+            return
+        
+        # Parse the command
+        command_words = line.split()
+        command = command_words[0].lower()
+        args = command_words[1:]
+        # Dispatch the command to the appropriate method.  Note that all you
+        # need to do to implement a new command is add another do_* method.
+        try:
+            method = getattr(self, 'do_' + command)
+        except AttributeError, e:
+            self.sendLine('%s: no such command.' % (self.KEY_ERROR))
+        else:
+            #try:
+            method(*args)
+            #except Exception, e:
+            #    self.sendLine('%s: %s' % (self.KEY_ERROR, e))
+
+    def do_help(self, *args):
+        """
+        help [command]: List commands, or show help on the given command.
+        """
+        if len(args) == 1:
+            command = args[0]
+            self.sendLine(getattr(self, 'do_' + command).__doc__)
+        else:
+            commands = [cmd[3:] for cmd in dir(self) if cmd.startswith('do_')]
+            self.sendLine("%s: Valid commands: %s" %  (self.KEY_INFO, " ".join(commands)))
+
+    def do_quit(self, *args):
+        """quit: Quit this session"""
+        self.sendLine('%s: Goodbye.' % (self.KEY_QUIT))
+        self.transport.loseConnection()
+        
+    def do_set(self, name, value=None):
+        """set: Sets a configuration value. Usage: set <name> <value>"""
+        if hasattr(self.slave, name):
+            _type = type(getattr(self.slave, name))
+            try:
+                setattr(self.slave, _type(value))
+            except ValueError, e:
+                self.sendLine("%s: Bad type for %s. \"%s\" is not a valid %s." % (self.KEY_ERROR, name, value, _type.__name__))
+    
+    def do_command(self, *args):
+        """command: sets the shell command to be run."""
+        self.slave.command = list(args) # FIXME: use shlex or json?
+        self.sendLine(self.KEY_OK)
+
+    def do_env(self, *args):
+        """Sets the env vars for the process. Must be in the JSON format."""
+        json_string = " ".join(args) # FIXME
+        try:
+            data = json.loads(json_string)
+        except ValueError, e:
+            self.sendLine("%s: (json) %s" % (self.KEY_ERROR, e))
+        else:
+            if type(data) is dict:
+                self.slave.env = data
+            else:
+                self.sendLine("%s: %s" % (self.KEY_ERROR, "Data should be a dict."))
+
+    def do_run(self):
+        """run: Starts the process."""
+        try:
+            self.slave.start()
+        except SlaveError, e:
+            self.sendLine("%s: %s" % (self.KEY_ERROR, e))
+        else:
+            self.sendLine(self.KEY_STARTING)
+    
+    def do_stop(self, *args):
+        """stop: Stops the process."""
+        try:
+            self.slave.stop()
+        except SlaveError, e:
+            self.sendLine("%s: %s" % (self.KEY_ERROR, e))
+        else:
+            self.sendLine(self.KEY_STOPPING)
+
+    def do_ping(self, *args):
+        """ping: Answers with PONG"""
+        #TODO : check if slave process is running
+        self.sendLine(self.KEY_PONG)
+
+    def do_status(self, *args):
+        """status: prints the status and all info about the slave."""
+        self.sendLine("%s: %s" % (self.KEY_STATUS, self.slave.__dict__))
+
+    def connectionLost(self, reason):
+        # stop the reactor, only because this is meant to be run in Stdio.
+        reactor.stop()
+
+def run_slave():
+    from optparse import OptionParser
+    parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, description=DESCRIPTION)
+    parser.add_option("-i", "--identifier", type="string", help="Identifier of this lunch slave..")
+    (options, args) = parser.parse_args()
+    kwargs = {}
+    if options.identifier:
+        kwargs["identifier"] = options.identifier
+    slave = Slave(**kwargs)
+    slave_protocol = SlaveCommandProtocol()
+    slave_protocol.slave = slave
+    stdio.StandardIO(slave_protocol)
+    reactor.run()
+
+if __name__ == "__main__":
+    run_slave()
