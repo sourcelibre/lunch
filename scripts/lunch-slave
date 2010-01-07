@@ -219,6 +219,8 @@ class Slave(object):
     def _once_done(self):
         self.log("Closing stdout file.")
         self._stdout_file.close()
+        # making sure this has been called !!
+        self.set_state(const.STATE_STOPPED)
 
     def log(self, msg, level=logging.DEBUG):
         """

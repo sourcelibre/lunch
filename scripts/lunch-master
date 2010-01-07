@@ -236,27 +236,34 @@ class Command(object):
         Received one line of text from the slave through its stdout.
         """
         log.msg("Got from %s: %s" % (self.identifier, line))
-        words = line.split(" ") # TODO: use shlex
-        key = words[0]
-        if key == const.MESSAGE_MSG:
+        try:
+            tokens = line.split(":")
+            key = tokens[0]
+            mess = ": ".join(tokens[1:])
+        except IndexError:
             pass
-        elif key == const.MESSAGE_LOG:
-            pass
-        elif key == const.MESSAGE_ERROR:
-            pass
-        elif key == const.MESSAGE_DIED:
-            pass
-        elif key == const.ANSWER_PONG:
-            pass
-        elif key == const.ANSWER_QUIT:
-            pass
-        elif key == const.MESSAGE_STATE:
-            self._slave_state = words[1] # IMPORTANT !
-            if self._slave_state == const.STATE_STOPPED:
-                # TODO: start again?
-                log.msg("Quittint the slave %s.")
-                # XXX FIXME
-                self.quit() # FIXME
+        else:
+            if key == const.MESSAGE_MSG:
+                pass
+            elif key == const.MESSAGE_LOG:
+                pass
+            elif key == const.MESSAGE_ERROR:
+                pass
+            elif key == const.MESSAGE_DIED:
+                pass
+            elif key == const.ANSWER_PONG:
+                pass
+                log.msg("Got pong from %s" % (self.identifier))
+            elif key == const.ANSWER_QUIT:
+                pass
+            elif key == const.MESSAGE_STATE:
+                words = mess.split()
+                self._slave_state = words[0] # IMPORTANT !
+                if self._slave_state == const.STATE_STOPPED:
+                    # TODO: start again?
+                    log.msg("Quittint the slave %s.")
+                    # XXX FIXME
+                    self.quit() # FIXME
     
     def stop(self):
         """
@@ -283,13 +290,13 @@ class Command(object):
         elif self.state == const.STATE_RUNNING:
             """ Don't error out if we exitted with exit code 0 (for now) """
             if str(reason).find('exit code 0') != -1:
-                self.log('Luncher %s exited cleanly.' % (self.identifier))
+                log.msg('Luncher %s exited cleanly.' % (self.identifier))
                 self.exitted_itself_signal()
             else:
-                self.log('Luncher %s exited with error.' % (self.identifier))
+                log.msg('Luncher %s exited with error.' % (self.identifier))
                 self.set_state(const.STATE_ERROR)
         if self.state == const.STATE_STOPPING:
-            self.log('Luncher exited as expected.')
+            log.msg('Luncher exited as expected.')
             self.set_state(const.STATE_STOPPED)
         #if self.verbose:
         #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
