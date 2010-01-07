@@ -1,0 +1,414 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Lunch
+# Copyright (C) 2009 Société des arts technologiques (SAT)
+# http://www.sat.qc.ca
+# All rights reserved.
+#
+# This file is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# Lunch is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Tools for process management.
+"""
+__version__ = "0.2.0"
+DESCRIPTION = "Lunch is a distributed process manager for GNU/Linux. The Lunch slave must be installed on every host on which processes are to be run. The Lunch master launches slaves processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
+
+import os
+import sys
+import logging
+
+from twisted.internet import protocol
+from twisted.internet import reactor
+from twisted.python import procutils
+from twisted.python import log
+
+try:
+    import json # python 2.6
+except ImportError:
+    import simplejson as json # python 2.4 to 2.5
+try:
+    _tmp = json.loads
+except AttributeError:
+    sys.modules.pop('json') # get rid of the bad json module
+    import simplejson as json
+
+#_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
+log.startLogging(sys.stdout)
+# usage: log.msg("qweqwe", logLevel=logging.INFO)
+
+def _is_in_devel():
+    d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[1]
+    return d == "scripts"
+
+if __name__ == "__main__":
+    if _is_in_devel():
+        d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
+        sys.path.insert(0, d)
+
+from lunch import sig
+from lunch import constants as const
+
+class MasterError(Exception):
+    """
+    Raised by the L{Master} when dealing with the L{SlaveProcessprotocol}
+    """
+    pass
+
+class FileNotFoundError(Exception):
+    """
+    Thrown when a file could not be found.
+    """
+    pass
+
+class SlaveProcessProtocol(protocol.ProcessProtocol):
+    """
+    Process of a Lunch Slave. (probably through SSH)
+ 
+    The Lunch Master controls it by its stdin and monitors it with its stdout.
+    """
+    def __init__(self, command):
+        """
+        @param command: L{Command} instance.
+        """
+        self.command = command
+
+    def connectionMade(self):
+        """
+        Called once the process is started.
+        """
+        self.command._on_connection_made()
+
+    def outReceived(self, data):
+        """
+        Called when text is received from the managed process stdout
+        Twisted will not splitlines, it gives an arbitrary amount of
+        data at a time. This way, our manager only gets one line at 
+        a time.
+        """
+        for line in data.splitlines():
+            if line != "":
+                self.command._received_message(line)
+
+    def errReceived(self, data):
+        """
+        Called when text is received from the managed process stderr
+        """
+        for line in data.splitlines().strip():
+            if line != "":
+                log.msg("stderr: " + line + "\n")
+
+    def processEnded(self, status):
+        """
+        Called when the managed process has exited.
+        status is probably a twisted.internet.error.ProcessTerminated
+        "A process has ended with a probable error condition: process ended by signal 1"
+        
+        This is called when all the file descriptors associated with the child 
+        process have been closed and the process has been reaped. This means it 
+        is the last callback which will be made onto a ProcessProtocol. 
+        The status parameter has the same meaning as it does for processExited.
+        """
+        log.msg("Process ended." + str(status))
+        self.command._on_process_ended(status)
+    
+    def inConnectionLost(self, data):
+        log.msg("stdin pipe has closed." + str(data))
+
+    def outConnectionLost(self, data):
+        log.msg("stdout pipe has closed." + str(data))
+    
+    def errConnectionLost(self, data):
+        log.msg("stderr pipe has closed." + str(data))
+
+    def processExited(self, reason):
+        """
+        This is called when the child process has been reaped, and receives 
+        information about the process' exit status. The status is passed in the form 
+        of a Failure instance, created with a .value that either holds a ProcessDone 
+        object if the process terminated normally (it died of natural causes instead 
+        of receiving a signal, and if the exit code was 0), or a ProcessTerminated 
+        object (with an .exitCode attribute) if something went wrong.
+        """
+        log.msg("process has exited " + str(reason))
+    
+class Command(object):
+    """
+    Command that a slave needs to run.
+    Handles a SlaveProcessProtocol, which controls a lunch-slave process.
+    """
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
+        """
+        @param command: Shell string. The first item is the name of the name of the executable.
+        @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
+        @param env: dict with environment variables to set for the process to run.
+        """
+        self.command = command
+        self.identifier = identifier
+        self.env = {}
+        if env is not None:
+            self.env.update(env)
+        self.user = user
+        self.host = host
+        self.group = group
+        self.order = order
+        self.sleep_after = sleep_after
+        self.respawn = respawn
+        self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
+        self.log_dir = log_dir
+        # ------- private attributes:
+        self.state = const.STATE_IDLE # state of the Slave, not the process the slave handles
+        self.state_changed_signal = sig.Signal()
+        self.exitted_itself_signal = sig.Signal()
+        if command is None:
+            raise MasterError("You must provide a command to be run.")
+        self._process_protocol = None
+        self._process_transport = None
+        self._slave_state = const.STATE_IDLE
+    
+    def start(self):
+        """
+        Starts the slave Lunch
+        """
+        if self.host is None and self.user is None:
+            is_remote = False # not using SSH
+            _command = ["lunch-slave", "--id", self.identifier]
+        else:
+            is_remote = True # using SSH
+            _command = ["ssh"]
+            if self.user is not None:
+                _command.extend(["-l", self.user])
+            _command.extend(["lunch-slave", "--id", self.identifier])
+            # I hope you put your SSH key on the remote host !
+        try:
+            _command[0] = procutils.which(_command[0])[0]
+        except IndexError:
+            raise MasterError("Could not find path of executable %s." % (_command[0]))
+        log.msg("Will run command %s" % (str(_command)))
+        self._process_protocol = SlaveProcessProtocol(self)
+        #try:
+        if True:
+            proc_path = _command[0]
+            args = _command
+            environ = {}
+            for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
+                if os.environ.has_key(key):
+                    environ[key] = os.environ[key]
+            self.set_state(const.STATE_STARTING)
+            log.msg("Starting: %s" % (self.identifier))
+            self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
+    
+    def _format_env(self):
+        return json.dumps(self.env) # TODO: use k=v pairs
+    
+    def _on_connection_made(self):
+        if const.STATE_STARTING:
+            self.set_state(const.STATE_RUNNING)
+        else:
+            self.set_state(const.STATE_ERROR)
+        def _later(self):
+            self.send_message(const.COMMAND_COMMAND, self.command) # FIXME sends a string
+            self.send_message(const.COMMAND_PING) # for fun
+            self.send_message(const.COMMAND_ENV, self._format_env())
+            self.send_message(const.COMMAND_START)
+        reactor.callLater(0.1, _later, self) # FIXME !!!! not using callLater, but when it is really time !! we don't want self._process_transport to be None
+
+    def send_message(self, key, data=""):
+        """
+        Sends a command to the slave.
+        @param key: string
+        @param data: string
+        """
+        self._process_transport.write("%s %s\n" % (key, data))
+    
+    def _received_message(self, line):
+        """
+        Received one line of text from the slave through its stdout.
+        """
+        log.msg("Got from %s: %s" % (self.identifier, line))
+        words = line.split(" ") # TODO: use shlex
+        key = words[0]
+        if key == const.MESSAGE_MSG:
+            pass
+        elif key == const.MESSAGE_LOG:
+            pass
+        elif key == const.MESSAGE_ERROR:
+            pass
+        elif key == const.MESSAGE_DIED:
+            pass
+        elif key == const.ANSWER_PONG:
+            pass
+        elif key == const.ANSWER_QUIT:
+            pass
+        elif key == const.MESSAGE_STATE:
+            self._slave_state = words[1] # IMPORTANT !
+            if self._slave_state == const.STATE_STOPPED:
+                # TODO: start again?
+                log.msg("Quittint the slave %s.")
+                # XXX FIXME
+                self.quit() # FIXME
+    
+    def stop(self):
+        """
+        Tells the slave to stop its process.
+        """
+        if self._slave_state == const.STATE_RUNNING:
+            log.msg('Will stop process %s.' % (self.identifier))
+            self.send_message(const.COMMAND_STOP)
+    
+    def quit(self):
+        """
+        Stops the slave Lunch
+        """
+        if self.state == const.STATE_RUNNING:
+            self.set_state(const.STATE_STOPPING)
+            log.msg('Will stop Lunch slave %s.' % (self.identifier))
+            self._process_transport.loseConnection()
+        else:
+            log.msg("Cannot stop a process that is \"%s\" state." % (self.state))
+
+    def _on_process_ended(self, reason):
+        if self.state == const.STATE_STARTING:
+            self.set_state(const.STATE_ERROR)
+        elif self.state == const.STATE_RUNNING:
+            """ Don't error out if we exitted with exit code 0 (for now) """
+            if str(reason).find('exit code 0') != -1:
+                self.log('Luncher %s exited cleanly.' % (self.identifier))
+                self.exitted_itself_signal()
+            else:
+                self.log('Luncher %s exited with error.' % (self.identifier))
+                self.set_state(const.STATE_ERROR)
+        if self.state == const.STATE_STOPPING:
+            self.log('Luncher exited as expected.')
+            self.set_state(const.STATE_STOPPED)
+        #if self.verbose:
+        #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
+        if self.respawn:
+            # XXX FIXME
+            log.msg("Restarting the slave %s." % (self.identifier), logging.INFO)
+            self.start()
+        
+    def set_state(self, new_state):
+        if self.state != new_state:
+            self.state = new_state
+            self.state_changed_signal(self.state)
+
+# IMPORTANT global var !!
+_commands = []
+
+def add_command(command="", env=None, host=None, user=None, order=100, identifier=None, sleep_after=0.25, respawn=True, log_dir=None):
+    """
+    This is the only function that users use from within the configuration file.
+    It adds a Command instance to the list of commands to run. 
+    
+    Default priority is 100. The lowest the earliest.
+    """
+    global _commands
+    log.msg("DEBUG: adding %s %s %s %s %s %s %s %s" % (command, env, host, user, order, sleep_after, respawn, log_dir)) # EDIT ME
+    _commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir)) # EDIT ME
+
+class Master(object):
+    def __init__(self):
+        global _commands
+        reactor.callLater(0.025, self._cl)
+        self.commands = _commands
+    
+    def _cl(self):
+        """
+        Called once reactor is running.
+        """
+        self.start_all()
+
+    def start_all(self):
+        i = 0 # for default identifiers
+        for c in self.commands:
+            if c.identifier is None:
+                c.identifier = "default-%d" % (i)
+                i += 1
+            c.start() # FIXME TODO: sleep between each !!!!
+
+    def stop_all(self):
+        for c in self.commands:
+            s.respawn = False
+            c.stop()
+
+    def quit(self):
+        """
+        Stops all slaves and quits the application.
+        """
+        def _later(self):
+            again = False
+            for c in self.commands:
+                if c._slave_state == const.STATE_RUNNING:
+                    again = True
+            if again:        
+                reactor.callLater(_later, self)
+            else:
+                log.msg("Stopping Lunch.")
+                reactor.stop()
+        _later(self)
+
+def run_master(config_file):
+    """
+    Runs the master that calls commands using ssh or so.
+
+    This happens only on the master computer.
+     * reads config file
+     * uses multiprocessing to create many workers. (calling start_worker)
+       Those worker launch the "lunch" program in a xterm terminal.
+       (maybe through ssh, if on a remote host)
+     * If ctrl-C is pressed from any worker, dies.
+    """
+    global _commands
+    if os.path.exists(config_file):
+        try:
+            execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
+        except Exception, e:
+            print("ERROR: Error in user configuration file.")
+            raise
+    else:
+        # create the directory ?
+        raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
+    m = Master()
+
+def main():
+    """
+    Runs the application.
+    """
+    from optparse import OptionParser
+    parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, description=DESCRIPTION)
+    parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
+    #parser.add_option("-l", "--log-file", type="string", help="Specifies the log file to write to.")
+    (options, args) = parser.parse_args()
+    config_file = options.config_file
+    DEFAULT_CONFIG_FILE = os.path.expanduser("~/.lunchrc")
+    if len(args) == 1 and not options.config_file: 
+        log.msg("DEBUG: overriding config_file with %s" % (args[0])) 
+        config_file = args[0] 
+    else:
+        config_file = DEFAULT_CONFIG_FILE
+    try:
+        print("DEBUG: using config_file %s" % (config_file))
+        run_master(config_file)
+    except FileNotFoundError, e:
+        print("Error starting lunch as master.")
+        print(e.message)
+        print("A configuration file is missing. Try the --help flag.")
+        sys.exit(1)
+    try:
+        reactor.run()
+    except KeyboardInterrupt:
+        reactor.stop()
+
+if __name__ == "__main__":
+    main()

@@ -33,7 +33,6 @@ from twisted.internet import reactor
 from twisted.internet import stdio
 from twisted.protocols import basic
 from twisted.python import procutils
-from twisted.web import client
 
 try:
     import json # python 2.6
