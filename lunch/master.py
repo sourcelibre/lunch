@@ -313,13 +313,14 @@ class Command(object):
 # IMPORTANT global var !!
 _commands = {"default": []} # keys are group names, values are a list of Command objects.
 
-def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
+def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
     
     Default priority is 100. The lowest the earliest.
     """
+    #FIXME: Changed back identifier to title.
     global _commands
     log.msg("DEBUG: adding %s %s %s %s %s %s %s %s" % (command, env, host, user, order, sleep_after, respawn, log_dir)) # EDIT ME
     if group is None:
@@ -327,7 +328,7 @@ def add_command(command=None, identifier=None, env=None, user=None, host=None, g
     if not _commands.has_key(group):
         log.msg("Adding group %s" % (group))
         _commands[group] = []
-    _commands[group].append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=identifier)) # EDIT ME
+    _commands[group].append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
 
 def _sorting_callback(x, y):
     """
