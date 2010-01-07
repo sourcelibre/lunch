@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# lunch example config file.
+# Copy this to ~/.lunch/config
+# 
+# All you need to do here is to call add_command() for each command you 
+# want to add to the distributed process launcher. 
+
+# local:
+add_command("/usr/lib/xscreensaver/polytopes", order=0)
+add_command("glxgears", order=1, sleep_after=1.0)
+add_command("mplayer /var/tmp/excerpt.ogm", identifier="local_mplayer")
+add_command("gcalctool")
+add_command("xlogo", identifier="local_xlogo")
+add_command("xeyes -geometry 320x240", identifier="local_xeyes")
+add_command("xeyes -geometry 240x320")
+
+#add_command("/usr/lib/xscreensaver/solarwinds")
+#add_command("/usr/lib/xscreensaver/hufo_smoke")
+#add_command("/usr/lib/xscreensaver/euphoria")
+#add_command("/usr/lib/xscreensaver/flux")
+#add_command("/usr/lib/xscreensaver/flyingtoasters")
+#add_command("/usr/lib/xscreensaver/glblur")
+#add_command("/usr/lib/xscreensaver/moebiusgears")
+#add_command("/usr/lib/xscreensaver/plasma")

@@ -7,7 +7,7 @@ all:
 	python setup.py build
 	
 install: all
-	install bin/lunch /usr/local/bin/lunch
+	install scripts/lunch /usr/local/bin/lunch
 	install lunch.desktop /usr/local/share/applications/
 	mkdir -p /usr/local/share/pixmaps/
 	install lunch.png /usr/local/share/pixmaps/
@@ -17,6 +17,7 @@ install: all
 
 uninstall:
 	rm -f /usr/local/bin/lunch
+	rm -f /usr/local/bin/lunch-slave
 	rm -f /usr/local/share/applications/lunch.desktop
 	rm -f /usr/local/share/pixmaps/lunch.png
 	@echo You need to manually uninstall lunch from /usr/local/lib/python2.5/site-packages
