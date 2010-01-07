@@ -25,11 +25,13 @@ __version__ = "0.2.0"
 DESCRIPTION = "Lunch is a distributed process manager for GNU/Linux. The Lunch slave must be installed on every host on which processes are to be run. The Lunch master launches slaves processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
 
 import os
+import time
 import sys
 import logging
 
 from twisted.internet import protocol
 from twisted.internet import reactor
+from twisted.internet import defer
 from twisted.python import procutils
 from twisted.python import log
 
@@ -268,7 +270,7 @@ class Command(object):
                 if new_state in [const.STATE_STOPPED, const.STATE_ERROR]:
                     log.msg("Master will now force-quit the slave %s." % (self.identifier))
                     # XXX FIXME
-                    self.quit() # FIXME restarts once it is dead
+                    self.quit_slave() # FIXME restarts once it is dead
 
     def stop(self):
         """
@@ -278,21 +280,26 @@ class Command(object):
             log.msg('Will stop process %s.' % (self.identifier))
             self.send_message(const.COMMAND_STOP)
     
-    def quit(self):
+    def quit_slave(self):
         """
         Stops the slave Lunch
         """
         if self.state == const.STATE_SLAVE_DEAD:
             log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.state))
+            self.state = const.STATE_STOPPED
         else:
-            self.set_state(const.STATE_STOPPING)
-            log.msg('Master will stop process of Lunch slave %s.' % (self.identifier))
-            self._process_transport.loseConnection()
+            if self.state in [const.STATE_RUNNING, const.STATE_STARTING, const.STATE_STARTING]:
+                self.set_state(const.STATE_STOPPING)
+                log.msg('Master will stop process of Lunch slave %s.' % (self.identifier))
+                self._process_transport.loseConnection()
+            else:
+                self.state = const.STATE_STOPPED
 
     def _on_process_ended(self, reason):
         if self.state == const.STATE_STARTING:
             log.msg("Slave %s died during startup." % (self.identifier), logging.ERROR)
-            self.set_state(const.STATE_ERROR)
+            #self.set_state(const.STATE_ERROR)
+            self.set_state(const.STATE_STOPPED)
         elif self.state == const.STATE_RUNNING:
             """ Don't error out if we exitted with exit code 0 (for now) """
             if str(reason).find('exit code 0') != -1:
@@ -300,7 +307,8 @@ class Command(object):
                 self.exitted_itself_signal()
             else:
                 log.msg('Luncher %s exited with error.' % (self.identifier))
-                self.set_state(const.STATE_ERROR)
+                #self.set_state(const.STATE_ERROR)
+                self.set_state(const.STATE_STOPPED)
         if self.state == const.STATE_STOPPING:
             log.msg('Luncher exited as expected.')
             self.set_state(const.STATE_STOPPED)
@@ -317,9 +325,9 @@ class Command(object):
             self.state_changed_signal(self.state)
 
 # IMPORTANT global var !!
-_commands = []
+_commands = {"default": []} # keys are group names, values are a list of Command objects.
 
-def add_command(command="", env=None, host=None, user=None, order=100, identifier=None, sleep_after=0.25, respawn=True, log_dir=None):
+def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -328,7 +336,12 @@ def add_command(command="", env=None, host=None, user=None, order=100, identifie
     """
     global _commands
     log.msg("DEBUG: adding %s %s %s %s %s %s %s %s" % (command, env, host, user, order, sleep_after, respawn, log_dir)) # EDIT ME
-    _commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=identifier)) # EDIT ME
+    if group is None:
+        group = "default" # default group is 0
+    if not _commands.has_key(group):
+        log.msg("Adding group %s" % (group))
+        _commands[group] = []
+    _commands[group].append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=identifier)) # EDIT ME
 
 def _sorting_callback(x, y):
     """
@@ -360,33 +373,57 @@ class Master(object):
     def start_all(self):
         i = 0 # for default identifiers
         
-        self.commands.sort(_sorting_callback)
-        for c in self.commands:
-            if c.identifier is None:
-                c.identifier = "default-%d" % (i)
-                i += 1
-            c.start() # FIXME TODO: sleep between each !!!!
+        for group in self.commands.iterkeys():
+            commands_in_group = self.commands[group]
+            commands_in_group.sort(_sorting_callback)
+            for c in commands_in_group:
+                if c.identifier is None:
+                    c.identifier = "default-%d" % (i)
+                    i += 1
+                c.start() # FIXME TODO: sleep between each !!!!
 
     def stop_all(self):
-        for c in self.commands:
-            s.respawn = False
-            c.stop()
+        for group in self.commands.iterkeys():
+            commands_in_group = self.commands[group]
+            commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
+            for c in commands_in_group:
+                s.respawn = False
+                c.stop()
 
-    def quit(self):
+    def quit_master(self):
         """
         Stops all slaves and quits the application.
         """
-        def _later(self):
+        reactor.stop()
+
+    def before_shutdown(self):
+        _shutdown_data = {
+                "time" : time.time(),
+                "max_shutdown_time": 2.0
+            }
+        deferred = defer.Deferred()
+        def _later(self, data):
             again = False
-            for c in self.commands:
-                if c._slave_state == const.STATE_RUNNING:
-                    again = True
-            if again:        
-                reactor.callLater(_later, self)
+            for group in self.commands.iterkeys():
+                commands_in_group = self.commands[group]
+                commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
+                for c in commands_in_group:
+                    if c._slave_state == const.STATE_RUNNING:
+                        log.msg("Slave %s is still running. Stopping it." % (c.identifier))
+                        again = True
+                        c.respawn = False
+                        c.quit_slave()
+            if data["time"] + time.time() >= data["max_shutdown_time"]:
+                log.msg("Max shutdown time expired.", logging.ERROR)
+                again = False
+            if again:
+                reactor.callLater(0.1, _later, self, data)
             else:
                 log.msg("Stopping Lunch.")
-                reactor.stop()
-        _later(self)
+                deferred.callback(True) # stops reactor
+        
+        _later(self, _shutdown_data)
+        return deferred
 
 def run_master(config_file):
     """
@@ -398,6 +435,7 @@ def run_master(config_file):
        Those worker launch the "lunch" program in a xterm terminal.
        (maybe through ssh, if on a remote host)
      * If ctrl-C is pressed from any worker, dies.
+    @rettype Master
     """
     global _commands
     if os.path.exists(config_file):
@@ -410,6 +448,8 @@ def run_master(config_file):
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
     m = Master()
+    reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown)
+    return m
 
 def main():
     """
@@ -429,7 +469,7 @@ def main():
         config_file = DEFAULT_CONFIG_FILE
     try:
         print("DEBUG: using config_file %s" % (config_file))
-        run_master(config_file)
+        master = run_master(config_file)
     except FileNotFoundError, e:
         print("Error starting lunch as master.")
         print(e.message)
@@ -438,6 +478,8 @@ def main():
     try:
         reactor.run()
     except KeyboardInterrupt:
+        log.msg("Ctrl-C in Master.", logging.INFO)
+        #master.quit_master()
         reactor.stop()
 
 if __name__ == "__main__":
