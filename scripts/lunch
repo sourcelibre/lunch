@@ -39,7 +39,8 @@ if __name__ == "__main__":
     parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
     #parser.add_option("-l", "--log-file", type="string", help="Specifies the log file to write to.")
     (options, args) = parser.parse_args()
-    config_file = options.config_file
+    if options.config_file:
+        config_file = options.config_file
     DEFAULT_CONFIG_FILE = os.path.expanduser("~/.lunchrc")
     if len(args) == 1 and not options.config_file: 
         #log.msg("DEBUG: overriding config_file with %s" % (args[0])) 
@@ -47,6 +48,9 @@ if __name__ == "__main__":
     else:
         config_file = DEFAULT_CONFIG_FILE
     
+    if not os.path.exists(config_file):
+        print("No such file: %s." % (config_file))
+        sys.exit(1)
     if _is_in_devel():
         d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
         sys.path.insert(0, d)
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     try:
         #print("DEBUG: using config_file %s" % (config_file))
         master = run_master(config_file)
-    except FileNotFoundError, e:
+    except master.FileNotFoundError, e:
         print("Error starting lunch as master.")
         print(e.message)
         print("A configuration file is missing. Try the --help flag.")
