@@ -6,6 +6,7 @@ STATE_RUNNING = "RUNNING" # success
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED" # success
 STATE_ERROR = "ERROR"
+STATE_SLAVE_DEAD = "DEAD"
 
 # Keys of the messages from the slave :
 MESSAGE_MSG = "MSG"

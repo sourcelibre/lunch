@@ -180,6 +180,9 @@ class Command(object):
         """
         Starts the slave Lunch
         """
+        if self.state == const.STATE_RUNNING:
+            log.msg("Cannot start slave %s that is running." % (self.identifier))
+            return # XXX
         if self.host is None and self.user is None:
             is_remote = False # not using SSH
             _command = ["lunch-slave", "--id", self.identifier]
@@ -190,6 +193,7 @@ class Command(object):
                 _command.extend(["-l", self.user])
             _command.extend(["lunch-slave", "--id", self.identifier])
             # I hope you put your SSH key on the remote host !
+            # FIXME: we should pop-up a terminal if keys are not set up.
         try:
             _command[0] = procutils.which(_command[0])[0]
         except IndexError:
@@ -235,36 +239,37 @@ class Command(object):
         """
         Received one line of text from the slave through its stdout.
         """
-        log.msg("Got from %s: %s" % (self.identifier, line))
+        #log.msg("%8s: %s" % (self.identifier, line))
         try:
-            tokens = line.split(":")
-            key = tokens[0]
-            mess = ": ".join(tokens[1:])
+            key = line.split(" ")[0]
+            mess = line[len(key) + 1:]
         except IndexError:
             pass
         else:
             if key == const.MESSAGE_MSG:
                 pass
             elif key == const.MESSAGE_LOG:
-                pass
+                log.msg("%8s: %s" % (self.identifier, mess))
             elif key == const.MESSAGE_ERROR:
-                pass
+                log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
             elif key == const.MESSAGE_DIED:
-                pass
+                log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
             elif key == const.ANSWER_PONG:
                 pass
-                log.msg("Got pong from %s" % (self.identifier))
+                #log.msg("pong from %s" % (self.identifier))
             elif key == const.ANSWER_QUIT:
-                pass
+                log.msg("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
             elif key == const.MESSAGE_STATE:
-                words = mess.split()
-                self._slave_state = words[0] # IMPORTANT !
-                if self._slave_state == const.STATE_STOPPED:
-                    # TODO: start again?
-                    log.msg("Quittint the slave %s.")
+                words = mess.split(" ")
+                previous_state = self._slave_state
+                new_state = words[0]
+                self._slave_state = new_state # IMPORTANT !
+                log.msg("%8s: %s" % (self.identifier, "state: %s" % (new_state)))
+                if new_state in [const.STATE_STOPPED, const.STATE_ERROR]:
+                    log.msg("Master will now force-quit the slave %s." % (self.identifier))
                     # XXX FIXME
-                    self.quit() # FIXME
-    
+                    self.quit() # FIXME restarts once it is dead
+
     def stop(self):
         """
         Tells the slave to stop its process.
@@ -277,15 +282,16 @@ class Command(object):
         """
         Stops the slave Lunch
         """
-        if self.state == const.STATE_RUNNING:
-            self.set_state(const.STATE_STOPPING)
-            log.msg('Will stop Lunch slave %s.' % (self.identifier))
-            self._process_transport.loseConnection()
+        if self.state == const.STATE_SLAVE_DEAD:
+            log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.state))
         else:
-            log.msg("Cannot stop a process that is \"%s\" state." % (self.state))
+            self.set_state(const.STATE_STOPPING)
+            log.msg('Master will stop process of Lunch slave %s.' % (self.identifier))
+            self._process_transport.loseConnection()
 
     def _on_process_ended(self, reason):
         if self.state == const.STATE_STARTING:
+            log.msg("Slave %s died during startup." % (self.identifier), logging.ERROR)
             self.set_state(const.STATE_ERROR)
         elif self.state == const.STATE_RUNNING:
             """ Don't error out if we exitted with exit code 0 (for now) """
@@ -322,7 +328,22 @@ def add_command(command="", env=None, host=None, user=None, order=100, identifie
     """
     global _commands
     log.msg("DEBUG: adding %s %s %s %s %s %s %s %s" % (command, env, host, user, order, sleep_after, respawn, log_dir)) # EDIT ME
-    _commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir)) # EDIT ME
+    _commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=identifier)) # EDIT ME
+
+def _sorting_callback(x, y):
+    """
+    Sorts Command objects using their order attribute.
+    
+    To define a compare function for sort(), you must follow certain pattern.
+    1. Compare function must take TWO param: x and y,
+    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
+    """
+    if x.order > y.order:
+        return 1
+    elif x.order < y.order:
+        return -1
+    else:
+        return 0
 
 class Master(object):
     def __init__(self):
@@ -338,6 +359,8 @@ class Master(object):
 
     def start_all(self):
         i = 0 # for default identifiers
+        
+        self.commands.sort(_sorting_callback)
         for c in self.commands:
             if c.identifier is None:
                 c.identifier = "default-%d" % (i)
