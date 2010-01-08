@@ -86,7 +86,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
             if line != "":
                 log.msg("stderr: " + line + "\n")
 
-    def processEnded(self, status):
+    def processEnded(self, failure):
         """
         Called when the managed process has exited.
         status is probably a twisted.internet.error.ProcessTerminated
@@ -97,17 +97,18 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         is the last callback which will be made onto a ProcessProtocol. 
         The status parameter has the same meaning as it does for processExited.
         """
-        log.msg("Slave process ended." + str(status))
-        self.command._on_process_ended(status)
+        exit_code = failure.value.exitCode
+        log.msg("Slave %s process ended with %s." % (self.command.identifier, exit_code))
+        self.command._on_process_ended(failure.value.exitCode)
     
     def inConnectionLost(self, data):
-        log.msg("Slave stdin has closed." + str(data))
+        log.msg("Slave stdin has closed. %s" % (str(data)))
 
     def outConnectionLost(self, data):
-        log.msg("Slave stdout has closed." + str(data))
+        log.msg("Slave stdout has closed. %s" % (str(data)))
     
     def errConnectionLost(self, data):
-        log.msg("Slave stderr has closed." + str(data))
+        log.msg("Slave stderr has closed. %s" % (str(data)))
 
     def processExited(self, reason):
         """
@@ -118,7 +119,8 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         of receiving a signal, and if the exit code was 0), or a ProcessTerminated 
         object (with an .exitCode attribute) if something went wrong.
         """
-        log.msg("process has exited " + str(reason))
+        exit_code = failure.value.exitCode
+        log.msg("process has exited : %s." % (str(exit_code)))
     
 class Command(object):
     """
@@ -265,34 +267,34 @@ class Command(object):
         """
         if self.state == const.STATE_SLAVE_DEAD:
             log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.state))
-            self.state = const.STATE_STOPPED
+            self.state = const.STATE_STOPPED # FIXME
         else:
-            if self.state in [const.STATE_RUNNING, const.STATE_STARTING, const.STATE_STARTING]:
-                self.set_state(const.STATE_STOPPING)
-                log.msg('Master will stop process of Lunch slave %s.' % (self.identifier))
+            if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
+                self._process_transport.signalProcess(15) # signal.SIGTERM
                 self._process_transport.loseConnection()
+                self.set_state(const.STATE_STOPPING)
+                log.msg('Master will stop slave %s.' % (self.identifier))
+            elif self.state == const.STATE_STOPPING:
+                log.msg("kill -9 Slave %s" % (self.identifier))
+                self._process_transport.signalProcess(9) # signal.SIGKILL
             else:
                 self.state = const.STATE_STOPPED
 
-    def _on_process_ended(self, reason):
+    def _on_process_ended(self, exit_code):
+        #log.msg("Exit code: " % (exit_code))
         if self.state == const.STATE_STARTING:
             log.msg("Slave %s died during startup." % (self.identifier), logging.ERROR)
-            #self.set_state(const.STATE_ERROR)
             self.set_state(const.STATE_STOPPED)
         elif self.state == const.STATE_RUNNING:
-            """ Don't error out if we exitted with exit code 0 (for now) """
-            if str(reason).find('exit code 0') != -1:
-                log.msg('Luncher %s exited cleanly.' % (self.identifier))
+            if exit_code == 0:
+                log.msg("Slave %s exited." % (self.identifier))
                 self.exitted_itself_signal()
             else:
-                log.msg('Luncher %s exited with error.' % (self.identifier))
-                #self.set_state(const.STATE_ERROR)
+                log.msg('Slave %s exited with error %s.' % (self.identifier, exit_code))
                 self.set_state(const.STATE_STOPPED)
         if self.state == const.STATE_STOPPING:
-            log.msg('Luncher exited as expected.')
+            log.msg('Slave exited as expected.')
             self.set_state(const.STATE_STOPPED)
-        #if self.verbose:
-        #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
         if self.respawn:
             # XXX FIXME
             log.msg("Restarting the slave %s." % (self.identifier), logging.INFO)
@@ -377,9 +379,10 @@ class Master(object):
         reactor.stop()
 
     def before_shutdown(self):
+        now = time.time()
         _shutdown_data = {
-                "time" : time.time(),
-                "max_shutdown_time": 2.0
+                "shutdown_started" : now,
+                "shutdown_time": now + 1.0
             }
         deferred = defer.Deferred()
         def _later(self, data):
@@ -393,7 +396,7 @@ class Master(object):
                         again = True
                         c.respawn = False
                         c.quit_slave()
-            if data["time"] + time.time() >= data["max_shutdown_time"]:
+            if time.time() >= (data["shutdown_time"]):
                 log.msg("Max shutdown time expired.", logging.ERROR)
                 again = False
             if again:

@@ -215,8 +215,11 @@ class Slave(object):
         if self.state == const.STATE_RUNNING:
             self.set_state(const.STATE_STOPPING)
             self.log('Will stop process.')
+            self._process_transport.signalProcess(15) # signal.SIGTERM
             self._process_transport.loseConnection()
-            self._once_done()
+        elif self.state == const.STATE_STOPPING:
+            self.log('kill -9.')
+            self._process_transport.signalProcess(9) # signal.SIGKILL
         else:
             msg = "Cannot stop a process that is \"%s\" state." % (self.state)
             self.set_state(const.STATE_ERROR)
@@ -246,6 +249,8 @@ class Slave(object):
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
+        exit_code = reason.exitCode
+        self.log("Child exit code : %s" % (exit_code))
         self.set_state(const.STATE_STOPPED)
         self._once_done()
         
@@ -402,7 +407,7 @@ class SlaveIO(basic.LineReceiver):
             try:
                 self.slave.stop()
             except SlaveError, e:
-                self.sendLine("%s %s" % (const.MESSAGE_ERROR, e))
+                self.send_error("%s" % (e))
         if reactor.running != 0:
             reactor.stop()
 
