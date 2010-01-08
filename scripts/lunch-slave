@@ -492,7 +492,6 @@ def run_slave():
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-i", "--id", type="string", help="Identifier of this lunch slave.")
     (options, args) = parser.parse_args()
-    sys.argv[0] = "lunch-slave" #XXX so that we see that is ps !! 
     kwargs = {}
     if options.id:
         kwargs["identifier"] = options.id
