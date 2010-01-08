@@ -43,7 +43,6 @@ if __name__ == "__main__":
         d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
         sys.path.insert(0, d)
 
-from lunch import sig
 from lunch import constants as const
 
 class SlaveError(Exception):
@@ -52,7 +51,11 @@ class SlaveError(Exception):
     """
     pass
 
-class CommandProcessProtocol(protocol.ProcessProtocol):
+def call_callbacks(callbacks, *args, **kwargs):
+    for c in callbacks:
+        c(*args, **kwargs)
+
+class ChildProcess(protocol.ProcessProtocol):
     """
     Process managed by a Lunch Slave.
  
@@ -134,15 +137,16 @@ class Slave(object):
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
         self.state = const.STATE_IDLE
-        self.command = command
-        self.identifier = identifier
-        self.env = {}
+        self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
+        self.command = command # string
+        self.identifier = identifier # title
+        self.env = {} # environment variables for the 
         if env is not None:
             self.env.update(env)
         self.log_dir = os.path.join(os.getcwd(), "lunch")
         self._stdout_file = None
         self.pid = None
-        self.log_signal = sig.Signal()
+        self.log_callbacks = []# = sig.Signal()
         #self.state_changed_signal = sig.Signal()
         #self.exitted_itself_signal = sig.Signal()
         if self.identifier is None:
@@ -164,7 +168,7 @@ class Slave(object):
         self.log("Writing to %s" % (stdout_file_name))
         self._stdout_file = file(stdout_file_name, "a") # open in append mode
         self.log("Will run command %s" % (str(self.command)))
-        self._process_protocol = CommandProcessProtocol(self)
+        self._child_process = ChildProcess(self)
         proc_path = self.command[0]
         args = self.command
         environ = {}
@@ -176,7 +180,7 @@ class Slave(object):
         self.set_state(const.STATE_STARTING)
         self.log("Identifier: %s" % (self.identifier))
         self.log("Environment variables: %s" % (str(environ)))
-        self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
+        self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
         self.log("Spawned process.")
     
     def _on_connection_made(self):
@@ -211,7 +215,8 @@ class Slave(object):
         (through stdout)
         """
         if level >= self.log_level:
-            self.log_signal(msg, level)
+            call_callbacks(self.log_callbacks, msg, level)
+            #self.log_signal(msg, level)
 
     def _on_process_ended(self, reason):
         if self.state == const.STATE_STARTING:
@@ -237,11 +242,11 @@ class Slave(object):
         if self.state != new_state:
             self.state = new_state
             #self.state_changed_signal(self.state)
-            self.command_protocol.sendLine("%s %s" % (const.MESSAGE_STATE, self.state))
+            self.io_protocol.sendLine("%s %s" % (const.MESSAGE_STATE, self.state))
         
-class SlaveCommandProtocol(basic.LineReceiver):
+class SlaveIO(basic.LineReceiver):
     """
-    Interactive commands for the slave using its stdio
+    Interactive commands for the slave using its standard input and output.
     """
     delimiter = '\n' # unix terminal style newlines. remove this line
                      # for use with Telnet
@@ -258,12 +263,12 @@ class SlaveCommandProtocol(basic.LineReceiver):
     
     def __init__(self, slave):
         self.slave = slave
-        slave.command_protocol = self
+        slave.io_protocol = self
     
     def connectionMade(self):
         self.sendLine("%s Lunch slave console. Type 'help' for help." % (const.MESSAGE_MSG))
         # XXX: self.slave needs to be set
-        self.slave.log_signal.connect(self._on_log)
+        self.slave.log_callbacks.append(self._on_log)
 
     def _on_log(self, msg, level=logging.INFO):
         key = self.log_keys[level]
@@ -274,8 +279,7 @@ class SlaveCommandProtocol(basic.LineReceiver):
         Commands are in the form "command arg"
         Answers are in the form "key: message"
         """
-        # Ignore blank lines
-        if not line: 
+        if line == "": 
             return
         
         # Parse the command
@@ -368,6 +372,10 @@ class SlaveCommandProtocol(basic.LineReceiver):
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
+        try:
+            self.slave.log_callbacks.remove(self._on_log) # XXX !
+        except ValueError, e:
+            pass
         if self.slave.state != const.STATE_STOPPED:
             try:
                 self.slave.stop()
@@ -388,8 +396,8 @@ def run_slave():
     if options.id:
         kwargs["identifier"] = options.id
     slave = Slave(**kwargs)
-    slave_protocol = SlaveCommandProtocol(slave)
-    stdio.StandardIO(slave_protocol)
+    slave_io = SlaveIO(slave)
+    stdio.StandardIO(slave_io)
     try:
         reactor.run()
     except KeyboardInterrupt:
