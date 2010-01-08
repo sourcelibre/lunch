@@ -34,16 +34,6 @@ from twisted.internet import stdio
 from twisted.protocols import basic
 from twisted.python import procutils
 
-try:
-    import json # python 2.6
-except ImportError:
-    import simplejson as json # python 2.4 to 2.5
-try:
-    _tmp = json.loads
-except AttributeError:
-    sys.modules.pop('json') # get rid of the bad json module
-    import simplejson as json
-
 def _is_in_devel():
     d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[1]
     return d == "scripts"
@@ -289,9 +279,9 @@ class SlaveCommandProtocol(basic.LineReceiver):
             return
         
         # Parse the command
-        command_words = line.split() #TODO: use shlex and drop json
+        command_words = line.split() 
         command = command_words[0].lower()
-        args = command_words[1:]
+        args = command_words[1:] # TODO: just send leftover string as arg.
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another do_* method.
         
@@ -335,21 +325,19 @@ class SlaveCommandProtocol(basic.LineReceiver):
     
     def do_command(self, *args):
         """command: sets the shell command to be run."""
-        self.slave.command = list(args) # FIXME: use shlex or json?
+        self.slave.command = list(args) # TODO: join string and use bash or sh.
         self.sendLine(const.ANSWER_OK)
 
     def do_env(self, *args):
-        """Sets the env vars for the process. Must be in the JSON format."""
-        json_string = " ".join(args) # FIXME
-        try:
-            data = json.loads(json_string)
-        except ValueError, e:
-            self.sendLine("%s (json) %s" % (const.MESSAGE_ERROR, e))
-        else:
-            if type(data) is dict:
-                self.slave.env = data
+        """Sets the env vars for the process. Must be in a string of key=value separated by spaces."""
+        for key_val in args:
+            try:
+                k, v = key_val.split("=")
+            except ValueError:
+                self.sendLine("%s %s %s" % (const.MESSAGE_ERROR, "Wrong env key-value pair:", key_val))
             else:
-                self.sendLine("%s %s" % (const.MESSAGE_ERROR, "Data should be a dict."))
+                self.slave.log("Setting env var $%s=%s." % (k, v))
+                self.slave.env[k] = v
 
     def do_run(self):
         """run: Starts the process."""

@@ -29,16 +29,6 @@ from twisted.internet import defer
 from twisted.python import procutils
 from twisted.python import log
 
-try:
-    import json # python 2.6
-except ImportError:
-    import simplejson as json # python 2.4 to 2.5
-try:
-    _tmp = json.loads
-except AttributeError:
-    sys.modules.pop('json') # get rid of the bad json module
-    import simplejson as json
-
 #_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
 log.startLogging(sys.stdout)
 # usage: log.msg("qweqwe", logLevel=logging.INFO)
@@ -201,7 +191,10 @@ class Command(object):
             self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
-        return json.dumps(self.env) # TODO: use k=v pairs
+        txt = ""
+        for k, v in self.env.iteritems():
+            txt += "%s=%s " % (k, v)
+        return txt 
     
     def _on_connection_made(self):
         if const.STATE_STARTING:
