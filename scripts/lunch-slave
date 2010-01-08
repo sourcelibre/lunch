@@ -34,16 +34,10 @@ from twisted.internet import stdio
 from twisted.protocols import basic
 from twisted.python import procutils
 
-def _is_in_devel():
-    d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[1]
-    return d == "scripts"
-
-if __name__ == "__main__":
-    if _is_in_devel():
-        d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
-        sys.path.insert(0, d)
-
-from lunch import constants as const
+STATE_STARTING = "STARTING"
+STATE_RUNNING = "RUNNING" # success
+STATE_STOPPING = "STOPPING"
+STATE_STOPPED = "STOPPED" # success
 
 class SlaveError(Exception):
     """
@@ -146,7 +140,7 @@ class Slave(object):
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
-        self.state = const.STATE_IDLE
+        self.state = STATE_STOPPED
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
         self.options = {
@@ -163,16 +157,17 @@ class Slave(object):
         if self.identifier is None:
             self.identifier = "default"
         self.log_level = logging.DEBUG
+        #TODO: use reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown) to make sure that the process is dead before quitting.
     
     def start(self):
         """
         Starts the child process
         """
-        if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
+        if self.state in [STATE_RUNNING, STATE_STARTING]:
             msg = "Child is already %s. Cannot start it." % (self.state)
             self.io_protocol.send_error(msg)
             return
-        elif self.state == const.STATE_STOPPING:
+        elif self.state == STATE_STOPPING:
             msg = "Child is %s. Please try again to start it when it will be stopped." % (self.state)
             self.io_protocol.send_error(msg)
             # TODO: The Master should try again later.
@@ -223,31 +218,32 @@ class Slave(object):
                 environ[key] = os.environ[key]
         for key, val in self.env.iteritems():
             environ[key] = val
-        self.set_state(const.STATE_STARTING)
+        self.set_state(STATE_STARTING)
         #self.log("Identifier: %s" % (self.identifier))
         #self.log("Environment variables: %s" % (str(environ)))
         self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
         self.log("Spawned process %s." % (self.identifier))
     
     def _on_connection_made(self):
-        if not const.STATE_STARTING:
+        if not STATE_STARTING:
             self.log("Connection made even if we were not starting the child process.", logging.ERROR)
-        self.set_state(const.STATE_RUNNING)
+        self.set_state(STATE_RUNNING)
     
     def stop(self):
         """
         Stops the child process
         """
-        if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
-            self.set_state(const.STATE_STOPPING)
-            self.log('Will stop process.')
+        #see twisted.internet.process._BaseProcess.reapProcess
+        if self.state in [STATE_RUNNING, STATE_STARTING]:
+            self.set_state(STATE_STOPPING)
+            self.log('Will stop process. kill -15')
             try:
                 self._process_transport.signalProcess(15) # signal.SIGTERM
             except OSError, e:
-                self.log("Error sending SIGKILL. %s" % (e))
+                self.log("Error sending SIGINT. %s" % (e))
             #TODO: later, make sure it is correctly killed.
             self._process_transport.loseConnection()
-        elif self.state == const.STATE_STOPPING:
+        elif self.state == STATE_STOPPING:
             self.log('Trying to kill again the child process. Using kill -9.')
             try:
                 self._process_transport.signalProcess(9) # signal.SIGKILL
@@ -255,7 +251,7 @@ class Slave(object):
                 self.log("Error sending SIGKILL. %s" % (e))
         else: # STOPPED
             msg = "Process is already stopped."
-            self.set_state(const.STATE_STOPPED)
+            self.set_state(STATE_STOPPED)
             self.io_protocol.send_error(msg)
             return
 
@@ -268,17 +264,17 @@ class Slave(object):
             call_callbacks(self.log_callbacks, msg, level)
 
     def _on_process_ended(self, exit_code):
-        if self.state == const.STATE_STOPPING:
+        if self.state == STATE_STOPPING:
             self.log('Child process exited as expected.')
-        elif self.state == const.STATE_STARTING:
+        elif self.state == STATE_STARTING:
             self.log('Child process exited while trying to start it.')
-        elif self.state == const.STATE_RUNNING:
+        elif self.state == STATE_RUNNING:
             if str(reason).find('exit code 0') != -1:
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
         self.log("Child exitted with %s" % (exit_code), logging.INFO)
-        self.set_state(const.STATE_STOPPED)
+        self.set_state(STATE_STOPPED)
         self.log("Closing slave's process stdout file.")
         self._stdout_file.close()
         
@@ -335,7 +331,7 @@ class SlaveIO(basic.LineReceiver):
         try:
             method = getattr(self, 'do_' + key)
         except AttributeError, e:
-            self.sendLine('%s no such command.' % (const.MESSAGE_ERROR))
+            self.send_error('%s no such command.')
         else:
             method(mess)
 
@@ -349,14 +345,14 @@ class SlaveIO(basic.LineReceiver):
             self.sendLine(getattr(self, 'do_' + command).__doc__)
         else:
             commands = [cmd[3:] for cmd in dir(self) if cmd.startswith('do_')]
-            self.sendLine("%s Valid commands: %s" %  (const.MESSAGE_MSG, " ".join(commands)))
+            self.send_message("Valid commands: %s" %  (" ".join(commands)))
 
     def send_state(self, state):
-        self.sendLine("%s %s" % (const.MESSAGE_STATE, state))
+        self.sendLine("%s %s" % ("STATE", state))
     
     def do_quit(self, line):
         """quit: Quit this session"""
-        if self.slave.state == const.STATE_RUNNING:
+        if self.slave.state == STATE_RUNNING:
             self.send_log("Slave is still running. Need to stop it.") # XXX
             self.slave.stop()
         self.send_quit()
@@ -366,7 +362,7 @@ class SlaveIO(basic.LineReceiver):
         """
         Confirms that we will stop this slave.
         """
-        self.sendLine('%s Goodbye.' % (const.ANSWER_QUIT))
+        self.sendLine('%s Goodbye.' % ("BYE"))
         
     #def do_set(self, name, value=None):
     #    """set: Sets a configuration value. Usage: set <name> <value>"""
@@ -430,7 +426,10 @@ class SlaveIO(basic.LineReceiver):
 
     def do_status(self, line):
         """status: prints the state of the slave."""
-        self.sendLine("%s %s" % (const.ANSWER_STATUS, self.slave.state))
+        self.send_status()
+
+    def send_status(self):
+        self.sendLine("%s %s" % ("STATUS", self.slave.state))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
@@ -438,7 +437,7 @@ class SlaveIO(basic.LineReceiver):
             self.slave.log_callbacks.remove(self._on_log) # XXX !
         except ValueError, e:
             pass
-        if self.slave.state != const.STATE_STOPPED:
+        if self.slave.state != STATE_STOPPED:
             try:
                 self.slave.stop()
             except SlaveError, e:

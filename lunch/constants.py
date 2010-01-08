@@ -1,17 +1,16 @@
 
 # constants for the slave process
-STATE_IDLE = "IDLE" 
+STATE_IDLE = "IDLE" #deprecated
 STATE_STARTING = "STARTING"
 STATE_RUNNING = "RUNNING" # success
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED" # success
-STATE_ERROR = "ERROR"
-STATE_SLAVE_DEAD = "DEAD"
+STATE_ERROR = "ERROR" #deprecated
+STATE_SLAVE_DEAD = "DEAD" # for master only
 
 # Keys of the messages from the slave :
 MESSAGE_MSG = "MSG"
 MESSAGE_ERROR = "ERROR"
-MESSAGE_LOG = "LOG"
 MESSAGE_STATE = "STATE"
 MESSAGE_DIED = "DIED" # arg: duration in seconds (float)
 MESSAGE_STATE = "STATE"
