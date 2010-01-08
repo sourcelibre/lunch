@@ -160,6 +160,9 @@ class Slave(object):
         self.log_level = logging.DEBUG
     
     def start(self):
+        """
+        Starts the child process
+        """
         if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
             msg = "Child is already %s. Cannot start it." % (self.state)
             self.io_protocol.send_error(msg)
@@ -220,7 +223,7 @@ class Slave(object):
     
     def stop(self):
         """
-        Stops the managed process
+        Stops the child process
         """
         if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
             self.set_state(const.STATE_STOPPING)
@@ -243,11 +246,6 @@ class Slave(object):
             self.io_protocol.send_error(msg)
             return
 
-    def _once_done(self):
-        self.log("Closing slave's process stdout file.")
-        self._stdout_file.close()
-        # making sure this has been called !!
-        self.set_state(const.STATE_STOPPED)
 
     def log(self, msg, level=logging.DEBUG):
         """
@@ -269,7 +267,8 @@ class Slave(object):
                 self.log('Child process exited with error.')
         self.log("Child exit code : %s" % (exit_code))
         self.set_state(const.STATE_STOPPED)
-        self._once_done()
+        self.log("Closing slave's process stdout file.")
+        self._stdout_file.close()
         
     def set_state(self, new_state):
         """
@@ -277,7 +276,6 @@ class Slave(object):
         """
         if self.state != new_state:
             self.state = new_state
-            #self.state_changed_signal(self.state)
             self.io_protocol.send_state(self.state)
         
 class SlaveIO(basic.LineReceiver):
@@ -299,9 +297,9 @@ class SlaveIO(basic.LineReceiver):
         slave.io_protocol = self
     
     def connectionMade(self):
-        self.sendLine("%s Lunch slave console. Type 'help' for help." % (const.MESSAGE_MSG))
-        # XXX: self.slave needs to be set
-        self.slave.log_callbacks.append(self._on_log)
+        self.send_message("Welcome to the Lunch slave console. Type 'help' for help.")
+        if self._on_log not in self.slave.log_callbacks:
+            self.slave.log_callbacks.append(self._on_log)
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)
@@ -313,28 +311,27 @@ class SlaveIO(basic.LineReceiver):
         """
         if line == "": 
             return
-        
         # Parse the command
-        command_words = line.split() 
-        command = command_words[0].lower()
-        args = command_words[1:] # TODO: just send leftover string as arg.
+        try:
+            key = line.split(" ")[0].lower()
+            mess = line[len(key) + 1:]
+        except IndexError, e:
+            self.send_log("Index error parsing command-line." % (e), logging.ERROR)
+        
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another do_* method.
-        
         try:
-            method = getattr(self, 'do_' + command)
+            method = getattr(self, 'do_' + key)
         except AttributeError, e:
             self.sendLine('%s no such command.' % (const.MESSAGE_ERROR))
         else:
-            #try:
-            method(*args)
-            #except Exception, e:
-            #    self.sendLine('%s %s' % (const.MESSAGE_ERROR, e))
+            method(mess)
 
-    def do_help(self, *args):
+    def do_help(self, line):
         """
         help [command]: List commands, or show help on the given command.
         """
+        args = line.split()
         if len(args) == 1:
             command = args[0]
             self.sendLine(getattr(self, 'do_' + command).__doc__)
@@ -345,7 +342,7 @@ class SlaveIO(basic.LineReceiver):
     def send_state(self, state):
         self.sendLine("%s %s" % (const.MESSAGE_STATE, state))
     
-    def do_quit(self, *args):
+    def do_quit(self, line):
         """quit: Quit this session"""
         if self.slave.state == const.STATE_RUNNING:
             self.send_log("Slave is still running. Need to stop it.") # XXX
@@ -359,22 +356,28 @@ class SlaveIO(basic.LineReceiver):
         """
         self.sendLine('%s Goodbye.' % (const.ANSWER_QUIT))
         
-    def do_set(self, name, value=None):
-        """set: Sets a configuration value. Usage: set <name> <value>"""
-        if hasattr(self.slave, name):
-            _type = type(getattr(self.slave, name))
-            try:
-                setattr(self.slave, _type(value))
-            except ValueError, e:
-                self.send_error("Bad type for %s. \"%s\" is not a valid %s." % (name, value, _type.__name__))
+    #def do_set(self, name, value=None):
+    #    """set: Sets a configuration value. Usage: set <name> <value>"""
+    #    if hasattr(self.slave, name):
+    #        _type = type(getattr(self.slave, name))
+    #        try:
+    #            setattr(self.slave, _type(value))
+    #        except ValueError, e:
+    #            self.send_error("Bad type for %s. \"%s\" is not a valid %s." % (name, value, _type.__name__))
     
-    def do_command(self, *args):
+    def do_command(self, line):
         """command: sets the shell command to be run."""
-        self.slave.command = list(args) # TODO: join string and use bash or sh.
+        li = line.split() # TODO: do not split it, use bash !
+        if len(li) == 0:
+            self.send_error("Cannot use an empty command.")
+            return
+        self.send_message("Using %s as a command to run." % (li))
+        self.slave.command = li
         self.send_ok()
 
-    def do_env(self, *args):
+    def do_env(self, line):
         """Sets the env vars for the process. Must be in a string of key=value separated by spaces."""
+        args = line.split()
         for key_val in args:
             try:
                 k, v = key_val.split("=")
@@ -387,21 +390,24 @@ class SlaveIO(basic.LineReceiver):
     def send_ok(self):
         self.sendLine("OK")
 
-    def do_run(self):
+    def do_run(self, line):
         """run: Starts the process."""
         self.slave.start()
     
-    def do_stop(self, *args):
+    def do_stop(self, line):
         """stop: Stops the process."""
         self.slave.stop()
 
-    def do_ping(self, *args):
+    def do_ping(self, line):
         """ping: Answers with PONG"""
         #TODO : check if slave process is running
         self.send_pong()
 
     def send_error(self, msg):
         self.sendLine("%s %s" % ("ERROR", msg))
+    
+    def send_message(self, msg):
+        self.sendLine("%s %s" % ("MSG", msg))
 
     def send_pong(self):
         self.sendLine("pong")
@@ -410,9 +416,9 @@ class SlaveIO(basic.LineReceiver):
         key = self.log_keys[level]
         self.sendLine("%s %s %s" % ("log", key, msg))
 
-    def do_status(self, *args):
-        """status: prints the status and all info about the slave."""
-        self.sendLine("%s %s" % (const.ANSWER_STATUS, self.slave.__dict__))
+    def do_status(self, line):
+        """status: prints the state of the slave."""
+        self.sendLine("%s %s" % (const.ANSWER_STATUS, self.slave.state))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
