@@ -96,7 +96,7 @@ class ChildProcess(protocol.ProcessProtocol):
             if line != "":
                 self.slave._stdout_file.write(line + "\n")
 
-    def processEnded(self, status):
+    def processEnded(self, reason):
         """
         Called when the child process has exited.
         status is probably a twisted.internet.error.ProcessTerminated
@@ -107,7 +107,8 @@ class ChildProcess(protocol.ProcessProtocol):
         is the last callback which will be made onto a ProcessProtocol. 
         The status parameter has the same meaning as it does for processExited.
         """
-        self.slave._on_process_ended(status)
+        exit_code = reason.value.exitCode
+        self.slave._on_process_ended(exit_code)
     
     def inConnectionLost(self, data):
         #self.slave.log("stdin pipe has closed." + str(data))
@@ -159,6 +160,15 @@ class Slave(object):
         self.log_level = logging.DEBUG
     
     def start(self):
+        if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
+            msg = "Child is already %s. Cannot start it." % (self.state)
+            self.io_protocol.send_error(msg)
+            return
+        elif self.state == const.STATE_STOPPING:
+            msg = "Child is %s. Please try again to start it when it will be stopped." % (self.state)
+            self.io_protocol.send_error(msg)
+            # FIXME: try again later.
+            return
         if self.command is None:
             msg = "You must provide a command to be run."
             self.io_protocol.send_error(msg)
@@ -212,18 +222,26 @@ class Slave(object):
         """
         Stops the managed process
         """
-        if self.state == const.STATE_RUNNING:
+        if self.state in [const.STATE_RUNNING, const.STATE_STARTING]:
             self.set_state(const.STATE_STOPPING)
             self.log('Will stop process.')
-            self._process_transport.signalProcess(15) # signal.SIGTERM
+            try:
+                self._process_transport.signalProcess(15) # signal.SIGTERM
+            except OSError, e:
+                self.log("Error sending SIGKILL. %s" % (e))
+            #TODO: later, make sure it is correctly killed.
             self._process_transport.loseConnection()
         elif self.state == const.STATE_STOPPING:
-            self.log('kill -9.')
-            self._process_transport.signalProcess(9) # signal.SIGKILL
-        else:
-            msg = "Cannot stop a process that is \"%s\" state." % (self.state)
-            self.set_state(const.STATE_ERROR)
-            raise SlaveError(msg)
+            self.log('Trying to kill again the child process. Using kill -9.')
+            try:
+                self._process_transport.signalProcess(9) # signal.SIGKILL
+            except OSError, e:
+                self.log("Error sending SIGKILL. %s" % (e))
+        else: # STOPPED
+            msg = "Process is already stopped."
+            self.set_state(const.STATE_STOPPED)
+            self.io_protocol.send_error(msg)
+            return
 
     def _once_done(self):
         self.log("Closing slave's process stdout file.")
@@ -239,7 +257,7 @@ class Slave(object):
         if level >= self.log_level:
             call_callbacks(self.log_callbacks, msg, level)
 
-    def _on_process_ended(self, reason):
+    def _on_process_ended(self, exit_code):
         if self.state == const.STATE_STOPPING:
             self.log('Child process exited as expected.')
         elif self.state == const.STATE_STARTING:
@@ -249,7 +267,6 @@ class Slave(object):
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
-        exit_code = reason.exitCode
         self.log("Child exit code : %s" % (exit_code))
         self.set_state(const.STATE_STOPPED)
         self._once_done()
