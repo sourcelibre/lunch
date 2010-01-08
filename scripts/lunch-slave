@@ -135,6 +135,7 @@ class Slave(object):
     
     The command, identifier and env can be set after object creation.
     """
+    # TODO: check twisted.runner.procmon !!!
     def __init__(self, command=None, identifier=None, env=None):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
@@ -173,15 +174,18 @@ class Slave(object):
             # TODO: The Master should try again later.
             return
         # find full path to executable
-        if self.command is None:
+        if self.command is None or self.command.strip() == "":
             msg = "You must provide a command to be run."
             self.io_protocol.send_error(msg)
             return
         else:
+            words = self.command.strip().split(" ")
+            executable_name = words[0]
             try:
-                self.command[0] = procutils.which(self.command[0])[0]
+                full_exec_path = procutils.which(executable_name)[0]
+                #self.command[0] = procutils.which(self.command[0])[0]
             except IndexError:
-                msg = "Could not find path of executable %s." % (self.command[0])
+                msg = "Could not find path of executable %s." % (executable_name)
                 self.io_protocol.send_error(msg)
                 return
         # create log dir
@@ -221,7 +225,11 @@ class Slave(object):
         self.set_state(STATE_STARTING)
         #self.log("Identifier: %s" % (self.identifier))
         #self.log("Environment variables: %s" % (str(environ)))
-        self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
+        #self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
+        shell = "/bin/sh"
+        if os.path.exists("/bin/bash"):
+            shell = "/bin/bash"
+        self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
         self.log("Spawned process %s." % (self.identifier))
     
     def _on_connection_made(self):
@@ -233,6 +241,7 @@ class Slave(object):
         """
         Stops the child process
         """
+        # TODO: do callLater calls to check if the process is still running or not.
         #see twisted.internet.process._BaseProcess.reapProcess
         if self.state in [STATE_RUNNING, STATE_STARTING]:
             self.set_state(STATE_STOPPING)
@@ -269,7 +278,7 @@ class Slave(object):
         elif self.state == STATE_STARTING:
             self.log('Child process exited while trying to start it.')
         elif self.state == STATE_RUNNING:
-            if str(reason).find('exit code 0') != -1:
+            if exit_code == 0:
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
@@ -379,8 +388,8 @@ class SlaveIO(basic.LineReceiver):
         if len(li) == 0:
             self.send_error("Cannot use an empty command.")
             return
-        self.send_message("Using %s as a command to run." % (li))
-        self.slave.command = li
+        self.send_message("Using %s as a command to run." % (line))
+        self.slave.command = line.strip()
         self.send_ok()
 
     def do_env(self, line):
@@ -405,6 +414,36 @@ class SlaveIO(basic.LineReceiver):
     def do_stop(self, line):
         """stop: Stops the process."""
         self.slave.stop()
+    
+    def do_opt(self, line):
+        """opt: sets an option. Usage: opt <key> <value> Use 0 or 1 for boolean options."""
+        words = line.split()
+        try:
+            k = words[0]
+            v = words[1]
+        except IndexError, e:
+            self.send_error("Wrong number of arguments.")
+            return
+        if not self.slave.options.has_key(k):
+            self.send_error("No such option: %s" % (k))
+            return
+        current = self.slave.options[k]
+        cast = type(current)
+        try:
+            if cast is bool:
+                self.slave.options[k] = bool(int(v))
+            else:
+                self.slave.options[k] = cast(v)
+            self.send_ok()
+            return
+        except ValueError, e:
+            self.send_error("Wrong type of value %s for option %s." % (v, k))
+            return
+        # else ok?
+
+    def do_opts(self, line):
+        """opt: lists options. """
+        self.send_message("Options: %s" % (self.slave.options))
 
     def do_ping(self, line):
         """ping: Answers with PONG"""
@@ -453,6 +492,7 @@ def run_slave():
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-i", "--id", type="string", help="Identifier of this lunch slave.")
     (options, args) = parser.parse_args()
+    sys.argv[0] = "lunch-slave" #XXX so that we see that is ps !! 
     kwargs = {}
     if options.id:
         kwargs["identifier"] = options.id
