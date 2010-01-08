@@ -149,11 +149,14 @@ class Slave(object):
         self.state = const.STATE_IDLE
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
+        self.options = {
+            "clear-old-logs": True,
+            }
         self.identifier = identifier # title
         self.env = {} # environment variables for the child process
         if env is not None:
             self.env.update(env)
-        self.log_dir = os.path.join(os.getcwd(), "lunch")
+        self.log_dir = os.path.join(os.getcwd(), "lunch_log")
         self._stdout_file = None
         self.pid = None
         self.log_callbacks = []
@@ -174,6 +177,7 @@ class Slave(object):
             self.io_protocol.send_error(msg)
             # TODO: The Master should try again later.
             return
+        # find full path to executable
         if self.command is None:
             msg = "You must provide a command to be run."
             self.io_protocol.send_error(msg)
@@ -185,6 +189,7 @@ class Slave(object):
                 msg = "Could not find path of executable %s." % (self.command[0])
                 self.io_protocol.send_error(msg)
                 return
+        # create log dir
         if not os.path.exists(self.log_dir):
             try:
                 os.makedirs(self.log_dir)
@@ -193,9 +198,15 @@ class Slave(object):
                 return
             else:
                 self.log("Created directory %s" % (self.log_dir))
+        # remove old log file
         stdout_file_name = os.path.join(self.log_dir, "%s.log" % (self.identifier))
+        if self.options["clear-old-logs"]:
+            try:
+                os.remove(stdout_file_name) # cleans it up from last time we ran it. TAKE CARE !
+            except OSError, e:
+                self.log("Error erasing old stdout file %s." % (stdout_file_name), logging.ERROR)
+        # open log file in write mode.
         try:
-            # TODO: erase previous stdout_file if desired.
             self._stdout_file = file(stdout_file_name, "a") # open in append mode
         except OSError, e:
             self.io_protocol.send_error("Could not open log file %s in write mode." % (stdout_file_name))

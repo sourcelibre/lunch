@@ -33,5 +33,5 @@ python-build-stamp-*
 _trial_temp/*
 
 # ----------lunch logs 
-lunch/*log
+lunch_log/*log
 
