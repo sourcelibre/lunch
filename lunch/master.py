@@ -97,17 +97,17 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         is the last callback which will be made onto a ProcessProtocol. 
         The status parameter has the same meaning as it does for processExited.
         """
-        log.msg("Process ended." + str(status))
+        log.msg("Slave process ended." + str(status))
         self.command._on_process_ended(status)
     
     def inConnectionLost(self, data):
-        log.msg("stdin pipe has closed." + str(data))
+        log.msg("Slave stdin has closed." + str(data))
 
     def outConnectionLost(self, data):
-        log.msg("stdout pipe has closed." + str(data))
+        log.msg("Slave stdout has closed." + str(data))
     
     def errConnectionLost(self, data):
-        log.msg("stderr pipe has closed." + str(data))
+        log.msg("Slave stderr has closed." + str(data))
 
     def processExited(self, reason):
         """
@@ -229,13 +229,13 @@ class Command(object):
         else:
             if key == const.MESSAGE_MSG:
                 pass
-            elif key == const.MESSAGE_LOG:
+            elif key == "log":
                 log.msg("%8s: %s" % (self.identifier, mess))
             elif key == const.MESSAGE_ERROR:
                 log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
             elif key == const.MESSAGE_DIED:
                 log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
-            elif key == const.ANSWER_PONG:
+            elif key == "pong":
                 pass
                 #log.msg("pong from %s" % (self.identifier))
             elif key == const.ANSWER_QUIT:

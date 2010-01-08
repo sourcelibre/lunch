@@ -52,6 +52,9 @@ class SlaveError(Exception):
     pass
 
 def call_callbacks(callbacks, *args, **kwargs):
+    """
+    Calls each callable in the list of callbacks with the arguments and keyword-arguments provided.
+    """
     for c in callbacks:
         c(*args, **kwargs)
 
@@ -77,8 +80,9 @@ class ChildProcess(protocol.ProcessProtocol):
         """
         Called when text is received from the managed process stdout
         Twisted will not splitlines, it gives an arbitrary amount of
-        data at a time. This way, our manager only gets one line at 
-        a time.
+        data at a time. 
+
+        Here, we make sure our slave manager only gets one line at a time.
         """
         for line in data.splitlines():
             if line != "":
@@ -94,7 +98,7 @@ class ChildProcess(protocol.ProcessProtocol):
 
     def processEnded(self, status):
         """
-        Called when the managed process has exited.
+        Called when the child process has exited.
         status is probably a twisted.internet.error.ProcessTerminated
         "A process has ended with a probable error condition: process ended by signal 1"
         
@@ -106,13 +110,16 @@ class ChildProcess(protocol.ProcessProtocol):
         self.slave._on_process_ended(status)
     
     def inConnectionLost(self, data):
-        self.slave.log("stdin pipe has closed." + str(data))
-
+        #self.slave.log("stdin pipe has closed." + str(data))
+        pass
+        
     def outConnectionLost(self, data):
-        self.slave.log("stdout pipe has closed." + str(data))
-    
+        #self.slave.log("stdout pipe has closed." + str(data))
+        pass
+        
     def errConnectionLost(self, data):
-        self.slave.log("stderr pipe has closed." + str(data))
+        #self.slave.log("stderr pipe has closed." + str(data))
+        pass
 
     def processExited(self, reason):
         """
@@ -140,34 +147,47 @@ class Slave(object):
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
         self.identifier = identifier # title
-        self.env = {} # environment variables for the 
+        self.env = {} # environment variables for the child process
         if env is not None:
             self.env.update(env)
         self.log_dir = os.path.join(os.getcwd(), "lunch")
         self._stdout_file = None
         self.pid = None
-        self.log_callbacks = []# = sig.Signal()
-        #self.state_changed_signal = sig.Signal()
-        #self.exitted_itself_signal = sig.Signal()
+        self.log_callbacks = []
         if self.identifier is None:
             self.identifier = "default"
         self.log_level = logging.DEBUG
     
     def start(self):
         if self.command is None:
-            raise SlaveError("You must provide a command to be run.")
+            msg = "You must provide a command to be run."
+            self.io_protocol.send_error(msg)
+            return
         else:
             try:
                 self.command[0] = procutils.which(self.command[0])[0]
             except IndexError:
-                raise SlaveError("Could not find path of executable %s." % (self.command[0]))
+                msg = "Could not find path of executable %s." % (self.command[0])
+                self.io_protocol.send_error(msg)
+                return
         if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
-            self.log("Creating directory %s" % (self.log_dir))
+            try:
+                os.makedirs(self.log_dir)
+            except OSError, e:
+                self.io_protocol.send_error("Could not create log directory %s." % (self.log_dir))
+                return
+            else:
+                self.log("Created directory %s" % (self.log_dir))
         stdout_file_name = os.path.join(self.log_dir, "%s.log" % (self.identifier))
-        self.log("Writing to %s" % (stdout_file_name))
-        self._stdout_file = file(stdout_file_name, "a") # open in append mode
-        self.log("Will run command %s" % (str(self.command)))
+        try:
+            # TODO: erase previous stdout_file if desired.
+            self._stdout_file = file(stdout_file_name, "a") # open in append mode
+        except OSError, e:
+            self.io_protocol.send_error("Could not open log file %s in write mode." % (stdout_file_name))
+            return
+        else:
+            self.log("Writing to %s" % (stdout_file_name))
+        self.log("Slave %s will run command %s" % (self.identifier, str(self.command)))
         self._child_process = ChildProcess(self)
         proc_path = self.command[0]
         args = self.command
@@ -178,16 +198,15 @@ class Slave(object):
         for key, val in self.env.iteritems():
             environ[key] = val
         self.set_state(const.STATE_STARTING)
-        self.log("Identifier: %s" % (self.identifier))
-        self.log("Environment variables: %s" % (str(environ)))
+        #self.log("Identifier: %s" % (self.identifier))
+        #self.log("Environment variables: %s" % (str(environ)))
         self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
-        self.log("Spawned process.")
+        self.log("Spawned process %s." % (self.identifier))
     
     def _on_connection_made(self):
-        if const.STATE_STARTING:
-            self.set_state(const.STATE_RUNNING)
-        else:
-            self.set_state(const.STATE_ERROR)
+        if not const.STATE_STARTING:
+            self.log("Connection made even if we were not starting the child process.", logging.ERROR)
+        self.set_state(const.STATE_RUNNING)
     
     def stop(self):
         """
@@ -216,33 +235,28 @@ class Slave(object):
         """
         if level >= self.log_level:
             call_callbacks(self.log_callbacks, msg, level)
-            #self.log_signal(msg, level)
 
     def _on_process_ended(self, reason):
-        if self.state == const.STATE_STARTING:
-            self.set_state(const.STATE_ERROR)
-        elif self.state == const.STATE_RUNNING:
-            """ Don't error out if we exitted with exit code 0 (for now) """
-            if str(reason).find('exit code 0') != -1:
-                self.log('Process exited cleanly.')
-                #self.exitted_itself_signal()
-            else:
-                self.log('Process exited with error.')
-                self.set_state(const.STATE_ERROR)
         if self.state == const.STATE_STOPPING:
-            self.log('Process exited as expected.')
-            self.set_state(const.STATE_STOPPED)
-        else:
-            self.set_state(const.STATE_ERROR)
-        #if self.verbose:
-        #    print("%s process ended. Reason: \n%s" % (self.name, str(reason)))
+            self.log('Child process exited as expected.')
+        elif self.state == const.STATE_STARTING:
+            self.log('Child process exited while trying to start it.')
+        elif self.state == const.STATE_RUNNING:
+            if str(reason).find('exit code 0') != -1:
+                self.log('Child process exited.')
+            else:
+                self.log('Child process exited with error.')
+        self.set_state(const.STATE_STOPPED)
         self._once_done()
         
     def set_state(self, new_state):
+        """
+        Handles state changes.
+        """
         if self.state != new_state:
             self.state = new_state
             #self.state_changed_signal(self.state)
-            self.io_protocol.sendLine("%s %s" % (const.MESSAGE_STATE, self.state))
+            self.io_protocol.send_state(self.state)
         
 class SlaveIO(basic.LineReceiver):
     """
@@ -250,7 +264,6 @@ class SlaveIO(basic.LineReceiver):
     """
     delimiter = '\n' # unix terminal style newlines. remove this line
                      # for use with Telnet
-    
     log_keys = {
         logging.DEBUG: "DEBUG",
         logging.INFO: "INFO",
@@ -258,8 +271,6 @@ class SlaveIO(basic.LineReceiver):
         logging.CRITICAL: "CRITICAL",
         logging.ERROR: "ERROR",
         }
-
-    # TODO: create constructor and pass it slave.
     
     def __init__(self, slave):
         self.slave = slave
@@ -271,8 +282,7 @@ class SlaveIO(basic.LineReceiver):
         self.slave.log_callbacks.append(self._on_log)
 
     def _on_log(self, msg, level=logging.INFO):
-        key = self.log_keys[level]
-        self.sendLine("%s (%s) %s" % (const.MESSAGE_LOG, key, msg))
+        self.send_log(msg, level)
 
     def lineReceived(self, line):
         """
@@ -310,13 +320,22 @@ class SlaveIO(basic.LineReceiver):
             commands = [cmd[3:] for cmd in dir(self) if cmd.startswith('do_')]
             self.sendLine("%s Valid commands: %s" %  (const.MESSAGE_MSG, " ".join(commands)))
 
+    def send_state(self, state):
+        self.sendLine("%s %s" % (const.MESSAGE_STATE, state))
+    
     def do_quit(self, *args):
         """quit: Quit this session"""
         if self.slave.state == const.STATE_RUNNING:
-            self.slave.log("Slave is still running. Need to stop it.") # XXX
+            self.send_log("Slave is still running. Need to stop it.") # XXX
             self.slave.stop()
-        self.sendLine('%s Goodbye.' % (const.ANSWER_QUIT))
+        self.send_quit()
         self.transport.loseConnection()
+
+    def send_quit(self):
+        """
+        Confirms that we will stop this slave.
+        """
+        self.sendLine('%s Goodbye.' % (const.ANSWER_QUIT))
         
     def do_set(self, name, value=None):
         """set: Sets a configuration value. Usage: set <name> <value>"""
@@ -325,12 +344,12 @@ class SlaveIO(basic.LineReceiver):
             try:
                 setattr(self.slave, _type(value))
             except ValueError, e:
-                self.sendLine("%s Bad type for %s. \"%s\" is not a valid %s." % (const.MESSAGE_ERROR, name, value, _type.__name__))
+                self.send_error("Bad type for %s. \"%s\" is not a valid %s." % (name, value, _type.__name__))
     
     def do_command(self, *args):
         """command: sets the shell command to be run."""
         self.slave.command = list(args) # TODO: join string and use bash or sh.
-        self.sendLine(const.ANSWER_OK)
+        self.send_ok()
 
     def do_env(self, *args):
         """Sets the env vars for the process. Must be in a string of key=value separated by spaces."""
@@ -338,33 +357,36 @@ class SlaveIO(basic.LineReceiver):
             try:
                 k, v = key_val.split("=")
             except ValueError:
-                self.sendLine("%s %s %s" % (const.MESSAGE_ERROR, "Wrong env key-value pair:", key_val))
+                self.send_error("%s %s" % ("Wrong env key-value pair:", key_val))
             else:
-                self.slave.log("Setting env var $%s=%s." % (k, v))
+                self.send_log("Setting env var $%s=%s." % (k, v), logging.DEBUG)
                 self.slave.env[k] = v
+
+    def send_ok(self):
+        self.sendLine("OK")
 
     def do_run(self):
         """run: Starts the process."""
-        #try:
         self.slave.start()
-        #except SlaveError, e:
-        #    self.sendLine("%s %s" % (const.MESSAGE_ERROR, e))
-        #else:
-        #    self.sendLine(const.ANSWER_STARTING)
     
     def do_stop(self, *args):
         """stop: Stops the process."""
-        #try:
         self.slave.stop()
-        #except SlaveError, e:
-        #    self.sendLine("%s %s" % (const.MESSAGE_ERROR, e))
-        #else:
-        #    self.sendLine(const.ANSWER_STOPPING)
 
     def do_ping(self, *args):
         """ping: Answers with PONG"""
         #TODO : check if slave process is running
-        self.sendLine(const.ANSWER_PONG)
+        self.send_pong()
+
+    def send_error(self, msg):
+        self.sendLine("%s %s" % ("ERROR", msg))
+
+    def send_pong(self):
+        self.sendLine("pong")
+
+    def send_log(self, msg, level=logging.DEBUG):
+        key = self.log_keys[level]
+        self.sendLine("%s %s %s" % ("log", key, msg))
 
     def do_status(self, *args):
         """status: prints the status and all info about the slave."""

@@ -19,7 +19,6 @@ MESSAGE_STATE = "STATE"
 # answers from the slave :
 ANSWER_OK = "OK" # when asking to run a command
 ANSWER_QUIT = "BYE"
-ANSWER_PONG = "PONG"
 ANSWER_STOPPING = "STOPPING"
 ANSWER_STARTING = "STARTING"
 ANSWER_STATUS = "STATUS"
