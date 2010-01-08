@@ -108,6 +108,8 @@ class ChildProcess(protocol.ProcessProtocol):
         The status parameter has the same meaning as it does for processExited.
         """
         exit_code = reason.value.exitCode
+        if exit_code is None:
+            exit_code = reason.value.signal
         self.slave._on_process_ended(exit_code)
     
     def inConnectionLost(self, data):
@@ -170,7 +172,7 @@ class Slave(object):
         elif self.state == const.STATE_STOPPING:
             msg = "Child is %s. Please try again to start it when it will be stopped." % (self.state)
             self.io_protocol.send_error(msg)
-            # FIXME: try again later.
+            # TODO: The Master should try again later.
             return
         if self.command is None:
             msg = "You must provide a command to be run."
@@ -246,7 +248,6 @@ class Slave(object):
             self.io_protocol.send_error(msg)
             return
 
-
     def log(self, msg, level=logging.DEBUG):
         """
         Logs to Master.
@@ -265,7 +266,7 @@ class Slave(object):
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
-        self.log("Child exit code : %s" % (exit_code))
+        self.log("Child exitted with %s" % (exit_code), logging.INFO)
         self.set_state(const.STATE_STOPPED)
         self.log("Closing slave's process stdout file.")
         self._stdout_file.close()
