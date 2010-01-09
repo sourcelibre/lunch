@@ -86,7 +86,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
             if line != "":
                 log.msg("stderr: " + line + "\n")
 
-    def processEnded(self, failure):
+    def processEnded(self, reason):
         """
         Called when the managed process has exited.
         status is probably a twisted.internet.error.ProcessTerminated
@@ -97,9 +97,9 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         is the last callback which will be made onto a ProcessProtocol. 
         The status parameter has the same meaning as it does for processExited.
         """
-        exit_code = failure.value.exitCode
+        exit_code = reason.value.exitCode
         log.msg("Slave %s process ended with %s." % (self.command.identifier, exit_code))
-        self.command._on_process_ended(failure.value.exitCode)
+        self.command._on_process_ended(reason.value.exitCode)
     
     def inConnectionLost(self, data):
         log.msg("Slave stdin has closed. %s" % (str(data)))
@@ -119,7 +119,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         of receiving a signal, and if the exit code was 0), or a ProcessTerminated 
         object (with an .exitCode attribute) if something went wrong.
         """
-        exit_code = failure.value.exitCode
+        exit_code = reason.value.exitCode
         log.msg("process has exited : %s." % (str(exit_code)))
     
 class Command(object):
