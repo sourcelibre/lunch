@@ -29,13 +29,13 @@ from twisted.internet import defer
 from twisted.python import procutils
 from twisted.python import log
 
-#_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
-log.startLogging(sys.stdout)
-# usage: log.msg("qweqwe", logLevel=logging.INFO)
-
-
 from lunch import sig
 from lunch import constants as const
+
+def start_logging():
+    #_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
+    log.startLogging(sys.stdout)
+    # usage: log.msg("qweqwe", logLevel=logging.INFO)
 
 class MasterError(Exception):
     """
@@ -420,6 +420,7 @@ def run_master(config_file):
      * If ctrl-C is pressed from any worker, dies.
     @rettype Master
     """
+    start_logging()
     global _commands
     if os.path.exists(config_file):
         try:

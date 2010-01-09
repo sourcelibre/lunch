@@ -2,17 +2,20 @@
 Tests for lunch Master
 """
 from twisted.trial import unittest
+from lunch import master
 
 class Test_Master(unittest.TestCase):
     def test_read_config(self):
         pass
+
     def test_add_command(self):
-        pass
-    def test_remove_command(self):
-        pass
+        master.add_command(command="xeyes -geometry 100x100")
+        if len(master._commands["default"]) != 1:
+            self.fail("Did not add command.")
+        # empty the commands
+        master._commands["default"] = []
+
     test_read_config.skip = "TODO."
-    test_add_command.skip = "TODO."
-    test_remove_command.skip = "TODO."
 
 class Test_Command(unittest.TestCase):
     def test_configure(self):
