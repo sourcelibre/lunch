@@ -8,10 +8,10 @@
 # local:
 add_command("/usr/lib/xscreensaver/polytopes", order=0)
 add_command("glxgears", order=1, sleep_after=1.0)
-#add_command("mplayer /var/tmp/excerpt.ogm", identifier="local_mplayer")
+#add_command("mplayer /var/tmp/excerpt.ogm", title="local_mplayer")
 add_command("gcalctool")
-add_command("xlogo", identifier="local_xlogo")
-add_command("xeyes -geometry 320x240", identifier="local_xeyes")
+add_command("xlogo", title="local_xlogo")
+add_command("xeyes -geometry 320x240", title="local_xeyes")
 add_command("xeyes -geometry 240x320")
 
 #add_command("/usr/lib/xscreensaver/solarwinds")
