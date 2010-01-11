@@ -407,11 +407,10 @@ class Command(object):
         if self.slave_state != new_state:
             self.slave_state = new_state
             self.slave_state_changed_signal(self.slave_state)
+
+    def __str__(self):
+        return "%s" % (self.identifier)
     
-
-# IMPORTANT global var !!
-_commands = {"default": []} # keys are group names, values are a list of Command objects.
-
 def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
     """
     This is the only function that users use from within the configuration file.
@@ -420,90 +419,156 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
     Default priority is 100. The lowest the earliest.
     """
     #FIXME: Changed back identifier to title.
-    global _commands
-    log.msg("DEBUG: adding %s %s %s %s %s %s %s %s" % (command, env, host, user, order, sleep_after, respawn, log_dir)) # EDIT ME
+    #global _commands
+    #log.msg("DEBUG: adding %s %s %s %s %s %s %s %s to group %s" % (command, env, host, user, order, sleep_after, respawn, log_dir, group)) # EDIT ME
+    log.msg("Adding %s (%s) %s@%s to group %s" % (title, command, user, host, group), logging.INFO)
     if group is None:
-        group = "default" # default group is 0
-    if not _commands.has_key(group):
+        group = "default" # default group is "default"
+    if not Master.groups.has_key(group):
         log.msg("Adding group %s" % (group))
-        _commands[group] = []
-    _commands[group].append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
-
-def _sorting_callback(x, y):
-    """
-    Sorts Command objects using their order attribute.
+        Master.groups[group] = Group(group)
+    Master.groups[group].commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
     
-    To define a compare function for sort(), you must follow certain pattern.
-    1. Compare function must take TWO param: x and y,
-    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
-    """
-    if x.order > y.order:
-        return 1
-    elif x.order < y.order:
-        return -1
-    else:
-        return 0
+    #for k, v in Master.groups.iteritems():
+    #    print str(k), str(v)
+
+#def _sorting_callback(x, y):
+#    """
+#    Sorts Command objects using their order attribute.
+#    
+#    To define a compare function for sort(), you must follow certain pattern.
+#    1. Compare function must take TWO param: x and y,
+#    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
+#    """
+#    if x.order > y.order:
+#        return 1
+#    elif x.order < y.order:
+#        return -1
+#    else:
+#        return 0
 
 class Group(object):
+    """
+    A group contains commands.
+    """
     def __init__(self, name):
-        self.state = STATE_STOPPED
+        #self.state = STATE_STOPPED
         self.commands = []
+        self.name = name
+    
+    def __str__(self):
+        txt = "Group %s: " % (self.name)
+        for c in self.commands:
+            txt += str(self.commands) + " "
+        return txt
 
 class Master(object):
-    def __init__(self):
-        global _commands
-        reactor.callLater(0.025, self._cl)
-        self.commands = _commands
-        self.groups = {"default": Group("default")}
+    """
+    The Lunch Master launches slaves, which in turn launch childs.
+    The master manages slaves, grouped in groups.
+    """
+    # static class variable
+    groups = {"default":Group("default")}
     
-    def _cl(self):
-        """
-        Called once reactor is running.
-        """
-        self.start_all()
-
-    def start_all(self, group_name=None):
-        groups = self._get_all_in_group(group_name)
-        i = 0 # for default identifiers
-        for group in groups:
-            commands_in_group = self.commands[group]
-            commands_in_group.sort(_sorting_callback)
-            for c in commands_in_group:
+    def __init__(self):
+        # set default names if they are none:
+        i = 0
+        for g in Master.groups.itervalues():
+            for c in g.commands:
                 if c.identifier is None:
                     c.identifier = "default-%d" % (i)
                     i += 1
-                c.start() # FIXME TODO: sleep between each !!!!
-    
-    def _get_all_in_group(self, group_name=None):
+        reactor.callLater(0, self.start_all)
+
+    def start_all(self, group_name=None):
         """
-        If group_name is None, returns all groups.
+        Starts all slaves in a group, iterating asynchronously.
+        If group is None, iterates over all commands slaves.
         """
-        if group_name is not None:
-            groups = [self.commands[group_name]] # a 1-element list
+        if group_name is None:
+            groups = Master.groups.keys()
         else:
-            groups = self.commands.keys()
-        return groups
+            groups = group_name
+        iter_groups = iter(groups)
+        iter_commands = iter([]) # at first empty
+        reactor.callLater(0, self._start_next, iter_groups, iter_commands)
+
+    def _start_next(self, iter_groups, iter_commands, group_name=None):
+        # define asynchronous iterating function
+        c = None
+        try:
+            c = iter_commands.next()
+        except StopIteration:
+            if group_name is not None:
+                log.msg("Done iterating through commands of group %s." % (group_name))
+            try:
+                group_name = iter_groups.next()
+            except StopIteration:
+                log.msg("Done iterating through groups.")
+                return
+            else:
+                log.msg("Iterating through commands of group %s." % (group_name))
+                g = Master.groups[group_name]
+                iter_commands = iter(g.commands)
+                log.msg("Next command in group %s : %s" % (g.name, g.commands))
+                try:
+                    c = iter_commands.next()
+                except StopIteration:
+                    if group_name is not None:
+                        log.msg("Done iterating through commands in group %s." % (group_name))
+                else:
+                    log.msg("Got command %s" % (c.identifier))
+        sleep = 0
+        if c is not None:
+            log.msg("Starting command %s" % (c.identifier))
+            c.start()
+            sleep = c.sleep_after
+        reactor.callLater(sleep, self._start_next, iter_groups, iter_commands, group_name)
+    
+    def _get_all(self, group_name=None):
+        """
+        Returns all commands in a group, or in every groups. (all commands)
+        If group_name is None, returns commands from all groups.
+        """
+        if group_name is None: # returns commands from all groups
+            ret = []
+            for g in self.groups.itervalues():
+                ret.extend(g.commands)
+        else:
+            ret = self.groups[group_name].commands
+        return ret
     
     def stop_all(self, group_name=None):
-        groups = self._get_all_in_group(group_name)
-        for group in groups:
-            commands_in_group = self.commands[group]
-            commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
-            for c in commands_in_group:
-                s.enabled = False
-                # TODO: callLaters...
-                c.stop()
+        """
+        Stops all commands
+        """
+        commands = self._get_all(group_name)
+        for c in commands:
+            c.enabled = False
+            c.stop()
+            # TODO: callLaters...
 
     def restart_all(self, group_name=None):
-        groups = self._get_all_in_group(group_name)
-        for group in groups:
-            commands_in_group = self.commands[group]
-            commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
-            for c in commands_in_group:
-                s.enabled = False
-                c.stop()
-            all = self.commands[group_name]
-            iterator = iter(all)
+        self.stop_all(group_name)
+        commands = self._get_all(group_name)
+        for c in commands:
+            s.enabled = False
+            c.stop()
+        reactor.callLater(0.1, _start_if_all_stopped, group_name)
+
+    def _start_if_all_stopped(self, group_name=None):
+        """
+        Checks in loop if all got stopped, if so, start them over.
+        """
+        commands = self._get_all(group_name)
+        ready_to_restart = True
+        for c in commands:
+            if c.child_state != STATE_STOPPED:
+                ready_to_restart = False
+        if ready_to_restart:
+            self.start_all(group_name)
+        else:
+            reactor.callLater(0.1, _start_if_all_stopped, group_name)
 
     def quit_master(self):
         """
@@ -520,15 +585,12 @@ class Master(object):
         deferred = defer.Deferred()
         def _later(self, data):
             again = False
-            for group in self.commands.iterkeys():
-                commands_in_group = self.commands[group]
-                commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
-                for c in commands_in_group:
-                    if c.child_state == STATE_RUNNING:
-                        log.msg("Slave %s is still running. Stopping it." % (c.identifier))
-                        again = True
-                        c.enabled = False
-                        c.quit_slave()
+            for c in self._get_all():
+                if c.child_state == STATE_RUNNING:
+                    log.msg("Slave %s is still running. Stopping it." % (c.identifier))
+                    again = True
+                    c.enabled = False
+                    c.quit_slave()
             if time.time() >= (data["shutdown_time"]):
                 log.msg("Max shutdown time expired.", logging.ERROR)
                 again = False
