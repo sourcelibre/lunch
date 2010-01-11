@@ -5,8 +5,7 @@ STATE_STARTING = "STARTING"
 STATE_RUNNING = "RUNNING" # success
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED" # success
-STATE_ERROR = "ERROR" #deprecated
-STATE_SLAVE_DEAD = "DEAD" # for master only
+STATE_NOSLAVE = "DEAD" # for master only
 
 # Keys of the messages from the slave :
 MESSAGE_MSG = "msg"
