@@ -162,8 +162,18 @@ class Slave(object):
         if self.identifier is None:
             self.identifier = "default"
         self.log_level = logging.DEBUG
-        #TODO: use reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown) to make sure that the process is dead before quitting.
+        
     
+    def _before_shutdown(self):
+        """
+        Called before twisted's reactor shutdown.
+        to make sure that the process is dead before quitting.
+        """
+        if self.state in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
+            msg = "Child still %s. Stopping it before shutdown." % (self.state)
+            self.log(msg)
+            self.stop()
+
     def is_alive(self):
         """
         Checks if the child is alive.
@@ -397,21 +407,21 @@ class SlaveIO(basic.LineReceiver):
             self.send_message("Valid commands: %s" %  (" ".join(commands)))
 
     def send_state(self, state):
-        self.sendLine("%s %s" % ("STATE", state))
+        self.sendLine("%s %s" % ("state", state))
     
     def do_quit(self, line):
         """quit: Quit this session"""
         if self.slave.state == STATE_RUNNING:
             self.send_log("Slave is still running. Need to stop it.") # XXX
             self.slave.stop()
-        self.send_quit()
-        self.transport.loseConnection()
+        self.send_bye()
+        self.transport.loseConnection() # close this process' stdin and stdout
 
-    def send_quit(self):
+    def send_bye(self):
         """
         Confirms that we will stop this slave.
         """
-        self.sendLine('%s Goodbye.' % ("BYE"))
+        self.sendLine('%s Exiting slave.' % ("bye"))
         
     #def do_set(self, name, value=None):
     #    """set: Sets a configuration value. Usage: set <name> <value>"""
@@ -422,8 +432,8 @@ class SlaveIO(basic.LineReceiver):
     #        except ValueError, e:
     #            self.send_error("Bad type for %s. \"%s\" is not a valid %s." % (name, value, _type.__name__))
     
-    def do_command(self, line):
-        """command: sets the shell command to be run."""
+    def do_do(self, line):
+        """do: sets the shell command to be run."""
         li = line.split() # TODO: do not split it, use bash !
         if len(li) == 0:
             self.send_error("Cannot use an empty command.")
@@ -445,7 +455,7 @@ class SlaveIO(basic.LineReceiver):
                 self.slave.env[k] = v
 
     def send_ok(self):
-        self.sendLine("OK")
+        self.sendLine("ok")
 
     def do_run(self, line):
         """run: Starts the process."""
@@ -491,10 +501,10 @@ class SlaveIO(basic.LineReceiver):
         self.send_pong()
 
     def send_error(self, msg):
-        self.sendLine("%s %s" % ("ERROR", msg))
+        self.sendLine("%s %s" % ("error", msg))
     
     def send_message(self, msg):
-        self.sendLine("%s %s" % ("MSG", msg))
+        self.sendLine("%s %s" % ("msg", msg))
 
     def send_pong(self):
         self.sendLine("pong")
@@ -508,7 +518,7 @@ class SlaveIO(basic.LineReceiver):
         self.send_status()
 
     def send_status(self):
-        self.sendLine("%s %s" % ("STATUS", self.slave.state))
+        self.sendLine("%s %s" % ("status", self.slave.state))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
@@ -536,6 +546,7 @@ def run_slave():
     if options.id:
         kwargs["identifier"] = options.id
     slave = Slave(**kwargs)
+    reactor.addSystemEventTrigger("before", "shutdown", slave._before_shutdown) #to make sure that the process is dead before quitting.
     slave_io = SlaveIO(slave)
     stdio.StandardIO(slave_io)
     try:

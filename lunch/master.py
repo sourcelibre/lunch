@@ -45,7 +45,7 @@ class MasterError(Exception):
 
 class FileNotFoundError(Exception):
     """
-    Thrown when a file could not be found.
+    Thrown when the given config file could not be found.
     """
     pass
 
@@ -102,13 +102,13 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         self.command._on_process_ended(reason.value.exitCode)
     
     def inConnectionLost(self, data):
-        log.msg("Slave stdin has closed. %s" % (str(data)))
+        pass #log.msg("Slave stdin has closed. %s" % (str(data)))
 
     def outConnectionLost(self, data):
-        log.msg("Slave stdout has closed. %s" % (str(data)))
+        pass #log.msg("Slave stdout has closed. %s" % (str(data)))
     
     def errConnectionLost(self, data):
-        log.msg("Slave stderr has closed. %s" % (str(data)))
+        pass #log.msg("Slave stderr has closed. %s" % (str(data)))
 
     def processExited(self, reason):
         """
@@ -205,16 +205,18 @@ class Command(object):
         return txt 
     
     def _on_connection_made(self):
-        if const.STATE_STARTING:
-            self.set_state(const.STATE_RUNNING)
-        else:
-            self.set_state(const.STATE_ERROR)
         def _later(self):
             self.send_message(const.COMMAND_COMMAND, self.command) # FIXME sends a string
             self.send_message(const.COMMAND_PING) # for fun
             self.send_message(const.COMMAND_ENV, self._format_env())
             self.send_message(const.COMMAND_START)
-        reactor.callLater(0.1, _later, self) # FIXME !!!! not using callLater, but when it is really time !! we don't want self._process_transport to be None
+        
+        if const.STATE_STARTING:
+            self.set_state(const.STATE_RUNNING)
+            reactor.callLater(0, _later, self) 
+        else:
+            msg = "Connection made with slave %s, even if not expecting it." % (self.identifier)
+            log.msg(msg, logging.ERROR)
 
     def send_message(self, key, data=""):
         """
@@ -232,32 +234,50 @@ class Command(object):
         try:
             key = line.split(" ")[0]
             mess = line[len(key) + 1:]
-        except IndexError:
-            pass
+        except IndexError, e:
+            log.msg("Index error parsing message from slave. %s" % (e), logging.ERROR)
         else:
-            if key == const.MESSAGE_MSG:
-                pass
-            elif key == "log":
-                log.msg("%8s: %s" % (self.identifier, mess))
-            elif key == const.MESSAGE_ERROR:
-                log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
-            elif key == const.MESSAGE_DIED:
-                log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
-            elif key == "pong":
-                pass
-                #log.msg("pong from %s" % (self.identifier))
-            elif key == const.ANSWER_QUIT:
-                log.msg("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
-            elif key == const.MESSAGE_STATE:
-                words = mess.split(" ")
-                previous_state = self._slave_state
-                new_state = words[0]
-                self._slave_state = new_state # IMPORTANT !
-                log.msg("%8s: %s" % (self.identifier, "state: %s" % (new_state)))
-                if new_state in [const.STATE_STOPPED, const.STATE_ERROR]:
-                    log.msg("Master will now force-quit the slave %s." % (self.identifier))
-                    # XXX FIXME
-                    self.quit_slave() # FIXME restarts once it is dead
+            # Dispatch the command to the appropriate method.  Note that all you
+            # need to do to implement a new command is add another do_* method.
+            try:
+                method = getattr(self, 'recv_' + key)
+            except AttributeError, e:
+                log.msg('No callback for "%s" got from slave %s.' % (key, self.identifier), logging.ERROR)
+            else:
+                method(mess)
+
+    def recv_ok(self, mess):
+        pass
+
+    def recv_msg(self, mess):
+        pass
+    
+    def recv_log(self, mess):
+        log.msg("%8s: %s" % (self.identifier, mess))
+
+    def recv_error(self, mess):
+        log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
+    
+    def rec_died(self, mess):
+        log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
+    
+    def recv_pong(self, mess):
+        pass
+        #log.msg("pong from %s" % (self.identifier))
+
+    def recv_bye(self, mess):
+        log.msg("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
+
+    def recv_state(self, mess):
+        words = mess.split(" ")
+        previous_state = self._slave_state
+        new_state = words[0]
+        self._slave_state = new_state # IMPORTANT !
+        log.msg("%8s: %s" % (self.identifier, "state: %s" % (new_state)))
+        if new_state in [const.STATE_STOPPED, const.STATE_ERROR]:
+            log.msg("Master will now force-quit the slave %s." % (self.identifier))
+            # XXX FIXME
+            self.quit_slave() # FIXME restarts once it is dead
 
     def stop(self):
         """
