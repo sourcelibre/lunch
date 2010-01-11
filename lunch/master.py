@@ -225,7 +225,10 @@ class Command(object):
             msg = "Connection made with slave %s, even if not expecting it." % (self.identifier)
             log.msg(msg, logging.ERROR)
 
-    def send_command(self):
+    def send_do(self):
+        """
+        Send to the slave the command line to luanch its child.
+        """
         self.send_message("do", self.command) # FIXME sends a string
     
     def send_ping(self):
@@ -266,30 +269,44 @@ class Command(object):
                 method(mess)
 
     def recv_ok(self, mess):
+        """
+        Callback for the "ok" message from the slave.
+        """
         pass
 
     def recv_msg(self, mess):
+        """
+        Callback for the "msg" message from the slave.
+        """
         pass
     
-    
     def recv_log(self, mess):
+        """
+        Callback for the "log" message from the slave.
+        """
         log.msg("%8s: %s" % (self.identifier, mess))
 
     def recv_error(self, mess):
+        """
+        Callback for the "error" message from the slave.
+        """
         log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
     
-    def recv_died(self, mess):
-        log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
-    
     def recv_pong(self, mess):
-        pass
-        #log.msg("pong from %s" % (self.identifier))
+        """
+        Callback for the "pong" message from the slave.
+        """
+        pass #log.msg("pong from %s" % (self.identifier))
 
     def recv_bye(self, mess):
+        """
+        Callback for the "bye" message from the slave.
+        """
         log.msg("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
 
     def recv_state(self, mess):
         """
+        Callback for the "state" message from the slave.
         Received child state.
         """
         words = mess.split(" ")
@@ -303,26 +320,35 @@ class Command(object):
             log.msg("Child %s is running." % (self.identifier))
 
     def recv_ready(self, mess):
+        """
+        Callback for the "ready" message from the slave.
+        The slave sends that to the master when launched.
+        It means it is ready to received commands.
+        """
         if self.enabled:
             self.send_all_startup_commands()
 
     def send_all_startup_commands(self):
         """
         Tells the slave to launch its child process.
+        Sets up the environment and command so that the slave can launch the child.
         """
-        self.send_command()
+        self.send_do()
         self.send_env()
-        self.send_ping()
+        #self.send_ping()
         self.send_run()
 
     def set_child_state(self, new_state):
+        """
+        Called when it is time to change the state of the child of the slave.
+        """
         if self.child_state != new_state:
             self.child_state = new_state
             self.child_state_changed_signal(self.child_state)
 
     def stop(self):
         """
-        Tells the slave to stop its process.
+        Tells the slave to stop its child.
         """
         if self.child_state in [STATE_RUNNING, STATE_STARTING]:
             log.msg('Will stop process %s.' % (self.identifier))
@@ -338,13 +364,10 @@ class Command(object):
         """
         Stops the slave Lunch
         """
-        
         def _cl_sigint(self):
             def _cl_sigkill(self):
                 if self.slave_state == STATE_STOPPING:
                     self._process_transport.signalProcess(9) # signal.SIGKILL
-                    
-            self._process_transport.signalProcess(15) # signal.SIGTERM
         
         if self.slave_state == STATE_STOPPED:
             log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.slave_state), logging.ERROR)
@@ -357,9 +380,9 @@ class Command(object):
                 self.set_slave_state(STATE_STOPPING)
                 log.msg('Master will stop slave %s.' % (self.identifier))
             elif self.slave_state == STATE_STOPPING:
+                # second time this is called, force-quitting:
                 log.msg("kill -9 Slave %s" % (self.identifier))
-            else:
-                self.slave_state = STATE_STOPPED
+                self._process_transport.signalProcess(9) # signal.SIGKILL
 
     def _on_process_ended(self, exit_code):
         #log.msg("Exit code: " % (exit_code))
@@ -421,11 +444,17 @@ def _sorting_callback(x, y):
     else:
         return 0
 
+class Group(object):
+    def __init__(self, name):
+        self.state = STATE_STOPPED
+        self.commands = []
+
 class Master(object):
     def __init__(self):
         global _commands
         reactor.callLater(0.025, self._cl)
         self.commands = _commands
+        self.groups = {"default": Group("default")}
     
     def _cl(self):
         """
@@ -433,10 +462,10 @@ class Master(object):
         """
         self.start_all()
 
-    def start_all(self):
+    def start_all(self, group_name=None):
+        groups = self._get_all_in_group(group_name)
         i = 0 # for default identifiers
-        
-        for group in self.commands.iterkeys():
+        for group in groups:
             commands_in_group = self.commands[group]
             commands_in_group.sort(_sorting_callback)
             for c in commands_in_group:
@@ -444,14 +473,37 @@ class Master(object):
                     c.identifier = "default-%d" % (i)
                     i += 1
                 c.start() # FIXME TODO: sleep between each !!!!
+    
+    def _get_all_in_group(self, group_name=None):
+        """
+        If group_name is None, returns all groups.
+        """
+        if group_name is not None:
+            groups = [self.commands[group_name]] # a 1-element list
+        else:
+            groups = self.commands.keys()
+        return groups
+    
+    def stop_all(self, group_name=None):
+        groups = self._get_all_in_group(group_name)
+        for group in groups:
+            commands_in_group = self.commands[group]
+            commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
+            for c in commands_in_group:
+                s.enabled = False
+                # TODO: callLaters...
+                c.stop()
 
-    def stop_all(self):
-        for group in self.commands.iterkeys():
+    def restart_all(self, group_name=None):
+        groups = self._get_all_in_group(group_name)
+        for group in groups:
             commands_in_group = self.commands[group]
             commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
             for c in commands_in_group:
                 s.enabled = False
                 c.stop()
+            all = self.commands[group_name]
+            iterator = iter(all)
 
     def quit_master(self):
         """

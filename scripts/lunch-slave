@@ -263,7 +263,7 @@ class Slave(object):
             shell = "/bin/bash"
         self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
         self.pid = self._process_transport.pid
-        self.log("Spawned process %s. pid: %s" % (self.identifier, self.pid))
+        self.log("Spawned child %s with pid %s." % (self.identifier, self.pid))
     
     def _on_connection_made(self):
         if not STATE_STARTING:
@@ -378,7 +378,7 @@ class SlaveIO(basic.LineReceiver):
     def lineReceived(self, line):
         """
         Commands are in the form "command arg"
-        Answers are in the form "key: message"
+        Answers are in the form "key message"
         """
         if line == "": 
             return
