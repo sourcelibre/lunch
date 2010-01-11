@@ -258,7 +258,7 @@ class Command(object):
     def recv_error(self, mess):
         log.msg("%8s: %s" % (self.identifier, mess), logging.ERROR)
     
-    def rec_died(self, mess):
+    def recv_died(self, mess):
         log.msg("%8s: %s" % (self.identifier, "DIED"), logging.ERROR)
     
     def recv_pong(self, mess):
