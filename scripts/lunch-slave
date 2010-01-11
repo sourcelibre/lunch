@@ -29,6 +29,7 @@ import sys
 import logging
 
 from twisted.internet import protocol
+from twisted.internet import error
 from twisted.internet import reactor
 from twisted.internet import stdio
 from twisted.protocols import basic
@@ -141,24 +142,45 @@ class Slave(object):
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
+        self._process_transport = None
+        self._child_process = None
+        self._stdout_file = None
         self.state = STATE_STOPPED
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
         self.options = {
             "clear-old-logs": True,
+            "delay_kill": 5.0, # seconds
             }
         self.identifier = identifier # title
         self.env = {} # environment variables for the child process
         if env is not None:
             self.env.update(env)
         self.log_dir = os.path.join(os.getcwd(), "lunch_log")
-        self._stdout_file = None
         self.pid = None
         self.log_callbacks = []
         if self.identifier is None:
             self.identifier = "default"
         self.log_level = logging.DEBUG
         #TODO: use reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown) to make sure that the process is dead before quitting.
+    
+    def is_alive(self):
+        """
+        Checks if the child is alive.
+        """
+        #TODO Use this
+        if self.state == STATE_RUNNING:
+            proc = self._process_transport
+            try:
+                proc.signalProcess(0)
+            except (OSError, error.ProcessExitedAlready):
+                msg = "Lost process %s. Error sending it an empty signal." % (self.identifier)
+                self.io_protocol.send_error(msg)
+                return False
+            else:
+                return True
+        else:
+            return False
     
     def start(self):
         """
@@ -230,7 +252,8 @@ class Slave(object):
         if os.path.exists("/bin/bash"):
             shell = "/bin/bash"
         self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
-        self.log("Spawned process %s." % (self.identifier))
+        self.pid = self._process_transport.pid
+        self.log("Spawned process %s. pid: %s" % (self.identifier, self.pid))
     
     def _on_connection_made(self):
         if not STATE_STARTING:
@@ -241,28 +264,44 @@ class Slave(object):
         """
         Stops the child process
         """
+        def _later_check(self, pid):
+            if self.pid == pid:
+                if self.state in [STATE_STOPPING]:
+                    self.io_protocol.send_error("Child process not dead.")
+                    self.stop() # KILL
+                elif self.state in [STATE_STOPPED]:
+                    msg = "Successfully killed process after least than the %f seconds. State is %s." % (self.options["delay_kill"], self.state)
+                    self.log(msg)
+        
         # TODO: do callLater calls to check if the process is still running or not.
         #see twisted.internet.process._BaseProcess.reapProcess
+        signal_to_send = None
         if self.state in [STATE_RUNNING, STATE_STARTING]:
             self.set_state(STATE_STOPPING)
-            self.log('Will stop process. kill -15')
-            try:
-                self._process_transport.signalProcess(15) # signal.SIGTERM
-            except OSError, e:
-                self.log("Error sending SIGINT. %s" % (e))
-            #TODO: later, make sure it is correctly killed.
-            self._process_transport.loseConnection()
+            self.log('Will stop process using SIGTERM.')
+            signal_to_send = 15 #"TERM"
+            # closing files handles in _on_process_ended
+            reactor.callLater(self.options["delay_kill"], _later_check, self, self.pid) # XXX important.
         elif self.state == STATE_STOPPING:
-            self.log('Trying to kill again the child process. Using kill -9.')
-            try:
-                self._process_transport.signalProcess(9) # signal.SIGKILL
-            except OSError, e:
-                self.log("Error sending SIGKILL. %s" % (e))
+            self.log('Trying to kill again the child process using SIGKILL.')
+            signal_to_send = 8 #"KILL"
+            # _on_process_ended will probably be called, this time.
         else: # STOPPED
             msg = "Process is already stopped."
             self.set_state(STATE_STOPPED)
             self.io_protocol.send_error(msg)
             return
+        if signal_to_send is not None:
+            try:
+                self._process_transport.signalProcess(signal_to_send)
+            except OSError, e:
+                msg = "Error sending signal %s. %s" % (signal_to_send, e)
+                self.io_protocol.send_error(msg)
+            except error.ProcessExitedAlready:
+                if signal_to_send == "TERM":
+                    msg = "Process had already exited while trying to send signal %s." % (signal_to_send)
+                    self.io_protocol.send_error(msg)
+            #TODO: later, make sure it is correctly killed.
 
     def log(self, msg, level=logging.DEBUG):
         """
@@ -282,6 +321,7 @@ class Slave(object):
                 self.log('Child process exited.')
             else:
                 self.log('Child process exited with error.')
+        self._process_transport.loseConnection() # close file handles
         self.log("Child exitted with %s" % (exit_code), logging.INFO)
         self.set_state(STATE_STOPPED)
         self.log("Closing slave's process stdout file.")

@@ -130,6 +130,7 @@ class Command(object):
     #TODO: add gid
     #TODO: add uid
     #TODO: add kill_time
+    #TODO: add time_started
     #TODO: add enabled. (for respawning or not a process, without changing its respawn attribute.
     
     def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
