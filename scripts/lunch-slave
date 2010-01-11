@@ -367,6 +367,10 @@ class SlaveIO(basic.LineReceiver):
         self.send_message("Welcome to the Lunch slave console. Type 'help' for help.")
         if self._on_log not in self.slave.log_callbacks:
             self.slave.log_callbacks.append(self._on_log)
+        self.send_ready()
+    
+    def send_ready(self):
+        self.sendLine("ready")
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)

@@ -24,6 +24,7 @@ import sys
 import logging
 
 from twisted.internet import protocol
+from twisted.internet import error
 from twisted.internet import reactor
 from twisted.internet import defer
 from twisted.python import procutils
@@ -137,7 +138,8 @@ class Command(object):
     """
     #TODO: add gid
     #TODO: add uid
-    #TODO: add kill_time
+    #TODO: add delay_kill
+    #TODO: add clear_old_logs
     #TODO: add time_started
     #TODO: add enabled. (for respawning or not a process, without changing its respawn attribute.
     
@@ -158,24 +160,26 @@ class Command(object):
         self.order = order
         self.sleep_after = sleep_after
         self.respawn = respawn
+        self.enabled = True 
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         self.log_dir = log_dir
         # ------- private attributes:
-        self.state = STATE_STOPPED # state of the Slave, not the process the slave handles
-        self.state_changed_signal = sig.Signal()
-        self.exitted_itself_signal = sig.Signal()
+        self.slave_state = STATE_STOPPED # state of the Slave, not the process the slave handles
+        self.child_state = STATE_STOPPED # state of the child process of the slave.
+        self.slave_state_changed_signal = sig.Signal()
+        self.child_state_changed_signal = sig.Signal()
         if command is None:
             raise MasterError("You must provide a command to be run.")
+            #self.send_stop()
         self._process_protocol = None
         self._process_transport = None
-        self._slave_state = STATE_STOPPED
     
     def start(self):
         """
         Starts the slave Lunch
         """
-        if self.state == STATE_RUNNING:
-            log.msg("Cannot start slave %s that is running." % (self.identifier))
+        if self.slave_state in [STATE_RUNNING, STATE_STARTING, STATE_STOPPING]:
+            log.msg("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
             return # XXX
         if self.host is None and self.user is None:
             is_remote = False # not using SSH
@@ -195,16 +199,15 @@ class Command(object):
         log.msg("Will run command %s" % (str(_command)))
         self._process_protocol = SlaveProcessProtocol(self)
         #try:
-        if True:
-            proc_path = _command[0]
-            args = _command
-            environ = {}
-            for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
-                if os.environ.has_key(key):
-                    environ[key] = os.environ[key]
-            self.set_state(STATE_STARTING)
-            log.msg("Starting: %s" % (self.identifier))
-            self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
+        proc_path = _command[0]
+        args = _command
+        environ = {}
+        for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
+            if os.environ.has_key(key):
+                environ[key] = os.environ[key]
+        self.set_slave_state(STATE_STARTING)
+        log.msg("Starting: %s" % (self.identifier))
+        self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
         txt = ""
@@ -216,18 +219,23 @@ class Command(object):
         """
         Here, we send all the commands to the slave.
         """
-        def _later(self):
-            self.send_message("do", self.command) # FIXME sends a string
-            self.send_message("ping") # for fun
-            self.send_message("env", self._format_env())
-            self.send_message("run")
-        
-        if STATE_STARTING:
-            self.set_state(STATE_RUNNING)
-            reactor.callLater(0, _later, self) 
+        if self.slave_state == STATE_STARTING:
+            self.set_slave_state(STATE_RUNNING)
         else:
             msg = "Connection made with slave %s, even if not expecting it." % (self.identifier)
             log.msg(msg, logging.ERROR)
+
+    def send_command(self):
+        self.send_message("do", self.command) # FIXME sends a string
+    
+    def send_ping(self):
+        self.send_message("ping") # for fun
+
+    def send_run(self):
+        self.send_message("run")
+        
+    def send_env(self):
+        self.send_message("env", self._format_env())
 
     def send_message(self, key, data=""):
         """
@@ -263,6 +271,7 @@ class Command(object):
     def recv_msg(self, mess):
         pass
     
+    
     def recv_log(self, mess):
         log.msg("%8s: %s" % (self.identifier, mess))
 
@@ -280,67 +289,102 @@ class Command(object):
         log.msg("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
 
     def recv_state(self, mess):
+        """
+        Received child state.
+        """
         words = mess.split(" ")
-        previous_state = self._slave_state
+        previous_state = self.child_state
         new_state = words[0]
-        self._slave_state = new_state # IMPORTANT !
-        log.msg("%8s: %s" % (self.identifier, "state: %s" % (new_state)))
-        if new_state == STATE_STOPPED:
-            log.msg("Master will now force-quit the slave %s." % (self.identifier))
-            # XXX FIXME
-            self.quit_slave() # FIXME restarts once it is dead
+        self.set_child_state(new_state) # IMPORTANT !
+        log.msg("Child %8s: %s" % (self.identifier, "state: %s" % (new_state)))
+        if new_state == STATE_STOPPED and self.enabled and self.respawn:
+            self.send_all_startup_commands()
+        elif new_state == STATE_RUNNING:
+            log.msg("Child %s is running." % (self.identifier))
+
+    def recv_ready(self, mess):
+        if self.enabled:
+            self.send_all_startup_commands()
+
+    def send_all_startup_commands(self):
+        """
+        Tells the slave to launch its child process.
+        """
+        self.send_command()
+        self.send_env()
+        self.send_ping()
+        self.send_run()
+
+    def set_child_state(self, new_state):
+        if self.child_state != new_state:
+            self.child_state = new_state
+            self.child_state_changed_signal(self.child_state)
 
     def stop(self):
         """
         Tells the slave to stop its process.
         """
-        if self._slave_state == STATE_RUNNING:
+        if self.child_state in [STATE_RUNNING, STATE_STARTING]:
             log.msg('Will stop process %s.' % (self.identifier))
-            self.send_message(COMMAND_STOP)
+            self.send_stop()
+        else:
+            msg = "Cannot stop child %s that is %s." % (self.identifier, self.child_state)
+            log.msg(msg, logging.ERROR)
+
+    def send_stop(self):
+        self.send_message("stop")
     
     def quit_slave(self):
         """
         Stops the slave Lunch
         """
-        if self.state == STATE_NOSLAVE:
-            log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.state))
-            self.state = STATE_STOPPED # FIXME
+        
+        def _cl_sigint(self):
+            def _cl_sigkill(self):
+                if self.slave_state == STATE_STOPPING:
+                    self._process_transport.signalProcess(9) # signal.SIGKILL
+                    
+            self._process_transport.signalProcess(15) # signal.SIGTERM
+        
+        if self.slave_state == STATE_STOPPED:
+            log.msg("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.slave_state), logging.ERROR)
         else:
-            if self.state in [STATE_RUNNING, STATE_STARTING]:
-                self._process_transport.signalProcess(15) # signal.SIGTERM
-                self._process_transport.loseConnection()
-                self.set_state(STATE_STOPPING)
+            if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
+                if self.child_state in [STATE_RUNNING, STATE_STARTING]:
+                    self.send_stop()
+                elif self.child_state == STATE_STOPPED:
+                    self._process_transport.signalProcess(15) # signal.SIGTERM
+                self.set_slave_state(STATE_STOPPING)
                 log.msg('Master will stop slave %s.' % (self.identifier))
-            elif self.state == STATE_STOPPING:
+            elif self.slave_state == STATE_STOPPING:
                 log.msg("kill -9 Slave %s" % (self.identifier))
-                self._process_transport.signalProcess(9) # signal.SIGKILL
             else:
-                self.state = STATE_STOPPED
+                self.slave_state = STATE_STOPPED
 
     def _on_process_ended(self, exit_code):
         #log.msg("Exit code: " % (exit_code))
-        if self.state == STATE_STARTING:
+        former_slave_state = self.slave_state
+        if former_slave_state == STATE_STARTING:
             log.msg("Slave %s died during startup." % (self.identifier), logging.ERROR)
-            self.set_state(STATE_STOPPED)
-        elif self.state == STATE_RUNNING:
+        elif former_slave_state == STATE_RUNNING:
             if exit_code == 0:
                 log.msg("Slave %s exited." % (self.identifier))
-                self.exitted_itself_signal()
             else:
                 log.msg('Slave %s exited with error %s.' % (self.identifier, exit_code))
-                self.set_state(STATE_STOPPED)
-        if self.state == STATE_STOPPING:
+        elif former_slave_state == STATE_STOPPING:
             log.msg('Slave exited as expected.')
-            self.set_state(STATE_STOPPED)
-        if self.respawn:
-            # XXX FIXME
+        self.set_slave_state(STATE_STOPPED)
+        self._process_transport.loseConnection()
+        if self.respawn and self.enabled:
             log.msg("Restarting the slave %s." % (self.identifier), logging.INFO)
             self.start()
         
-    def set_state(self, new_state):
-        if self.state != new_state:
-            self.state = new_state
-            self.state_changed_signal(self.state)
+    def set_slave_state(self, new_state):
+        log.msg("Slave %s is %s." % (self.identifier, new_state))
+        if self.slave_state != new_state:
+            self.slave_state = new_state
+            self.slave_state_changed_signal(self.slave_state)
+    
 
 # IMPORTANT global var !!
 _commands = {"default": []} # keys are group names, values are a list of Command objects.
@@ -406,7 +450,7 @@ class Master(object):
             commands_in_group = self.commands[group]
             commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
             for c in commands_in_group:
-                s.respawn = False
+                s.enabled = False
                 c.stop()
 
     def quit_master(self):
@@ -428,10 +472,10 @@ class Master(object):
                 commands_in_group = self.commands[group]
                 commands_in_group.sort(_sorting_callback) # FIXME: we should use an other sorting callback here.
                 for c in commands_in_group:
-                    if c._slave_state == STATE_RUNNING:
+                    if c.child_state == STATE_RUNNING:
                         log.msg("Slave %s is still running. Stopping it." % (c.identifier))
                         again = True
-                        c.respawn = False
+                        c.enabled = False
                         c.quit_slave()
             if time.time() >= (data["shutdown_time"]):
                 log.msg("Max shutdown time expired.", logging.ERROR)
