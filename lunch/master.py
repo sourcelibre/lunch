@@ -22,6 +22,7 @@ import os
 import time
 import sys
 import logging
+import warnings
 
 from twisted.internet import protocol
 from twisted.internet import error
@@ -411,13 +412,14 @@ class Command(object):
     def __str__(self):
         return "%s" % (self.identifier)
     
-def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
+def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
     
     Default priority is 100. The lowest the earliest.
     """
+    # TODO: remove priority and sleep kwargs in a future version
     #FIXME: Changed back identifier to title.
     #global _commands
     #log.msg("DEBUG: adding %s %s %s %s %s %s %s %s to group %s" % (command, env, host, user, order, sleep_after, respawn, log_dir, group)) # EDIT ME
@@ -427,6 +429,12 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
     if not Master.groups.has_key(group):
         log.msg("Adding group %s" % (group))
         Master.groups[group] = Group(group)
+    if sleep is not None:
+        warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
+        sleep_after = sleep
+    if priority is not None:
+        warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+        
     Master.groups[group].commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
     
     #for k, v in Master.groups.iteritems():
