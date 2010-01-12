@@ -14,3 +14,4 @@ binary-install/lunch::
 	dh_icons
 	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./scripts/lunch --output=lunch.1 
 	dh_installman lunch.1
+	dh_installdocs copyright
