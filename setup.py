@@ -9,6 +9,6 @@ setup(
     author_email="alexandre@quessy.net",
     url="https://svn.sat.qc.ca/trac/lunch",
     packages=["lunch"],
-    scripts=["scripts/lunch", "scripts/lunch-slave"]
+    scripts=["scripts/lunch", "scripts/lunch-0.1", "scripts/lunch-slave"]
     )
 
