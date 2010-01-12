@@ -317,6 +317,12 @@ def start_worker(command, vars={}, queue=None, respawn=True):
                 time.sleep(DELAY_BEFORE_LAUNCHING_AGAIN )
 
 if __name__ == "__main__":
+    # first, write lunch master's pid to file.
+    pidfile = "/tmp/lunch.pid"
+    f = open(pidfile, 'w')
+    f.write(str(os.getpid()))
+    f.close()
+    
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
     #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
     parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
