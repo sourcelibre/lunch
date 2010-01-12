@@ -19,16 +19,365 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Simply runs a process on the local machine.
+Allows specifying environment variables.
+
+Usage 
+-----
+
+Can be run as a server controlling remote computers with ssh security:: 
+ lunch
+
+Can also be run as a single process launcher in a xterm terminal.
+ lunch -c glxgears -e DISPLAY :0.0
+ 
+ ssh -X brrr xterm -e "lunch -c \"glxgears\" -e DISPLAY :0.0"
+
+Notes 
+-----
+We use lunch slave in order to add environment variables to the remote process.
+
+Lunch needs xterm, ssh and /bin/sh.
+"""
+# TODO: use log instead of print
+# TODO: create config dir/file if not found
 import os
 import sys
+import random
+from optparse import OptionParser
+import subprocess
+import multiprocessing
+import logging
+import time
 
-def _is_in_devel():
-    d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[1]
-    return d == "scripts"
+__version__ = "0.1.2"
+EPILOG = """Released under the terms of the GNU General Public License 2.
+Copyright 2009 Society for Arts and Technology."""
+DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
+It uses the following software packages : xterm, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
+Lunch itself must be installed on every host. """
+CONFIG_FILE = os.path.expanduser("~/.lunchrc")
+VERBOSE = False
+HOLD_TERMINAL = False
+RESPAWN = True # Respawn all KILL/INT/TERM'ed process
+ENABLE_MINIMUM_PROCESS_TIME = True
+DELAY_BEFORE_LAUNCHING_AGAIN = 0.1
+MINIMUM_PROCESS_TIME = 1.0 # minimum time a process must last to be considered successful
+LOGGING_ENABLED = False
+DEFAULT_LOG_FILE = "/var/tmp/lunch.log" # For slaves. In append mode, so that many slaves can write to it.
+_commands = []
+
+#class ParentKilledError(Exception):
+#    """Raised when parent is killed by ctrl-c"""
+#    pass
+
+class ChildKilledError(Exception):
+    """Raised when child is killed"""
+    pass
+
+class ExecutionFailedError(Exception):
+    """Raised when a command quickly returns an error, or when shell raises an OSError"""
+    pass
+
+def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_name=None):
+    """
+    Creates and launches a process. 
+
+    Uses subprocess to launch a process. Blocking.
+    When called, might throw a OSError or ValueError.
+    Throws a ChildKilledError if ctrl-C is pressed.
+    """
+    global VERBOSE
+    retcode = None
+    environment = {}
+    environment.update(os.environ)
+    environment.update(variables_dict)
+    log_file = None
+    if log_file_name is not None:
+        try:
+            os.remove(log_file_name) # cleans it up from last time we ran it. TAKE CARE !
+        except OSError, e:
+            pass
+        try:
+            log_file = open(log_file_name, 'a') # append mode
+        except IOError, e:
+            log_file = None
+            raise # !!!
+    try:
+        def verb(txt, log_file=None):
+            """
+            Local function
+            Writes to a log file debug messages and prints it too.
+            """
+            if log_file is not None:
+                log_file.write("%s\n" % (txt))
+                log_file.flush()
+            print(txt)
+        if VERBOSE:
+            verb("--------", log_file)
+        verb("RUNNING: %s" % (command_str), log_file)
+        p = subprocess.Popen(command_str, shell=True, env=environment, stderr=subprocess.STDOUT, stdout=log_file)
+        verb("PID: %s" % (p.pid), log_file)
+        if VERBOSE:
+            verb("ENV: %s" % (str(variables_dict)), log_file)
+            verb("--------", log_file)
+        retcode = p.wait() # blocking
+        if retcode < 0:
+            err = "EXITED: Child was terminated by signal %d. Its command was \"%s\".\n" % (retcode, command_str)
+            sys.stderr.write(err)
+        else:
+            err = "EXITED: Child returned %s Its command was \"%s\"." % (retcode, command_str)
+            verb(err, log_file)
+            sys.stderr.write(err)
+    except OSError, e:
+        err = "EXITED: Execution of child failed: %s. Its command was \"%s\"\n" % (e.message, command_str)
+        sys.stderr.write(err)
+        verb(err, log_file)
+        retcode = 1
+    except KeyboardInterrupt, e:
+        if die_on_ctrl_c:
+            msg = "INTERRUPTED: Ctrl-C has been pressed in a slave terminal. Dying. Its command was \"%s\"" % (command_str, log_file)
+            verb(msg, log_file)
+            sys.exit(1)
+        else:
+            raise ChildKilledError("INTERRUPTED: Ctrl-C has been pressed in the master's terminal and caught by a worker. Its command was \"%s\"" % (command_str))
+    except ValueError, e:
+        err = "ERROR: Wrong arguments to subprocess.Popen: %s Its command was \"%s\"" % (e.message, command_str)
+        sys.stderr.write(err)
+        raise
+    #else:
+        #print("Success\n") # retrcode is p.wait() return val
+    if log_file is not None:
+        log_file.close()
+    return retcode
+
+def run_slave(command_str, vars={}, log_file_name=DEFAULT_LOG_FILE):
+    """
+    Runs a slave. (a command (on remote host) to start a single process)
+    
+    Alias to run_command, but called from 
+    either the master on the local host of a slave "lunch" software on a remote host.
+    """
+    return run_command(command_str, vars, True, log_file_name) # Dies on ctrl-C
+
+class Command(object):
+    """
+    One command to run on a remote or local host.
+
+    Class with no method.
+    Default priority is 100
+    """
+    def __init__(self, command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.1, respawn=True, log_file=DEFAULT_LOG_FILE):
+        self.command = command
+        self.env = env
+        self.host = host
+        self.user = user
+        self.title = title
+        self.priority = priority
+        self.sleep = sleep
+        self.respawn = respawn
+        self.log_file = log_file
+
+def add_command(command="", env={}, host=None, user=None, priority=100, title="xterm_slave", sleep=0.25, respawn=True, log_file=DEFAULT_LOG_FILE):
+    """
+    This is the only function that users use from within the configuration file.
+    It adds a Command instance to the list of commands to run. 
+    
+    Default priority is 100. The lowest the earliest.
+    """
+    global _commands
+    global VERBOSE
+    if VERBOSE:
+        print("DEBUG: adding %s %s %s %s %s %s %s" % (command, env, host, user, priority, title, sleep, respawn)) # EDIT ME
+    _commands.append(Command(command=command, env=env, host=host, user=user, priority=priority, title=title, sleep=sleep, respawn=respawn, log_file=log_file)) # EDIT ME
+
+def sorting_callback(x, y):
+    """
+    Sorts Command objects using their priority attribute.
+    
+    To define a compare function for sort(), you must follow certain pattern.
+    1. Compare function must take TWO param: x and y,
+    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
+    """
+    if x.priority > y.priority:
+        return 1
+    elif x.priority < y.priority:
+        return -1
+    else:
+        return 0
+
+class FileNotFoundError(Exception):
+    """
+    Thrown when a file could not be found.
+    """
+    pass
+
+def run_master(config_file):
+    """
+    Runs the master that calls commands using ssh or so.
+
+    This happens only on the master computer.
+     * reads config file
+     * uses multiprocessing to create many workers. (calling start_worker)
+       Those worker launch the "lunch" program in a xterm terminal.
+       (maybe through ssh, if on a remote host)
+     * If ctrl-C is pressed from any worker, dies.
+    """
+    global _commands
+    if os.path.exists(config_file):
+        try:
+            execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
+        except Exception, e:
+            print("ERROR: Error in user configuration file.")
+            raise
+    else:
+        # create the directory ?
+        raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
+    # init multiprocessing
+    if LOGGING_ENABLED:
+        multiprocessing.log_to_stderr(level=logging.INFO) # level=logging.DEBUG)
+        log = multiprocessing.get_logger()
+        # log.warning("test debug")
+    workers = []
+    queue = multiprocessing.Queue()
+    _commands.sort(sorting_callback)
+    try:
+        for command in _commands:
+            user = command.user
+            host = command.host
+            title = command.title
+            log_file = command.log_file
+            cmd = command.command
+            env = "" # make str from dict
+            hold = ""
+            if HOLD_TERMINAL:
+                hold = "-hold"
+            if len(command.env) > 0:
+                for k, v in command.env.items():
+                    env += " -e %s %s " % (k, v)
+            # we use lunch slave in order to add environment variables to the remote process.
+            command_str = 'xterm -T "%s" %s -e lunch-0.1 %s -s --log-file %s -c "%s"' % (title, hold, env, log_file, cmd) 
+            if command.host is not None:
+                user_args = ""
+                if command.user is not None:
+                    user_args = "-l %s " % (command.user)
+                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch-0.1 %s -s --log-file %s -c \\"%s\\"' % (user_args, host, title, hold, env, log_file, cmd) # prepend ssh command
+                # TODO: how to escape commands properly ? 
+                # TODO: Maybe better to use sys.argv for every args after --command
+            # create server
+            process = multiprocessing.Process(group=None, target=start_worker, name=command_str, args=(command_str, os.environ, queue, command.respawn))
+            workers.append(process)
+            process.start()
+            time.sleep(command.sleep + random.random() * 0.05)
+        # waiting for a message from any child.
+        message = queue.get() # excepts the message "CTRL-C !", see below
+        raise ChildKilledError("INTERRUPTED: A worker received ctrl-C.")
+    except ChildKilledError:
+        print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
+        for worker in workers:
+            print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
+            worker.terminate()
+            #os.kill(worker.pid(), signal.SIGINT)
+    except KeyboardInterrupt:
+        print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
+        for worker in workers:
+            print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
+            worker.terminate()
+            #os.kill(worker.pid(), signal.SIGINT)
+
+def start_worker(command, vars={}, queue=None, respawn=True):
+    """ 
+    A multiprocessing worker will run as its own process 
+    """
+    # print("Starting command: " + str(command))
+    while True: # runs forever.
+        try:
+            started = time.time()
+            ret = run_command(command, vars, False) # throw an error on ctrl-C (this should be blocking)
+            if ret == 1:
+                print("Child process returned an error. Will not try to run it again. Its command was %s" % (command))
+                break
+            if ENABLE_MINIMUM_PROCESS_TIME:
+                if time.time() < (started + MINIMUM_PROCESS_TIME):
+                    print("ERROR: Process did not last long enough. Will not be run again. Its command was %s" % (command))
+                    break
+        except ChildKilledError:
+            # break
+            if queue is not None:
+                queue.put(["Ctrl-C !"]) # communicates with the master
+            # raise
+        else:
+            print("EXITED: Return value is %s" % (ret))
+            if not RESPAWN or not respawn:
+                print("DEBUG: Will not restart it.")
+                break
+            else:
+                print("DEBUG: Running it again in %f seconds." % (DELAY_BEFORE_LAUNCHING_AGAIN ))
+                time.sleep(DELAY_BEFORE_LAUNCHING_AGAIN )
 
 if __name__ == "__main__":
-    if _is_in_devel():
-        d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
-        sys.path.insert(0, d)
-    from lunch import runner
-    runner.run()
+    parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
+    #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
+    parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
+    parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
+    parser.add_option("-H", "--hold", action="store_true", help="Hold the xterm terminal window once it quit.")
+    parser.add_option("-t", "--minimum-time", type="float", help="Sets the minimum time that a process must last to be considered crashed. Only in slave mode for now. Default is %f seconds." % (MINIMUM_PROCESS_TIME))
+    parser.add_option("-R", "--no-respawn", action="store_true", help="Do not respawn processes when they die.")
+    parser.add_option("-v", "--verbose", action="store_true", help="Run in the verbose mode.")
+    parser.add_option("-c", "--command", type="string", help="Command to execute. This options is mandatory when in slave mode.")
+    parser.add_option("-e", "--environment", action="append", nargs=2, help="Sets an environment variable with key/value pair.")
+    parser.add_option("-f", "--config-file", type="string", help="If run as master, specifies the python config file.")
+    parser.add_option("-l", "--log-file", type="string", help="If run as slave, specifies the log file to write to. WARNING : That file will be removed and written to it with the children standard output. You can read this file with the command 'tail -F %s'" % (DEFAULT_LOG_FILE), default=DEFAULT_LOG_FILE)
+    (options, args) = parser.parse_args()
+    if options.minimum_time:
+        MINIMUM_PROCESS_TIME = options.minimum_time
+    if options.hold:
+        HOLD_TERMINAL = True
+    if options.disable_minimum_process_time:
+        MINIMUM_PROCESS_TIME = False
+    if options.verbose:
+        VERBOSE = True
+    if options.no_respawn:
+        RESPAWN = False
+    #if not options.master or 
+    if options.slave: # run as SLAVE
+        #if len(args) == 0:
+        if not options.command:
+            print("lunch --slave: You must provide a command to execute. Try -h to get help.")
+            parser.print_usage()
+            sys.exit(1)
+        else:
+            print("Running Lunch as a slave to launch a single process.")
+            # command = " ".join(args)
+            log_file_name = options.log_file
+            command = options.command
+            variables_dict = {} # dict of environment variables
+            if options.environment:
+                variables_dict = options.environment
+            print("Additional environment variables: %s" % (str(variables_dict)))
+            ret = run_slave(command, variables_dict, log_file_name)
+    else: # run as MASTER
+        #if options.command or 
+        if options.environment:
+            print("Environment variables can only be set when run in slave mode.")
+            parser.print_usage()
+            sys.exit(1)
+        else:
+            # run_master(CONFIG_FILE)
+            # you can now provide a config file as an argument. (without -f)
+            config_file = options.config_file
+            if len(args) == 1 and not options.config_file: 
+                # and not options.config_file == CONFIG_FILE: 
+                print("DEBUG: overriding config_file with %s" % (args[0])) 
+                config_file = args[0] 
+            else:
+                config_file = CONFIG_FILE # default value
+            try:
+                print("DEBUG: using config_file %s" % (config_file))
+                run_master(config_file)
+            except FileNotFoundError, e:
+                print("Error starting lunch as master.")
+                print(e.message)
+                print("A configuration file is missing. Try the --help flag.")
+                sys.exit(1)

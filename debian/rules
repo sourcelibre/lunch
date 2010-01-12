@@ -12,5 +12,5 @@ binary-install/lunch::
 	convert -geometry 48x48 -background none lunch.svg lunch.png
 	dh_install lunch.png usr/share/pixmaps
 	dh_icons
-	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./bin/lunch --output=lunch.1 
+	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./scripts/lunch --output=lunch.1 
 	dh_installman lunch.1
