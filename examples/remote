@@ -8,11 +8,10 @@
 # The following variables are only there to simplify test.
 #
 _host = "brrr" # Remote host for example tests.
-_user = "aalex" # Remote user for example tests.
 
 # local:
 add_command("xlogo", title="local_xlogo")
 add_command("xeyes", title="local_xeyes")
 
 # remote: (on remote host's display)
-add_command("xlogo", env={"DISPLAY":":0.0"}, host=_host, user=_user, title="remote_xlogo")
+add_command("xlogo", env={"DISPLAY":":0.0"}, host=_host, title="remote_xlogo")

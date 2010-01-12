@@ -202,6 +202,7 @@ class Command(object):
             _command = ["ssh"]
             if self.user is not None:
                 _command.extend(["-l", self.user])
+            _command.extend([self.host])
             _command.extend(["lunch-slave", "--id", self.identifier])
             # I hope you put your SSH key on the remote host !
             # FIXME: we should pop-up a terminal if keys are not set up.
