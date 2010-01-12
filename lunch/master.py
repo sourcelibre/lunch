@@ -178,8 +178,8 @@ class Command(object):
 
         # the slave log file
         slave_log_file = "slave-%s.log" % (self.identifier)
-        slave_log_subdir = "lunch_log"
-        slave_log_dir = os.path.join(os.getcwd(), slave_log_subdir)
+        SLAVE_LOG_SUBDIR = "lunch_log"
+        slave_log_dir = os.path.join(os.getcwd(), SLAVE_LOG_SUBDIR)
         if not os.path.exists(slave_log_dir):
             try:
                 os.makedirs(slave_log_dir)
@@ -424,7 +424,7 @@ class Command(object):
         
     def log(self, msg, level=logging.DEBUG):
         """Logs both to the slave's log file, and to the main app log. """
-        prefix = time.strftime("%c", time.localtime())
+        prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         self.slave_logger.write("%s %s\n" % (prefix, msg))
         self.slave_logger.flush()
         log.msg(msg, level)
@@ -469,24 +469,6 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         Master.i += 1
     Master.groups[group].commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
     
-    #for k, v in Master.groups.iteritems():
-    #    print str(k), str(v)
-
-#def _sorting_callback(x, y):
-#    """
-#    Sorts Command objects using their order attribute.
-#    
-#    To define a compare function for sort(), you must follow certain pattern.
-#    1. Compare function must take TWO param: x and y,
-#    2. It should return positive number if x > y, return negative number if x< y and return 0 if they are equal for Ascending sort.
-#    """
-#    if x.order > y.order:
-#        return 1
-#    elif x.order < y.order:
-#        return -1
-#    else:
-#        return 0
-
 class Group(object):
     """
     A group contains commands.

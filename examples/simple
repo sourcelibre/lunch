@@ -1,0 +1,4 @@
+add_command("/usr/lib/xscreensaver/polytopes")
+add_command("glxgears")
+add_command("xlogo")
+add_command("xeyes -geometry 240x320")
