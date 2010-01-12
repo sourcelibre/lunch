@@ -1,0 +1,5 @@
+# starts 3 xeyes, sleeps 2 seconds, and start xlogo
+add_command("xeyes")
+add_command("xeyes")
+add_command("xeyes", sleep_after=2.0)
+add_command("xlogo")
