@@ -273,11 +273,19 @@ class Command(object):
         #self.log("%8s: %s" % (self.identifier, line))
         
         try:
-            key = line.split(" ")[0]
+            words = line.split(" ")
+            key = words[0]
             mess = line[len(key) + 1:]
         except IndexError, e:
             self.log("Index error parsing message from slave. %s" % (e), logging.ERROR)
         else:
+            try:
+                if words[1] == "password:":
+                    self.log(line)
+                    self.log("SSH ERROR: Trying to connect using SSH, but the SSH server is asking for a password.")
+                    return
+            except IndexError:
+                pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
             if key not in ["do", "env", "run"]: # FIXME: receiving in stdin what we send to stdin slave !!!
