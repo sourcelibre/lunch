@@ -1,3 +1,9 @@
+lunch (0.2.1) unstable; urgency=low
+
+  * Improved backward-compatibility with scripts made with version 0.1
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Tue, 12 Jan 2010 09:13:00 -0500
+
 lunch (0.2.0) unstable; urgency=low
 
   * Ported to Twisted
