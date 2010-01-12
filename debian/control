@@ -11,8 +11,11 @@ Package: lunch
 Architecture: all
 XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends}, python (>= 2.4), python-central (>= 0.6.7), python-dev, openssh-client, openssh-server 
+Recommends: python-multiprocessing
 Description: The Lunch Distributed Process Manager.
  .
  Lunch is a simple distributed process manager for GNU/Linux.
  .
  See http://svn.sat.qc.ca/trac/lunch for more informations.
+ . 
+ It actually requires the python-multiprocessing package, but if it is not available, install it using easy_install multiprocessing.

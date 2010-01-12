@@ -1,6 +1,7 @@
 lunch (0.1.6) unstable; urgency=low
 
-  * Merged back to a single file
+  * Added the lunch.pid file
+  * Merged back executable to a single file
 
  -- Alexandre Quessy <alexandre@quessy.net> Wed, 06 Jan 2010 10:24:41 -0500
 
