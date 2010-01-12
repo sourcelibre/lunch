@@ -51,7 +51,7 @@ import multiprocessing
 import logging
 import time
 
-__version__ = "0.1.2"
+__version__ = "0.1.7"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
@@ -257,12 +257,12 @@ def run_master(config_file):
                 for k, v in command.env.items():
                     env += " -e %s %s " % (k, v)
             # we use lunch slave in order to add environment variables to the remote process.
-            command_str = 'xterm -T "%s" %s -e lunch-0.1 %s -s --log-file %s -c "%s"' % (title, hold, env, log_file, cmd) 
+            command_str = 'xterm -T "%s" %s -e lunch %s -s --log-file %s -c "%s"' % (title, hold, env, log_file, cmd) 
             if command.host is not None:
                 user_args = ""
                 if command.user is not None:
                     user_args = "-l %s " % (command.user)
-                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch-0.1 %s -s --log-file %s -c \\"%s\\"' % (user_args, host, title, hold, env, log_file, cmd) # prepend ssh command
+                command_str = 'ssh -X %s %s xterm -T "%s" %s -e lunch %s -s --log-file %s -c \\"%s\\"' % (user_args, host, title, hold, env, log_file, cmd) # prepend ssh command
                 # TODO: how to escape commands properly ? 
                 # TODO: Maybe better to use sys.argv for every args after --command
             # create server
