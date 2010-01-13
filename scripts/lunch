@@ -51,7 +51,7 @@ import multiprocessing
 import logging
 import time
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
@@ -328,7 +328,7 @@ def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
     f.close()
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
+    parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
     parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
     parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the xterm terminal window once it quit.")

@@ -1,12 +1,12 @@
 all:
 	@echo Usage:
 	@echo sudo make install
-	help2man -N -n "The Lunch Distributed Process Manager" bin/lunch > lunch.1
+	help2man -N -i man_lunch.txt -n "The Lunch Distributed Process Manager" scripts/lunch > lunch.1
 	convert -geometry 48x48 -background none lunch.svg lunch.png
 	python setup.py build
 	
 install: all
-	install bin/lunch /usr/local/bin/lunch
+	install scripts/lunch /usr/local/bin/lunch
 	install lunch.desktop /usr/local/share/applications/
 	mkdir -p /usr/local/share/pixmaps/
 	install lunch.png /usr/local/share/pixmaps/
