@@ -8,6 +8,7 @@ all:
 	
 install: all
 	install scripts/lunch /usr/local/bin/lunch
+	install scripts/lunch-slave /usr/local/bin/lunch-slave
 	install lunch.desktop /usr/local/share/applications/
 	mkdir -p /usr/local/share/pixmaps/
 	install lunch.png /usr/local/share/pixmaps/
@@ -31,9 +32,6 @@ doc: all
 clean:
 	rm -f lunch-readme.html lunch.html lunchc lunch.1 lunch-slave.1 lunch.png
 	rm -rf html
-
-deb:
-	dpkg-buildpackage -r 
 
 check:
 	trial lunch/test
