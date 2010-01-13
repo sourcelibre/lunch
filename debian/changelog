@@ -1,3 +1,14 @@
+lunch (0.1.8) unstable; urgency=low
+
+  * adding a whole bunch of kills wo try to make the slave die when killing
+    programatically the master
+  * Fixed mistakes in writing pidfile.
+  * Adding copyright file. Installing it.
+  * Making the lunch.desktop file executable.
+  * Improved the man page.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Wed, 13 Jan 2010 16:22:48 -0500
+
 lunch (0.1.7) unstable; urgency=low
 
   * Fixed critical error with executable name.
