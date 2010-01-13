@@ -189,6 +189,7 @@ class Command(object):
             _command = ["ssh"]
             if self.user is not None:
                 _command.extend(["-l", self.user])
+            _command.extend([self.host])
             _command.extend(["lunch-slave", "--id", self.identifier])
             # I hope you put your SSH key on the remote host !
             # FIXME: we should pop-up a terminal if keys are not set up.
@@ -196,15 +197,16 @@ class Command(object):
             _command[0] = procutils.which(_command[0])[0]
         except IndexError:
             raise MasterError("Could not find path of executable %s." % (_command[0]))
-        log.msg("Will run command %s" % (str(_command)))
+        log.msg("Will run command: %s" % (" ".join(_command)))
         self._process_protocol = SlaveProcessProtocol(self)
         #try:
         proc_path = _command[0]
         args = _command
         environ = {}
-        for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
-            if os.environ.has_key(key):
-                environ[key] = os.environ[key]
+        environ.update(os.environ)
+        #for key in ['HOME', 'DISPLAY', 'PATH']: # passing a few env vars
+        #    if os.environ.has_key(key):
+        #        environ[key] = os.environ[key]
         self.set_slave_state(STATE_STARTING)
         log.msg("Starting: %s" % (self.identifier))
         self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
@@ -265,6 +267,7 @@ class Command(object):
                 method = getattr(self, 'recv_' + key)
             except AttributeError, e:
                 log.msg('No callback for "%s" got from slave %s.' % (key, self.identifier), logging.ERROR)
+                log.msg('Got: %s' % (line))
             else:
                 method(mess)
 
