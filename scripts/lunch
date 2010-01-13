@@ -316,15 +316,20 @@ def start_worker(command, vars={}, queue=None, respawn=True):
                 print("DEBUG: Running it again in %f seconds." % (DELAY_BEFORE_LAUNCHING_AGAIN ))
                 time.sleep(DELAY_BEFORE_LAUNCHING_AGAIN )
 
-if __name__ == "__main__":
-    # first, write lunch master's pid to file.
-    pidfile = "/tmp/lunch.pid"
+def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
+    if config_file_name != "lunchrc":
+        config_file_name = os.path.split(config_file_name)[1] # remove dir name
+        # TODO: remote non-alnum chars in config_file_name
+    prefix = "lunch-master-%s.pid" % (config_file_name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    os.path.join(directory, file_name)
     f = open(pidfile, 'w')
     f.write(str(os.getpid()))
     f.close()
-    
+
+if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]", version="%prog " + __version__, epilog=EPILOG, description=DESCRIPTION)
-    #parser.add_option("-m", "--master", action="store_true", help="Run as master lunch server.")
     parser.add_option("-s", "--slave", action="store_true", help="Run in slave mode to launch a single process. The --command option is mandatory when in slave mode.")
     parser.add_option("-d", "--disable-minimum-process-time", action="store_true", help="Restart process even if it did not long last.")
     parser.add_option("-H", "--hold", action="store_true", help="Hold the xterm terminal window once it quit.")
@@ -346,7 +351,6 @@ if __name__ == "__main__":
         VERBOSE = True
     if options.no_respawn:
         RESPAWN = False
-    #if not options.master or 
     if options.slave: # run as SLAVE
         #if len(args) == 0:
         if not options.command:
@@ -364,13 +368,11 @@ if __name__ == "__main__":
             print("Additional environment variables: %s" % (str(variables_dict)))
             ret = run_slave(command, variables_dict, log_file_name)
     else: # run as MASTER
-        #if options.command or 
         if options.environment:
             print("Environment variables can only be set when run in slave mode.")
             parser.print_usage()
             sys.exit(1)
         else:
-            # run_master(CONFIG_FILE)
             # you can now provide a config file as an argument. (without -f)
             config_file = options.config_file
             if len(args) == 1 and not options.config_file: 
@@ -379,6 +381,8 @@ if __name__ == "__main__":
                 config_file = args[0] 
             else:
                 config_file = CONFIG_FILE # default value
+            # write our pid in a file
+            write_master_pid_file(config_file)
             try:
                 print("DEBUG: using config_file %s" % (config_file))
                 run_master(config_file)
