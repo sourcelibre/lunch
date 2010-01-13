@@ -634,6 +634,7 @@ class Master(object):
 def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
     config_file_name = os.path.split(config_file_name)[1] # remove dir name
     # TODO: remote non-alnum chars in config_file_name
+    config_file_name = config_file_name.replace(".", "") # getting rid of the dot in file name
     file_name = "lunch-master-%s.pid" % (config_file_name)
     if not os.path.exists(directory):
         os.makedirs(directory)
