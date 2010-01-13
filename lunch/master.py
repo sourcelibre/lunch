@@ -342,7 +342,11 @@ class Command(object):
         self.set_child_state(new_state) # IMPORTANT !
         self.log("Child %8s: %s" % (self.identifier, "state: %s" % (new_state)))
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
-            self.send_all_startup_commands()
+            child_running_time = float(words[1])
+            if child_running_time < self.minimum_lifetime_to_respawn:
+                self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
+            else:
+                self.send_all_startup_commands()
         elif new_state == STATE_RUNNING:
             self.log("Child %s is running." % (self.identifier))
 
