@@ -1,12 +1,14 @@
-# Example lunch configuration file which launches one command on a remote host using SSH.
-# The two other commands are lauched locally.
+#!/usr/bin/env python
+# lunch example config file.
+# Copy this to ~/.lunchrc
+#
+# In this example, we run a command on a remote host, via SSH.
 
-HOST = "brrr" # Remote host for example
-USER = "miville" # Remote user for example
+HOST = "brrr"
+USER = "miville"
 
 # local:
 add_command("xlogo", title="local_xlogo")
 add_command("xeyes", title="local_xeyes")
-
 # remote: (on remote host's display)
-add_command("xlogo", env={"DISPLAY":":0.0"}, host=HOST, user=USER, title="remote_xlogo")
+add_command("xeyes", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xeyes")
