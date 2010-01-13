@@ -603,6 +603,19 @@ class Master(object):
         _later(self, _shutdown_data)
         return deferred
 
+def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
+    config_file_name = os.path.split(config_file_name)[1] # remove dir name
+    # TODO: remote non-alnum chars in config_file_name
+    file_name = "lunch-master-%s.pid" % (config_file_name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    pid_file = os.path.join(directory, file_name)
+    f = open(pid_file, 'w')
+    f.write(str(os.getpid()))
+    f.close()
+
+
+
 def run_master(config_file):
     """
     Runs the master that calls commands using ssh or so.
@@ -615,6 +628,7 @@ def run_master(config_file):
      * If ctrl-C is pressed from any worker, dies.
     @rettype Master
     """
+    write_master_pid_file(config_file)
     start_logging()
     global _commands
     if os.path.exists(config_file):
