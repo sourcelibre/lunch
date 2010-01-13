@@ -1,8 +1,9 @@
 lunch (0.2.2) unstable; urgency=low
 
   * Fixed error with SSH keys not being used, since env vars were not passed.
+  * Implemented minimal childs lifetime to restart.
 
- -- Alexandre Quessy <alexandre@quessy.net>  Wed, 13 Jan 2010 15:02:01 -0500
+ -- Alexandre Quessy <alexandre@quessy.net>  Wed, 13 Jan 2010 16:10:24 -0500
 
 lunch (0.2.1) unstable; urgency=low
 
