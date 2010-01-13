@@ -197,7 +197,7 @@ class Command(object):
             _command[0] = procutils.which(_command[0])[0]
         except IndexError:
             raise MasterError("Could not find path of executable %s." % (_command[0]))
-        log.msg("Will run command %s" % (str(_command)))
+        log.msg("Will run command: %s" % (" ".join(_command)))
         self._process_protocol = SlaveProcessProtocol(self)
         #try:
         proc_path = _command[0]
@@ -267,6 +267,7 @@ class Command(object):
                 method = getattr(self, 'recv_' + key)
             except AttributeError, e:
                 log.msg('No callback for "%s" got from slave %s.' % (key, self.identifier), logging.ERROR)
+                log.msg('Got: %s' % (line))
             else:
                 method(mess)
 
