@@ -15,5 +15,9 @@ Lunch can be run either as a master or a slave. If run as a master, it launches 
 The pid of the master is written to a file located in /tmp/lunch-master*.pid, where * varies depending on the lunch config file used to configure the master.
 Use kill -2 $(cat lunch-master-*.pid) to kill the lunch masters on your system.
 
-The lunch config file is written in the Python programming language, and must call the add_command function. See https://svn.sat.qc.ca/lunch for help and documentation.
+The lunch config file is written in the Python programming language, and must call the add_command function. 
+
+[SEE ALSO]
+See https://svn.sat.qc.ca/lunch for help and documentation.
+
 Join the #propulseart IRC channel on irc.freenode.net for live support.
