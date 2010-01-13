@@ -55,7 +55,7 @@ __version__ = "0.1.8"
 EPILOG = """Released under the terms of the GNU General Public License 2.
 Copyright 2009 Society for Arts and Technology."""
 DESCRIPTION = """Lunch is a distributed process launcher for GNU/Linux. 
-It uses the following software packages : xterm, ssh (configured using ssh-keygen, ssh-agent and ssh-keyinstall). 
+It uses the following software packages : xterm, ssh (configured using ssh-keygen, ssh-agent and ssh-copy-id). 
 Lunch itself must be installed on every host. """
 CONFIG_FILE = os.path.expanduser("~/.lunchrc")
 VERBOSE = False
