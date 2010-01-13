@@ -139,8 +139,14 @@ def run_command(command_str, variables_dict={}, die_on_ctrl_c=True, log_file_nam
         if die_on_ctrl_c:
             msg = "INTERRUPTED: Ctrl-C has been pressed in a slave terminal. Dying. Its command was \"%s\"" % (command_str, log_file)
             verb(msg, log_file)
+            print("kill -15 %s" % (p.pid))
+            p.terminate()
             sys.exit(1)
         else:
+            msg = "INTERRUPTED: Ctrl-C has been pressed in while running a child process. Notifying the master."
+            verb(msg, log_file)
+            print("kill -15 %s" % (p.pid))
+            p.terminate()
             raise ChildKilledError("INTERRUPTED: Ctrl-C has been pressed in the master's terminal and caught by a worker. Its command was \"%s\"" % (command_str))
     except ValueError, e:
         err = "ERROR: Wrong arguments to subprocess.Popen: %s Its command was \"%s\"" % (e.message, command_str)
@@ -277,12 +283,14 @@ def run_master(config_file):
         print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
         for worker in workers:
             print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
+            os.kill(worker.pid, 2) # send it SIGINT
             worker.terminate()
             #os.kill(worker.pid(), signal.SIGINT)
     except KeyboardInterrupt:
         print("INTERRUPTED: !!! Ctrl-C was pressed in master. !!!")
         for worker in workers:
             print("EXITING: Terminating worker. Its command was: %s" % (worker.name))
+            os.kill(worker.pid, 2) # send it SIGINT
             worker.terminate()
             #os.kill(worker.pid(), signal.SIGINT)
 
