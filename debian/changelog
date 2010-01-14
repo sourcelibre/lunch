@@ -1,3 +1,9 @@
+lunch (0.2.4-1) unstable; urgency=low
+
+  * Fixed lunch-slave which was not creating logging directory as expected.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Thu, 14 Jan 2010 15:24:18 -0500
+
 lunch (0.2.3) unstable; urgency=low
 
   * Added the add_local_address function to disable SSH for the given address.
