@@ -288,14 +288,16 @@ class Command(object):
                 pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
-            if key not in ["do", "env", "run"]: # FIXME: receiving in stdin what we send to stdin slave !!!
-                self.log(line)
-            try:
-                method = getattr(self, 'recv_' + key)
-            except AttributeError, e:
-                self.log('No callback for "%s" got from slave %s. Got: %s' % (key, self.identifier, line), logging.ERROR)
+            if key in ["do", "env", "run"]: # FIXME: receiving in stdin what we send to stdin slave !!!
+                warnings.warn("We receive from the slave's stdout what we send to its stdin !")
             else:
-                method(mess)
+                try:
+                    method = getattr(self, 'recv_' + key)
+                except AttributeError, e:
+                    self.log('No callback for "%s" got from slave %s. Got: %s' % (key, self.identifier, line), logging.ERROR)
+                    self.log(line)
+                else:
+                    method(mess)
 
     def recv_ok(self, mess):
         """
@@ -477,14 +479,15 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
     # check if addr is local, set it to none if so.
     if host in Master.local_addresses:
-        host = None    
-        # TODO: Set gid if user is not None...
-    
+        log.msg("Filtering out host %s since it is in list of local addresses." % (host))
+        _host = None    
+    else:
+        _host = host
     # set default names if they are none:
     if title is None:
         title = "default-%d" % (Master.i)
         Master.i += 1
-    Master.groups[group].commands.append(Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
+    Master.groups[group].commands.append(Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
     
 class Group(object):
     """
@@ -630,6 +633,9 @@ class Master(object):
         reactor.stop()
 
     def before_shutdown(self):
+        """
+        Called before Twisted's shutdown. (end of master process)
+        """
         now = time.time()
         _shutdown_data = {
                 "shutdown_started" : now,
@@ -657,6 +663,9 @@ class Master(object):
         return deferred
 
 def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
+    """
+    Writes master's PID in a file.
+    """
     config_file_name = os.path.split(config_file_name)[1] # remove dir name
     # TODO: remote non-alnum chars in config_file_name
     config_file_name = config_file_name.replace(".", "") # getting rid of the dot in file name
@@ -667,8 +676,6 @@ def write_master_pid_file(config_file_name="lunchrc", directory="/tmp"):
     f = open(pid_file, 'w')
     f.write(str(os.getpid()))
     f.close()
-
-
 
 def run_master(config_file):
     """
@@ -684,6 +691,7 @@ def run_master(config_file):
     """
     write_master_pid_file(config_file)
     start_logging()
+    log.msg("Using lunch master module %s" % (__file__))
     global _commands
     if os.path.exists(config_file):
         try:
