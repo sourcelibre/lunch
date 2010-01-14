@@ -1,12 +1,14 @@
 [OPERATION]
-Lunch can be run either as a master or a slave. If run as a master, it launches slaves. The slaves are responsible for launching child processes.
+The lunch executable is called the lunch master. The lunch-slave executable is called the lunch slave. If run as a master, it launches slaves. The slaves are responsible for launching child processes. The master laucnhes slaves (via SSH or not) which, in turn, launch child processes.
 
-The Lunch configuration file can be provided as a argument to the lunch command. If not given, the Lunch master will look for the ~/.lunchrc file. If not found, lunch will print an error and exit. The lunch config file is written in the Python programming language, and must call the add_command function. 
+The Lunch configuration file can be provided as a argument to the lunch executable. If not given, the Lunch master will look for the ~/.lunchrc file. If not found, lunch will print an error and exit. The lunch config file is written in the Python programming language, and must call the add_command function. 
 
-The pid of the master is written to a file located in /tmp/lunch-master*.pid, where * varies depending on the lunch config file used to configure the master.
+The pid of the master is written to a file located in /var/tmp/lunch/master*.pid, where * varies depending on the lunch config file used to configure the master.
 Here is how to kill every lunch master on your system :
 
-  for f in /tmp/lunch-master-*pid; do kill -15 $(cat $f); done
+  for f in /var/tmp/lunch/master-*.pid; do kill -15 $(cat $f); done
+
+The 
 
 [EXAMPLES]
 
