@@ -164,7 +164,13 @@ class Command(object):
         self.respawn = respawn
         self.enabled = True 
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
-        self.log_dir = log_dir
+        if log_dir is None:
+            log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
+            # XXX: used to be something like:
+            #SLAVE_LOG_SUBDIR = "lunch_log"
+            #slave_log_dir = os.path.join(os.getcwd(), SLAVE_LOG_SUBDIR)
+        self.child_log_dir = log_dir # for both slave and child. If not set, defaults to $PWD/lunch_log
+        self.slave_log_dir = self.child_log_dir
         # ------- private attributes:
         self.slave_state = STATE_STOPPED # state of the Slave, not the process the slave handles
         self.child_state = STATE_STOPPED # state of the child process of the slave.
@@ -175,17 +181,15 @@ class Command(object):
             #self.send_stop()
         self._process_protocol = None
         self._process_transport = None
-
+        
         # the slave log file
         slave_log_file = "slave-%s.log" % (self.identifier)
-        SLAVE_LOG_SUBDIR = "lunch_log"
-        slave_log_dir = os.path.join(os.getcwd(), SLAVE_LOG_SUBDIR)
-        if not os.path.exists(slave_log_dir):
+        if not os.path.exists(self.slave_log_dir):
             try:
-                os.makedirs(slave_log_dir)
+                os.makedirs(self.slave_log_dir)
             except OSError, e:
                 raise MasterError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
-        self.slave_logger = logfile.LogFile(slave_log_file, slave_log_dir)
+        self.slave_logger = logfile.LogFile(slave_log_file, self.slave_log_dir)
     
     def start(self):
         """
@@ -254,6 +258,9 @@ class Command(object):
         
     def send_env(self):
         self.send_message("env", self._format_env())
+    
+    def send_logdir(self):
+        self.send_message("logdir", self.child_log_dir)
 
     def send_message(self, key, data=""):
         """
@@ -261,7 +268,9 @@ class Command(object):
         @param key: string
         @param data: string
         """
-        self._process_transport.write("%s %s\n" % (key, data))
+        msg = "%s %s\n" % (key, data)
+        self.log("Master sends to slave: " + msg.strip())
+        self._process_transport.write(msg)
     
     def __del__(self):
         self.slave_logger.close()
@@ -289,7 +298,7 @@ class Command(object):
                 pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
-            if key in ["do", "env", "run"]: # FIXME: receiving in stdin what we send to stdin slave !!!
+            if key in ["do", "env", "run", "logdir"]: # FIXME: receiving in stdin what we send to stdin slave !!!
                 warnings.warn("We receive from the slave's stdout what we send to its stdin !")
             else:
                 try:
@@ -370,6 +379,7 @@ class Command(object):
         Sets up the environment and command so that the slave can launch the child.
         """
         self.send_do()
+        self.send_logdir()
         self.send_env()
         #self.send_ping()
         self.send_run()
