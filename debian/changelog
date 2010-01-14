@@ -1,8 +1,11 @@
 lunch (0.2.3) unstable; urgency=low
 
-  * Added the add_local_addess function to disable SSH for the given address.
+  * Added the add_local_address function to disable SSH for the given address.
+  * The log directory of the slaves and children can be specified unsing the
+    log_dir keyword argument.
+  * Added --logging-directory and --log-to-file options to master.
 
- -- Alexandre Quessy <alexandre@quessy.net>  Thu, 14 Jan 2010 12:25:53 -0500
+ -- Alexandre Quessy <alexandre@quessy.net>  Thu, 14 Jan 2010 13:59:52 -0500
 
 lunch (0.2.2) unstable; urgency=low
 

@@ -43,7 +43,7 @@ STATE_NOSLAVE = "NOSLAVE" # for master only
 
 # Keys of the commands from the master :
 
-def start_logging():
+def start_stdout_logging():
     #_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
     log.startLogging(sys.stdout)
     # usage: log.msg("qweqwe", logLevel=logging.INFO)
@@ -680,14 +680,16 @@ class Master(object):
         _later(self, _shutdown_data)
         return deferred
 
-def write_master_pid_file(config_file_name="lunchrc", directory="/var/tmp/lunch"):
+def gen_id_from_config_file_name(config_file_name="lunchrc"):
+    file_name = os.path.split(config_file_name)[1] # remove dir name
+    identifier = file_name.replace(".", "") # getting rid of the dot in file name
+    return identifier
+
+def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     """
     Writes master's PID in a file.
     """
-    config_file_name = os.path.split(config_file_name)[1] # remove dir name
-    # TODO: remote non-alnum chars in config_file_name
-    config_file_name = config_file_name.replace(".", "") # getting rid of the dot in file name
-    file_name = "master-%s.pid" % (config_file_name)
+    file_name = "master-%s.pid" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
     pid_file = os.path.join(directory, file_name)
@@ -695,7 +697,15 @@ def write_master_pid_file(config_file_name="lunchrc", directory="/var/tmp/lunch"
     f.write(str(os.getpid()))
     f.close()
 
-def run_master(config_file):
+def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
+    file_name = "master-%s.log" % (identifier)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    pid_file = os.path.join(directory, file_name)
+    _log_file = logfile.DailyLogFile(file_name, directory)
+    log.startLogging(_log_file)
+
+def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch"):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -707,8 +717,12 @@ def run_master(config_file):
      * If ctrl-C is pressed from any worker, dies.
     @rettype Master
     """
-    write_master_pid_file(config_file)
-    start_logging()
+    identifier = gen_id_from_config_file_name(config_file)
+    write_master_pid_file(identifier=identifier, directory=log_dir)
+    if log_to_file:
+        start_file_logging(identifier=identifier, directory=log_dir)
+    else:
+        start_stdout_logging()
     log.msg("Using lunch master module %s" % (__file__))
     global _commands
     if os.path.exists(config_file):
