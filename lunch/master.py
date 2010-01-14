@@ -173,8 +173,8 @@ class Command(object):
         # ------- private attributes:
         self.slave_state = STATE_STOPPED # state of the Slave, not the process the slave handles
         self.child_state = STATE_STOPPED # state of the child process of the slave.
-        self.slave_state_changed_signal = sig.Signal()
-        self.child_state_changed_signal = sig.Signal()
+        self.slave_state_changed_signal = sig.Signal() # param: self, new_state
+        self.child_state_changed_signal = sig.Signal() # param: self, new_state
         if command is None:
             raise MasterError("You must provide a command to be run.")
             #self.send_stop()
@@ -389,7 +389,7 @@ class Command(object):
         """
         if self.child_state != new_state:
             self.child_state = new_state
-            self.child_state_changed_signal(self.child_state)
+            self.child_state_changed_signal(self, self.child_state)
 
     def stop(self):
         """

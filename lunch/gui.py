@@ -50,13 +50,13 @@ class LunchApp(object):
         self.state_labels = {}
         self.start_buttons = {}
         
-        commands = master.get_all_commands()
-        for i in range(len(commands)):
-            command = commands[i]
+        self.commands = master.get_all_commands()
+        for i in range(len(self.commands)):
+            command = self.commands[i]
             self.hboxes[i] = gtk.HBox(False, 0)
             self.box1.pack_start(self.hboxes[i], True, True, 0)
 
-            self.title_labels[i] = gtk.Label("%s" % (command.title))
+            self.title_labels[i] = gtk.Label("%s" % (command.identifier))
             self.hboxes[i].pack_start(self.title_labels[i], True, True, 0)
             self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
@@ -66,17 +66,17 @@ class LunchApp(object):
             self.state_labels[i].set_width_chars(20)
             self.state_labels[i].show()
             
-            self.start_buttons[i] = gtk.Button("Stop")
-            self.hboxes[i].pack_start(self.start_buttons[i], True, True, 0)
-            self.start_buttons[i].connect("clicked", self.on_start_clicked, i)
-            self.start_buttons[i].show()
+            #self.start_buttons[i] = gtk.Button("Stop")
+            #self.hboxes[i].pack_start(self.start_buttons[i], True, True, 0)
+            #self.start_buttons[i].connect("clicked", self.on_start_clicked, i)
+            #self.start_buttons[i].show()
             
             self.hboxes[i].show()
 
-        self.stopall_button = gtk.Button("Stop All")
-        self.stopall_button.connect("clicked", self.on_stopall_clicked)
-        self.box1.pack_start(self.stopall_button, True, True, 0)
-        self.stopall_button.show()
+        #self.stopall_button = gtk.Button("Stop All")
+        #self.stopall_button.connect("clicked", self.on_stopall_clicked)
+        #self.box1.pack_start(self.stopall_button, True, True, 0)
+        #self.stopall_button.show()
 
         self.quitbutton = gtk.Button("Quit")
         self.quitbutton.connect("clicked", self.destroy)
@@ -94,7 +94,19 @@ class LunchApp(object):
         print("Toggle start/stop %d" % (info))
 
     def on_stopall_clicked(self, widget): # index as info
-        print("Stop All %d" % (info))
+        print("Stop All")
+
+    def on_command_status_changed(self, command, new_state):
+        """
+        Called when the child_state_changed_signal of the command is triggered.
+        @param command L{Command} 
+        @param new_state str
+        """
+        for i in range(len(self.commands)):
+            if command is self.commands[i]:
+                txt = new_state
+                self.state_labels[i].set_label(txt)
+        print("Command %s changed its state to %s" % (command.identifier, new_state))
 
     def destroy(self, widget, data=None):
         """
@@ -112,19 +124,34 @@ class LunchApp(object):
         """
         gtk.main()
 
+def start_gui(lunch_master):
+    """
+    Starts the GTK GUI
+    :rettype: L{LunchApp}
+    """
+    app = LunchApp(lunch_master)
+    #self.slave_state_changed_signal = sig.Signal()
+    if hasattr(lunch_master, "child_state_changed_signal"):
+        lunch_master.child_state_changed_signal.connect(app.on_command_status_changed)
+    reactor.callLater(0, app.main)
+    return app
+
 if __name__ == "__main__":
     class Command(object):
         def __init__(self):
             self.state = "RUNNING"
-            self.title = "/usr/bin/hello"
+            self.identifier = "/usr/bin/hello"
             
-    class Master(object):
+    class DummyMaster(object):
         def get_all_commands(self):
+            """
+            @rettype: list
+            """
             data = []
             for i in range(10):
                 data.append(Command())
             return data
-    dummy = Master()
-    app = LunchApp(dummy)
-    reactor.callLater(0.1, app.main)
+
+    dummy_master = DummyMaster()
+    start_gui(dummy_master)
     reactor.run()
