@@ -723,6 +723,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch"):
         start_file_logging(identifier=identifier, directory=log_dir)
     else:
         start_stdout_logging()
+    log.msg("-------------------- Starting master -------------------")
     log.msg("Using lunch master module %s" % (__file__))
     global _commands
     if os.path.exists(config_file):
