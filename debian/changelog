@@ -1,3 +1,9 @@
+lunch (0.2.3) unstable; urgency=low
+
+  * Added the add_local_addess function to disable SSH for the given address.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Thu, 14 Jan 2010 12:25:53 -0500
+
 lunch (0.2.2) unstable; urgency=low
 
   * Fixed error with SSH keys not being used, since env vars were not passed.

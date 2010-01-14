@@ -508,9 +508,16 @@ class Group(object):
 def add_local_address(address):
     """
     Adds an IP to which not use SSH with.
+    :param address: str of list of str. IP address or host name
     """
-    if address not in Master.local_addresses:
-        Master.local_addresses.append(address)
+    if type(address) is not list:
+        addresses = [address]
+    else:
+        addresses = address
+    for address in addresses:
+        if address not in Master.local_addresses:
+            log.msg("Adding %s in list of local addresses." % (address))
+            Master.local_addresses.append(address)
 
 def clear_local_addresses():
     """
