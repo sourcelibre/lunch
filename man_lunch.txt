@@ -8,8 +8,6 @@ Here is how to kill every lunch master on your system :
 
   for f in /var/tmp/lunch/master-*.pid; do kill -15 $(cat $f); done
 
-The 
-
 [EXAMPLES]
 
 See the examples directory in the source code for examples.
