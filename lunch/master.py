@@ -194,7 +194,9 @@ class Command(object):
         if self.slave_state in [STATE_RUNNING, STATE_STARTING, STATE_STOPPING]:
             self.log("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
             return # XXX
-        if self.host is None and self.user is None:
+        if self.host is None:
+            # if self.user is not None:
+                # TODO: Set gid if user is not None...
             is_remote = False # not using SSH
             _command = ["lunch-slave", "--id", self.identifier]
         else:
@@ -473,7 +475,11 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         sleep_after = sleep
     if priority is not None:
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-        
+    # check if addr is local, set it to none if so.
+    if host in Master.local_addresses:
+        host = None    
+        # TODO: Set gid if user is not None...
+    
     # set default names if they are none:
     if title is None:
         title = "default-%d" % (Master.i)
@@ -495,15 +501,34 @@ class Group(object):
             txt += str(self.commands) + " "
         return txt
 
+def add_local_address(address):
+    """
+    Adds an IP to which not use SSH with.
+    """
+    if address not in Master.local_addresses:
+        Master.local_addresses.append(address)
+
+def clear_local_addresses():
+    """
+    Deletes all local addresses.
+    """
+    Master.local_addresses = []
+
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
     The master manages slaves, grouped in groups.
     """
-    # static class variable
+    # static class variable :
+    # All the commands are stored in groups of commands :
     groups = {"default":Group("default")}
-    # for default names if they are none:
+    # For counting default names if they are none :
     i = 0
+    # IP to which not use SSH with :
+    local_addresses = [
+        "localhost",
+        "127.0.0.1"
+        ] # TODO: check IP of each network interface.
     
     def __init__(self):
         reactor.callLater(0, self.start_all)
