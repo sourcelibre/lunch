@@ -1,7 +1,7 @@
 all:
 	@echo Usage:
 	@echo sudo make install
-	help2man -N -n "The Lunch Distributed Process Manager" scripts/lunch > lunch.1
+	help2man -N -n "The Lunch Distributed Process Manager" -i ./man_lunch.txt scripts/lunch > lunch.1
 	help2man -N -n "Lunch Slave" scripts/lunch-slave > lunch-slave.1
 	convert -geometry 48x48 -background none lunch.svg lunch.png
 	python setup.py build

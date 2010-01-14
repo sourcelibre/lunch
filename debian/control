@@ -13,6 +13,6 @@ XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends}, python (>= 2.4), python-central (>= 0.6.7), python-dev, openssh-client, openssh-server, python-twisted 
 Description: The Lunch Distributed Process Launcher
  .
- Lunch is a simple distributed process manager for GNU/Linux.
+ Lunch is a simple distributed process launcher and manager for GNU/Linux.
  .
  See http://svn.sat.qc.ca/trac/lunch for more informations.
