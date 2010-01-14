@@ -18,6 +18,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
+"""
+The Lunch master manages lunch slaves.
+"""
 import os
 import time
 import sys
@@ -41,12 +44,8 @@ STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED"
 STATE_NOSLAVE = "NOSLAVE" # for master only
 
-# Keys of the commands from the master :
-
 def start_stdout_logging():
-    #_log_file = twisted.python.logfile.DailyLogFile("lunch.log", os.getcwd())
     log.startLogging(sys.stdout)
-    # usage: log.msg("qweqwe", logLevel=logging.INFO)
 
 class MasterError(Exception):
     """

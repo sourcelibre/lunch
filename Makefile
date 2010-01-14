@@ -26,7 +26,9 @@ uninstall:
 
 doc: all
 	mkdir -p html
-	epydoc --html --output=html --verbose --show-imports --name=Lunch lunch
+	mkdir -p html-slave
+	epydoc --html --output=html --verbose --show-imports --name="Lunch" lunch
+	epydoc --html --output=html-slave --verbose --show-imports --name="Lunch Slave" scripts/lunch-slave
 	rst2html README.txt lunch-readme.html
 
 clean:

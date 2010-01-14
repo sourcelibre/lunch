@@ -35,3 +35,8 @@ _trial_temp/*
 # ----------lunch logs 
 lunch_log/*log
 
+# ---------- epydoc and rst2htmlstuff -------
+html/*
+html-slave/*
+scripts/lunch-slavec
+lunch-readme.html
