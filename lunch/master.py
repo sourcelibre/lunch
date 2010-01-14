@@ -200,6 +200,7 @@ class Command(object):
             is_remote = False # not using SSH
             _command = ["lunch-slave", "--id", self.identifier]
         else:
+            self.log("We will use SSH since host is %s" % (self.host))
             is_remote = True # using SSH
             _command = ["ssh"]
             if self.user is not None:
