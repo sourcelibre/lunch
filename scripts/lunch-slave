@@ -448,10 +448,14 @@ class SlaveIO(basic.LineReceiver):
             return
         dir_name = words[0]
         if not os.path.exists(dir_name):
-            self.send_error("Directory %s does not exist." % (dir_name))
-            return
-        self.slave.log_dir = dir_name
-        self.send_ok()
+            try:
+                os.makedirs(dir_name)
+            except OSError, e:
+                self.send_error("Directory %s does not exist and could not create it. %s" % (dir_name, e))
+                return
+            else:
+                self.slave.log_dir = dir_name
+                self.send_ok()
         
     #def recv_set(self, name, value=None):
     #    """set: Sets a configuration value. Usage: set <name> <value>"""
