@@ -65,14 +65,18 @@ if __name__ == "__main__":
     # --------- load the module and run
     from lunch.master import run_master
     from lunch.master import FileNotFoundError
+    from lunch.master import MasterError
     from twisted.internet import reactor
     try:
         #print("DEBUG: using config_file %s" % (config_file))
         master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir)
     except FileNotFoundError, e:
         print("Error starting lunch as master.")
-        print(e.message)
+        print(str(e))
         print("A configuration file is missing. Try the --help flag.")
+        sys.exit(1)
+    except MasterError, e:
+        print(str(e))
         sys.exit(1)
     try:
         reactor.run()

@@ -693,6 +693,16 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     if not os.path.exists(directory):
         os.makedirs(directory)
     pid_file = os.path.join(directory, file_name)
+    if os.path.exists(pid_file):
+        f = open(pid_file, 'r')
+        pid = f.read()
+        f.close()
+        try:
+            os.kill(int(pid), 0) # if it throws, it's dead
+        except OSError:
+            os.remove(pid_file)
+        else:
+            raise MasterError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
     f = open(pid_file, 'w')
     f.write(str(os.getpid()))
     f.close()
@@ -716,6 +726,8 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch"):
        (maybe through ssh, if on a remote host)
      * If ctrl-C is pressed from any worker, dies.
     @rettype Master
+    
+    Might raise a MasterError or a FileNotFoundError
     """
     identifier = gen_id_from_config_file_name(config_file)
     write_master_pid_file(identifier=identifier, directory=log_dir)
