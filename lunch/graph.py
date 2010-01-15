@@ -34,24 +34,23 @@ class DirectedGraph(object):
     """
     ROOT = "__ROOT__" # the root node, to which all depend
     def __init__(self):
-        self.deps = {} # dict node: list of nodes
-        self.add_node(self.ROOT)
+        self.deps = [] # dict node: list of [k, []] lists.
+        self.deps.append([self.ROOT, []])
     
     def add_node(self, node, deps=None):
         """
         @param node: str
         @param deps: list of str.
         """
-        if node not in self.deps:
-            self.deps[node] = []
+        if node not in self.get_all_nodes():
+            self.deps.append([node, []])
         if deps is not None:
-            self.add_dep(node, self.ROOT)
-        else:
             for dep in deps:
-                self.add_dep(node, dep)
-                # every node depends on the ROOT node...
-
-    def add_dep(self, node_from, node_to):
+                self.add_dependency(node, dep)
+        else:
+            self.add_dependency(node, self.ROOT)
+        
+    def add_dependency(self, node_from, node_to):
         """
         Adds a dependency between node_from and node_to.
         See networks.digraph.DiGraph.add_edge(node_from, node_to)
@@ -59,9 +58,11 @@ class DirectedGraph(object):
         @param node_to: str
         """
         # makes sure we already have this node
-        self.deps[node_from].append(node_to)
+        dependencies = self.get_dependencies(node_from)
+        if node_to not in dependencies:
+            dependencies.append(node_to)
 
-    def get_deps(self, node):
+    def get_dependencies(self, node):
         """
         Return nodes to which a node depends.
         
@@ -69,24 +70,55 @@ class DirectedGraph(object):
         @rettype list
         @param node: str
         """
-        return self.deps[node]
+        for k, v in self.deps:
+            if k is node:
+                return v
+        # else:
+        raise GraphError("No node %s in graph." % (node))
+
+    def get_all_nodes(self):
+        return [k for k, v in self.deps]
 
     def get_root(self):
         return self.ROOT
 
-    def remove_dep(self, node_from, node_to):
-        self.deps[node_from].remove(node_to)
+    def remove_dependency(self, node_from, node_to):
+        # might raise a ValueError
+        dependencies = self.get_dependencies(node_from)
+        if node_to in dependencies:
+            dependencies.remove(node_to) 
+        else:
+            raise GraphError("No dependency %s for node %s.", node_to, node_from)
         
     def remove_node(self, node):
-        del self.deps[node] 
-        for deps in self.deps.itervalues():
-            if node in deps:
-                deps.remove(node)
-            
+        if node in self.get_all_nodes():
+            for k, v in self.deps:
+                if k is node:
+                    self.deps.remove([k, v])
+        else:
+            raise GraphError("No node %s in graph." % (node))
 
-    def get_dependees(self, node):
+    def get_supported_by(self, node):
         ret = []
-        for k, v in self.deps.iteritems():
+        for k, v in self.deps:
             if node in v:
                 ret.append(k)
         return ret
+
+    def _traverse(self, node, indent=0):
+        """
+        Useful for printing an ASCII tree
+        Recursive method !
+        """
+        txt = " " * indent
+        txt += " * %s\n" % (node)
+        for child in self.get_supported_by(node):
+            txt += self._traverse(child, indent + 2)
+        return txt
+        
+    def __str__(self):
+        txt = "DirectedGraph:\n"
+        txt += str(self.__dict__) + "\n"
+        txt += "Graph nodes:\n"
+        txt += self._traverse(self.ROOT)
+        return txt
