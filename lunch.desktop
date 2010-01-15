@@ -1,6 +1,6 @@
 [Desktop Entry]
 Encoding=UTF-8
-Version=0.2.5
+Version=0.2.6
 Exec=lunch -g 
 Type=Application
 Terminal=true

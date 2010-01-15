@@ -1,3 +1,11 @@
+lunch (0.2.6-1) unstable; urgency=low
+
+  * Restored the terminal window with the Lunch GUI app.
+  * Fixed unit tests.
+  * Towards a graph of dependencies between child processes.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 15 Jan 2010 18:10:56 -0500
+
 lunch (0.2.5-1) unstable; urgency=low
 
   * Added --graphical option in Lunch master.
