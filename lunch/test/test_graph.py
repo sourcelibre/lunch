@@ -22,7 +22,24 @@ class Test_Graph(unittest.TestCase):
         # b should depend on a
        
         g.add_node("c", ["a"])
-        print(str(g)) 
+        #print(str(g)) 
         li = g.get_supported_by("a")
         self.failUnlessEqual(li, ["b", "c"])
         # b and c rely on a
+
+    def test_clear(self):
+        g = graph.DirectedGraph()
+        g.add_node("x")
+        g.add_node("y")
+        g.add_node("z")
+        root = g.get_root()
+        li = g.get_supported_by(root)
+        self.failUnlessEqual(li, ["x", "y", "z"])
+        li2 = g.get_all_nodes()
+        self.failUnlessEqual(li2, [root, "x", "y", "z"])
+        g.clear()
+        li3 = g.get_all_nodes()
+        self.failUnlessEqual(li3, [root])
+        
+        
+        

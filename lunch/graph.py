@@ -36,6 +36,12 @@ class DirectedGraph(object):
     def __init__(self):
         self.deps = [] # dict node: list of [k, []] lists.
         self.deps.append([self.ROOT, []])
+
+    def clear(self):
+        """
+        Removes all nodes and dependencies, except the root.
+        """
+        self.deps = [[self.ROOT, []]]
     
     def add_node(self, node, deps=None):
         """
