@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Version=0.2.5
-Exec=lunch -g -q
+Exec=lunch -g 
 Type=Application
 Terminal=true
 Categories=System;RemoteAccess;Network;
