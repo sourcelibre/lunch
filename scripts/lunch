@@ -39,6 +39,7 @@ if __name__ == "__main__":
     parser.add_option("-f", "--config-file", type="string", help="Specifies the python config file. You can also simply specify the config file as the first argument.")
     parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/tmp/lunch")
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
+    parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -62,11 +63,21 @@ if __name__ == "__main__":
     else:
         file_logging_enabled = False
     logging_dir = options.logging_directory
+    # ---------- load the right reactor
+    if options.graphical:
+        try:
+            from twisted.internet import gtk2reactor
+            gtk2reactor.install() # has to be done before importing reactor
+            from lunch import gui
+            GUI_ENABLED = True
+        except ImportError, e:
+            print("Could not load the GTK+ graphical user interface.")
+            GUI_ENABLED = False
+    from twisted.internet import reactor
     # --------- load the module and run
     from lunch.master import run_master
     from lunch.master import FileNotFoundError
     from lunch.master import MasterError
-    from twisted.internet import reactor
     try:
         #print("DEBUG: using config_file %s" % (config_file))
         master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir)
@@ -78,6 +89,9 @@ if __name__ == "__main__":
     except MasterError, e:
         print(str(e))
         sys.exit(1)
+    if GUI_ENABLED:
+        app = gui.start_gui(master)
+        print("Done starting the app.")
     try:
         reactor.run()
     except KeyboardInterrupt:

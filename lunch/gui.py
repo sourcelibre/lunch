@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 
-from twisted.internet import gtk2reactor
-gtk2reactor.install() # has to be done before importing reactor
+if __name__ == "__main__":
+    from twisted.internet import gtk2reactor
+    gtk2reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import defer
 import gtk
@@ -61,7 +62,11 @@ class LunchApp(object):
             self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
 
-            self.state_labels[i] = gtk.Label("%s" % (command.state))
+            if hasattr(command, "child_state_changed_signal"):
+                print("Connecting state changed signal to GUI.")
+                command.child_state_changed_signal.connect(self.on_command_status_changed)
+            
+            self.state_labels[i] = gtk.Label("%s" % (command.child_state))
             self.hboxes[i].pack_start(self.state_labels[i], True, True, 0)
             self.state_labels[i].set_width_chars(20)
             self.state_labels[i].show()
@@ -102,11 +107,10 @@ class LunchApp(object):
         @param command L{Command} 
         @param new_state str
         """
-        for i in range(len(self.commands)):
-            if command is self.commands[i]:
-                txt = new_state
-                self.state_labels[i].set_label(txt)
-        print("Command %s changed its state to %s" % (command.identifier, new_state))
+        txt = new_state
+        i = self.commands.index(command)
+        self.state_labels[i].set_label(txt)
+        print("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
 
     def destroy(self, widget, data=None):
         """
@@ -122,18 +126,20 @@ class LunchApp(object):
         """
         All PyGTK applications need a main method - event loop
         """
-        gtk.main()
+        pass
+        #print("pre-gtk.main()")
+        #gtk.main()
+        #print("post-gtk.main()")
 
 def start_gui(lunch_master):
     """
     Starts the GTK GUI
     :rettype: L{LunchApp}
     """
+    print("Starting the GUI.")
     app = LunchApp(lunch_master)
     #self.slave_state_changed_signal = sig.Signal()
-    if hasattr(lunch_master, "child_state_changed_signal"):
-        lunch_master.child_state_changed_signal.connect(app.on_command_status_changed)
-    reactor.callLater(0, app.main)
+    #reactor.callLater(0, app.main)
     return app
 
 if __name__ == "__main__":

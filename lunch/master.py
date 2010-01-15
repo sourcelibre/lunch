@@ -268,7 +268,7 @@ class Command(object):
         @param data: string
         """
         msg = "%s %s\n" % (key, data)
-        self.log("Master sends to slave: " + msg.strip())
+        self.log("Master->%s: %s" % (self.identifier, msg.strip()))
         self._process_transport.write(msg)
     
     def __del__(self):
@@ -324,13 +324,13 @@ class Command(object):
         """
         Callback for the "log" message from the slave.
         """
-        self.log("%8s: %s" % (self.identifier, mess))
+        self.log("%s->Master: log %s" % (self.identifier, mess))
 
     def recv_error(self, mess):
         """
         Callback for the "error" message from the slave.
         """
-        self.log("%8s: %s" % (self.identifier, mess), logging.ERROR)
+        self.log("%8s->Master: %s" % (self.identifier, mess), logging.ERROR)
     
     def recv_pong(self, mess):
         """
@@ -342,7 +342,7 @@ class Command(object):
         """
         Callback for the "bye" message from the slave.
         """
-        self.log("%8s: %s" % (self.identifier, "QUITTING !!!"), logging.ERROR)
+        self.log("%s->Master: %s" % (self.identifier, "BYE (slave quits)"), logging.ERROR)
 
     def recv_state(self, mess):
         """
@@ -352,8 +352,9 @@ class Command(object):
         words = mess.split(" ")
         previous_state = self.child_state
         new_state = words[0]
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX %s: %s" % (self.identifier, new_state))
         self.set_child_state(new_state) # IMPORTANT !
-        self.log("Child %8s: %s" % (self.identifier, "state: %s" % (new_state)))
+        self.log("%s->Master: child STATE is %s" % (self.identifier, new_state))
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:
@@ -387,9 +388,10 @@ class Command(object):
         """
         Called when it is time to change the state of the child of the slave.
         """
-        if self.child_state != new_state:
-            self.child_state = new_state
-            self.child_state_changed_signal(self, self.child_state)
+        #if self.child_state != new_state:
+        self.child_state = new_state
+        #    log.msg(" --------------- XXX Trigerring signal %s" % (self.child_state))
+        self.child_state_changed_signal(self, self.child_state)
 
     def stop(self):
         """
@@ -495,7 +497,7 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         _host = host
     # set default names if they are none:
     if title is None:
-        title = "default-%d" % (Master.i)
+        title = "default_%d" % (Master.i)
         Master.i += 1
     Master.groups[group].commands.append(Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
     
@@ -558,6 +560,7 @@ class Master(object):
         Starts all slaves in a group, iterating asynchronously.
         If group is None, iterates over all commands slaves.
         """
+        log.msg("Master.start_all()")
         if group_name is None:
             groups = Master.groups.keys()
         else:
@@ -610,6 +613,14 @@ class Master(object):
         else:
             ret = self.groups[group_name].commands
         return ret
+
+    def get_all_commands(self):
+        """
+        Returns all commands, not grouped in any way.
+        Used by the GUI.
+        @rettype list
+        """
+        return self._get_all()
     
     def stop_all(self, group_name=None):
         """

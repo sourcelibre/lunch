@@ -347,12 +347,15 @@ class Slave(object):
         """
         Handles state changes.
         """
-        self.state = new_state
-        if new_state == STATE_STOPPED:
-            self.log("Child lived for %s seconds." % (self._child_running_time))
-            self.io_protocol.send_state(self.state, self._child_running_time)
         if self.state != new_state:
-            self.io_protocol.send_state(self.state)
+            if new_state == STATE_STOPPED:
+                self.log("Child lived for %s seconds." % (self._child_running_time))
+                self.io_protocol.send_state(self.state, self._child_running_time)
+            else:
+                self.io_protocol.send_state(self.state)
+        else:
+            self.log("State is same as before: %s" % (new_state))
+        self.state = new_state
         
 class SlaveIO(basic.LineReceiver):
     """
