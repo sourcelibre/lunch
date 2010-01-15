@@ -258,7 +258,7 @@ class Slave(object):
         environ.update(os.environ)
         for key, val in self.env.iteritems():
             environ[key] = val
-        self.set_state(STATE_STARTING)
+        self.set_child_state(STATE_STARTING)
         #self.log("Identifier: %s" % (self.identifier))
         #self.log("Environment variables: %s" % (str(environ)))
         #self._process_transport = reactor.spawnProcess(self._child_process, proc_path, args, environ, usePTY=True)
@@ -273,7 +273,7 @@ class Slave(object):
     def _on_connection_made(self):
         if not STATE_STARTING:
             self.log("Connection made even if we were not starting the child process.", logging.ERROR)
-        self.set_state(STATE_RUNNING)
+        self.set_child_state(STATE_RUNNING)
     
     def stop(self):
         """
@@ -292,7 +292,7 @@ class Slave(object):
         #see twisted.internet.process._BaseProcess.reapProcess
         signal_to_send = None
         if self.state in [STATE_RUNNING, STATE_STARTING]:
-            self.set_state(STATE_STOPPING)
+            self.set_child_state(STATE_STOPPING)
             self.log('Will stop process using SIGTERM.')
             signal_to_send = 15 #"TERM"
             # closing files handles in _on_process_ended
@@ -303,7 +303,7 @@ class Slave(object):
             # _on_process_ended will probably be called, this time.
         else: # STOPPED
             msg = "Process is already stopped."
-            self.set_state(STATE_STOPPED)
+            self.set_child_state(STATE_STOPPED)
             self.io_protocol.send_error(msg)
             return
         if signal_to_send is not None:
@@ -339,20 +339,21 @@ class Slave(object):
                 self.log('Child process exited with error.')
         self._process_transport.loseConnection() # close file handles
         self.log("Child exitted with %s" % (exit_code), logging.INFO)
-        self.set_state(STATE_STOPPED)
+        self.set_child_state(STATE_STOPPED)
         self.log("Closing slave's process stdout file.")
         self._stdout_file.close()
         
-    def set_state(self, new_state):
+    def set_child_state(self, new_state):
         """
         Handles state changes.
         """
         if self.state != new_state:
             if new_state == STATE_STOPPED:
                 self.log("Child lived for %s seconds." % (self._child_running_time))
-                self.io_protocol.send_state(self.state, self._child_running_time)
+                self.io_protocol.send_state(new_state, self._child_running_time)
             else:
-                self.io_protocol.send_state(self.state)
+                self.io_protocol.send_state(new_state)
+            self.log("child state: %s" % (new_state))
         else:
             self.log("State is same as before: %s" % (new_state))
         self.state = new_state
@@ -427,7 +428,6 @@ class SlaveIO(basic.LineReceiver):
             self.sendLine("%s %s %s" % ("state", state, child_running_time))
         else:
             self.sendLine("%s %s" % ("state", state))
-            
     
     def recv_quit(self, line):
         """quit: Quit this session"""

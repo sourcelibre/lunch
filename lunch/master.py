@@ -352,7 +352,7 @@ class Command(object):
         words = mess.split(" ")
         previous_state = self.child_state
         new_state = words[0]
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX %s: %s" % (self.identifier, new_state))
+        #print("%s's child state: %s" % (self.identifier, new_state))
         self.set_child_state(new_state) # IMPORTANT !
         self.log("%s->Master: child STATE is %s" % (self.identifier, new_state))
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
