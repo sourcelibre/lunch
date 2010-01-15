@@ -240,11 +240,15 @@ class Slave(object):
                 self.log("Error erasing old stdout file %s." % (stdout_file_name), logging.ERROR)
         # open log file in write mode.
         try:
-            self._stdout_file = file(stdout_file_name, "a") # open in append mode
+            self._stdout_file = file(stdout_file_name, "w") 
         except OSError, e:
             self.io_protocol.send_error("Could not open log file %s in write mode." % (stdout_file_name))
             return
         else:
+            # close, chmod and re-open it:
+            self._stdout_file.close()
+            os.chmod(stdout_file_name, 0600)
+            self._stdout_file = file(stdout_file_name, "a")
             self.log("Writing to %s" % (stdout_file_name))
         self.log("Slave %s will run command %s" % (self.identifier, str(self.command)))
         self._child_process = ChildProcess(self)

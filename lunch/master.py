@@ -22,6 +22,7 @@
 The Lunch master manages lunch slaves.
 """
 import os
+import stat
 import time
 import sys
 import logging
@@ -716,16 +717,20 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     f = open(pid_file, 'w')
     f.write(str(os.getpid()))
     f.close()
+    os.chmod(pid_file, 0600)
 
 def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     file_name = "master-%s.log" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    pid_file = os.path.join(directory, file_name)
+    full_path = os.path.join(directory, file_name)
+    f = open(full_path, 'w')
+    f.close()
+    os.chmod(full_path, 0600)
     _log_file = logfile.DailyLogFile(file_name, directory)
     log.startLogging(_log_file)
 
-def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch"):
+def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_config_file=True):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -749,6 +754,15 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch"):
     log.msg("Using lunch master module %s" % (__file__))
     global _commands
     if os.path.exists(config_file):
+        if chmod_config_file:
+            mode = stat.S_IMODE(os.stat(config_file)[0])
+            new_mode = (mode & stat.S_IRUSR) + (mode & stat.S_IWUSR) + (mode & stat.S_IXUSR)
+            # user hase read/write/execute permissions
+            # 256, 128 and 64
+            try:
+                os.chmod(config_file, new_mode)
+            except OSError, e:
+                print("WARNING: Could not chmod configuration file.")
         try:
             execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
         except Exception, e:
