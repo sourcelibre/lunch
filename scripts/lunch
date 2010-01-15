@@ -73,6 +73,8 @@ if __name__ == "__main__":
         except ImportError, e:
             print("Could not load the GTK+ graphical user interface.")
             GUI_ENABLED = False
+    else:
+        GUI_ENABLED = False
     from twisted.internet import reactor
     # --------- load the module and run
     from lunch.master import run_master
