@@ -1,3 +1,9 @@
+lunch (0.2.6-0ubuntu1) dapper; urgency=low
+
+  * Ubuntu packaging.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Sat, 16 Jan 2010 12:52:03 -0500
+
 lunch (0.2.6-1) unstable; urgency=low
 
   * Restored the terminal window with the Lunch GUI app.
