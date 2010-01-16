@@ -1,8 +1,9 @@
-lunch (0.2.6-0ubuntu1) dapper; urgency=low
+lunch (0.2.7-0ubuntu1) dapper; urgency=low
 
   * Ubuntu packaging.
+  * Adding the command text in the GUI
 
- -- Alexandre Quessy <alexandre@quessy.net>  Sat, 16 Jan 2010 12:52:03 -0500
+ -- Alexandre Quessy <alexandre@quessy.net>  Sat, 16 Jan 2010 17:52:06 -0500
 
 lunch (0.2.6-1) unstable; urgency=low
 

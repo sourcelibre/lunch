@@ -57,7 +57,10 @@ class LunchApp(object):
             self.hboxes[i] = gtk.HBox(False, 0)
             self.box1.pack_start(self.hboxes[i], True, True, 0)
 
-            self.title_labels[i] = gtk.Label("%s" % (command.identifier))
+            self.title_labels[i] = gtk.Label("%s\n<small>%s</small>" % (command.identifier, command.command))
+            #self.title_labels[i].set_line_wrap(True)
+            self.title_labels[i].set_justify(gtk.JUSTIFY_LEFT)
+
             self.hboxes[i].pack_start(self.title_labels[i], True, True, 0)
             self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
