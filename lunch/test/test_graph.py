@@ -4,8 +4,6 @@ Tests for the oriented ordred graph. (for process dependencies between each othe
 from twisted.trial import unittest
 from lunch import graph
 
-print(graph.__file__)
-
 class Test_Graph(unittest.TestCase):
     def test_nodes(self):
         g = graph.DirectedGraph()
@@ -40,6 +38,35 @@ class Test_Graph(unittest.TestCase):
         g.clear()
         li3 = g.get_all_nodes()
         self.failUnlessEqual(li3, [root])
+        
+    def test_traverse(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        g.add_node("c", ["a"])
+        g.add_node("d", ["b"])
+        g.add_node("e", ["b"])
+        
+        li = g.get_supported_by("a")
+        self.failUnlessEqual(li, ["b", "c"])
+        li = g.get_supported_by("b")
+        self.failUnlessEqual(li, ["d", "e"])
+
+    def test_remove_dep(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        
+        li = g.get_supported_by("a")
+        self.failUnlessEqual(li, ["b"])
+        
+        g.remove_dependency("b", "a")
+        
+        li = g.get_supported_by("a")
+        self.failUnlessEqual(li, [])
+
+        li = g.get_dependencies("b")
+        self.failUnlessEqual(li, [g.get_root()])
         
         
         

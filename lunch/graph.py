@@ -30,7 +30,9 @@ class DirectedGraph(object):
     Directed Graph with ordered edges between nodes.
     Useful for handling dependencies between processes.
 
-    Some nodes can have two parents.
+    Some nodes can have two parents, but orphans are children of the root.
+    
+    Inspired from networkx.digraph.DiGraph
     """
     ROOT = "__ROOT__" # the root node, to which all depend
     def __init__(self):
@@ -45,12 +47,15 @@ class DirectedGraph(object):
     
     def add_node(self, node, deps=None):
         """
-        @param node: str
-        @param deps: list of str.
+        Adds a node to the graph, pointing to its dependencies. If no dependency is specified, it will point to the root.
+        @param node: L{str} or L{str} The node to add.
+        @param deps: :{list} of L{str} Its dependencies.
         """
         if node not in self.get_all_nodes():
             self.deps.append([node, []])
         if deps is not None:
+            if type(deps) is not list:
+                self.add_dependency(node, deps)
             for dep in deps:
                 self.add_dependency(node, dep)
         else:
@@ -70,9 +75,8 @@ class DirectedGraph(object):
 
     def get_dependencies(self, node):
         """
-        Return nodes to which a node depends.
+        Return a L{list} of nodes to which a node depends.
         
-        See networks.digraph.DiGraph.successors(node)
         @rettype list
         @param node: str
         """
@@ -86,17 +90,30 @@ class DirectedGraph(object):
         return [k for k, v in self.deps]
 
     def get_root(self):
+        """
+        Returns the root of the graph.  
+        @rettype: L{str}
+        """
         return self.ROOT
 
     def remove_dependency(self, node_from, node_to):
+        """
+        If no dependency if left, it will depend on the root.
+        """
         # might raise a ValueError
         dependencies = self.get_dependencies(node_from)
         if node_to in dependencies:
             dependencies.remove(node_to) 
+            if dependencies == []:
+                dependencies.append(self.ROOT)
         else:
             raise GraphError("No dependency %s for node %s.", node_to, node_from)
         
     def remove_node(self, node):
+        """
+        Removes a node from the graph.
+        Removes all the dependencies of other nodes to this one.
+        """
         if node in self.get_all_nodes():
             for k, v in self.deps:
                 if k is node:
@@ -105,6 +122,9 @@ class DirectedGraph(object):
             raise GraphError("No node %s in graph." % (node))
 
     def get_supported_by(self, node):
+        """
+        Returns the list of nodes that are supported by the given one.
+        """
         ret = []
         for k, v in self.deps:
             if node in v:
