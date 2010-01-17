@@ -21,7 +21,7 @@
 """
 Tools for process management.
 """
-__version__ = "0.2.6"
+__version__ = "0.2.8"
 DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch master launches lunch-slave processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
 SCRIPTS_DIR = "scripts"
 def _is_in_devel():

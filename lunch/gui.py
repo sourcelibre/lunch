@@ -33,7 +33,7 @@ import sys
 import os
 import webbrowser
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
