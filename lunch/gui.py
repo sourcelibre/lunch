@@ -106,20 +106,26 @@ class LunchApp(object):
         self.window.connect("destroy", self.destroy_app)
         self.window.set_default_size(320, 480)
         
+        # Vertical Box
+        vbox = gtk.VBox(False)
+        self.window.add(vbox)
+        
+        # Menu bar
+        self.menubar = self.create_main_menu(self.window)
+        vbox.pack_start(self.menubar, expand=False, fill=False)
+        self.menubar.show()
+
+        # Scrollable
         scroller = gtk.ScrolledWindow()
-        self.window.add(scroller)
+        vbox.add(scroller)
         
         self.commands = master.get_all_commands()
         num_rows = len(self.commands) + 1
         num_columns = 2
-        offset = 1
+        offset = 0
         self.table = gtk.Table(num_rows, num_columns, True)
         scroller.add_with_viewport(self.table)
         
-        # Menu bar
-        self.menubar = self.get_main_menu(self.window)
-        self.table.attach(self.menubar, 0, 2, 0, 1)
-        self.menubar.show()
         
         # Buttons
         self.title_labels = {}
@@ -155,26 +161,19 @@ class LunchApp(object):
 
         #self.stopall_button = gtk.Button("Stop All")
         #self.stopall_button.connect("clicked", self.on_stopall_clicked)
-        #self.box1.pack_start(self.stopall_button, True, True, 0)
+        #self.table.attach(self.stopall_button, 0, 2, num_rows - 1, num_rows)
         #self.stopall_button.show()
 
-        #self.quitbutton = gtk.Button("Quit")
-        #self.quitbutton.connect("clicked", self.destroy)
-        #self.table.attach(self.quitbutton, 0, 2, num_rows - 1, num_rows)
-        #self.quitbutton.show()
-        
-        # Show the box
         self.table.show()
         scroller.show()
-
-        # Show the window
+        vbox.show()
         self.window.show()
 
     def on_menu_open_logs(self, widget, data):
         #TODO:
         print "open logs"
 
-    def get_main_menu(self, window):
+    def create_main_menu(self, window):
         menu_items = (
             ( "/_File", None, None, 0, "<Branch>" ),
             #( "/File/_New", "<control>N", self.print_hello, 0, None),
