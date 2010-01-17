@@ -24,6 +24,7 @@ if __name__ == "__main__":
     gtk2reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import defer
+import glib
 import gtk
 import sys
 import os
@@ -73,8 +74,11 @@ class About(object):
         self.about_dialog.set_artists(['Rocket000'])
         gtk.about_dialog_set_url_hook(self.show_website)
         self.about_dialog.set_website("http://svn.sat.qc.ca/trac/lunch")
-        large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
-        self.about_dialog.set_logo(large_icon)
+        try:
+            large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
+            self.about_dialog.set_logo(large_icon)
+        except glib.GError, e:
+            print(str(e))
         # Add button to show keybindings:
         #shortcut_button = ui.button(text=_("_Shortcuts"))
         #self.about_dialog.action_area.pack_start(shortcut_button)
