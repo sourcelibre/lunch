@@ -40,28 +40,38 @@ class LunchApp(object):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
         self.window.connect("destroy", self.destroy)
-
-        # Box for multiple widgets
-        self.box1 = gtk.VBox(False, 0)
-        self.window.add(self.box1)
-
-        # Buttons
-        self.hboxes = {}
-        self.title_labels = {}
-        self.state_labels = {}
-        self.start_buttons = {}
+        self.window.set_default_size(320, 480)
+        
+        scroller = gtk.ScrolledWindow()
+        self.window.add(scroller)
         
         self.commands = master.get_all_commands()
+        num_rows = len(self.commands) + 1
+        num_columns = 2
+        offset = 0
+        self.table = gtk.Table(num_rows, num_columns, True)
+        scroller.add_with_viewport(self.table)
+        
+        #TODO:
+        #menubar = self.get_main_menu(self.window)
+        #self.table.attach(menubar, 0, 2, 0, 1)
+        
+
+        # Buttons
+        self.title_labels = {}
+        self.state_labels = {}
+        #self.start_buttons = {}
+        
         for i in range(len(self.commands)):
             command = self.commands[i]
-            self.hboxes[i] = gtk.HBox(False, 0)
-            self.box1.pack_start(self.hboxes[i], True, True, 0)
 
-            self.title_labels[i] = gtk.Label("%s\n<small>%s</small>" % (command.identifier, command.command))
+            self.title_labels[i] = gtk.Label()
+            txt = "%s\n<small>%s</small>" % (command.identifier, command.command)
+            self.title_labels[i].set_markup(txt) # pango markup
             #self.title_labels[i].set_line_wrap(True)
             self.title_labels[i].set_justify(gtk.JUSTIFY_LEFT)
 
-            self.hboxes[i].pack_start(self.title_labels[i], True, True, 0)
+            self.table.attach(self.title_labels[i], 0, 1, i + offset, i + offset + 1)
             self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
 
@@ -70,7 +80,7 @@ class LunchApp(object):
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
             
             self.state_labels[i] = gtk.Label("%s" % (command.child_state))
-            self.hboxes[i].pack_start(self.state_labels[i], True, True, 0)
+            self.table.attach(self.state_labels[i], 1, 2, i + offset, i + offset + 1)
             self.state_labels[i].set_width_chars(20)
             self.state_labels[i].show()
             
@@ -78,8 +88,6 @@ class LunchApp(object):
             #self.hboxes[i].pack_start(self.start_buttons[i], True, True, 0)
             #self.start_buttons[i].connect("clicked", self.on_start_clicked, i)
             #self.start_buttons[i].show()
-            
-            self.hboxes[i].show()
 
         #self.stopall_button = gtk.Button("Stop All")
         #self.stopall_button.connect("clicked", self.on_stopall_clicked)
@@ -88,11 +96,12 @@ class LunchApp(object):
 
         self.quitbutton = gtk.Button("Quit")
         self.quitbutton.connect("clicked", self.destroy)
-        self.box1.pack_start(self.quitbutton, True, True, 0)
+        self.table.attach(self.quitbutton, 0, 2, num_rows - 1, num_rows)
         self.quitbutton.show()
         
         # Show the box
-        self.box1.show()
+        self.table.show()
+        scroller.show()
 
         # Show the window
         self.window.show()
