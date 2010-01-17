@@ -2,7 +2,7 @@ lunch (0.2.8-0ubuntu2) hardy; urgency=low
 
   * Fixed name of the distro.
 
- -- Alexandre Quessy <alexandre@quessy.net>  Sun, 17 Jan 2010 00:36:25 -0500
+ -- Alexandre Quessy <alexandre@quessy.net>  Sun, 17 Jan 2010 17:09:47 -0500
 
 lunch (0.2.8-0ubuntu1) dapper; urgency=low
 
