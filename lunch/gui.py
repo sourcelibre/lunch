@@ -68,7 +68,7 @@ def open_path(path):
         return None
     else:
         print("Calling %s %s" % (executable, path))
-        d = utils.getProcessOutput(executable, [path], os.environ, os.getcwd(), reactor)
+        d = utils.getProcessValue(executable, [path], os.environ, '.', reactor)
         d.addCallback(_cb)
         return d
 
