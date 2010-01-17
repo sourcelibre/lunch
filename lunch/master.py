@@ -163,6 +163,7 @@ class Command(object):
         self.sleep_after = sleep_after
         self.respawn = respawn
         self.enabled = True 
+        self.how_many_times_run = 0
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
@@ -235,9 +236,6 @@ class Command(object):
         return txt 
     
     def _on_connection_made(self):
-        """
-        Here, we send all the commands to the slave.
-        """
         if self.slave_state == STATE_STARTING:
             self.set_slave_state(STATE_RUNNING)
         else:
@@ -389,10 +387,12 @@ class Command(object):
         """
         Called when it is time to change the state of the child of the slave.
         """
-        #if self.child_state != new_state:
-        self.child_state = new_state
+        if self.child_state != new_state:
+            if new_state == STATE_RUNNING:
+                self.how_many_times_run += 1
+            self.child_state = new_state
         #    log.msg(" --------------- XXX Trigerring signal %s" % (self.child_state))
-        self.child_state_changed_signal(self, self.child_state)
+            self.child_state_changed_signal(self, self.child_state)
 
     def stop(self):
         """

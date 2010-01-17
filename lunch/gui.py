@@ -130,7 +130,9 @@ class LunchApp(object):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
         self.window.connect("destroy", self.destroy_app)
-        self.window.set_default_size(400, 600)
+        WIDTH = 400
+        HEIGHT = 600
+        self.window.set_default_size(WIDTH, HEIGHT)
         
         # Vertical Box
         vbox = gtk.VBox(False)
@@ -163,7 +165,14 @@ class LunchApp(object):
             command = self.commands[i]
 
             self.title_labels[i] = gtk.Label()
+            user_host = ""
+            #if command.host is not None:
+            #    if command.user is not None:
+            #        user_host = "(%s@%s)" % (command.user, command.host)
+            #    else:
+            #        user_host = "(%s)" % (command.host)
             txt = "%s\n<small>%s</small>" % (command.identifier, command.command)
+            #txt = "%s <small>%s<small>\n<small>%s</small>" % (command.identifier, user_host, command.command)
             self.title_labels[i].set_markup(txt) # pango markup
             #self.title_labels[i].set_line_wrap(True)
             #self.title_labels[i].set_selectable(True)
@@ -171,22 +180,24 @@ class LunchApp(object):
             gtk.Misc.set_alignment(self.title_labels[i], 0.0, 0.0) # withinin range [0.,1.]
 
             self.table.attach(self.title_labels[i], 0, 1, current_row, current_row + 1)
-            self.title_labels[i].set_width_chars(20)
+            #self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
 
             if hasattr(command, "child_state_changed_signal"):
                 print("Connecting state changed signal to GUI.")
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
             
-            self.state_labels[i] = gtk.Label("%s" % (command.child_state))
+            self.state_labels[i] = gtk.Label()
+            self.state_labels[i].set_markup("%s\n<small>(ran 0 time)</small>" % (command.child_state))
             self.table.attach(self.state_labels[i], 1, 2, current_row, current_row + 1)
-            self.state_labels[i].set_width_chars(20)
+            #self.state_labels[i].set_width_chars(20)
             gtk.Misc.set_alignment(self.state_labels[i], 1.0, 1.0) # withinin range [0.,1.]
             self.state_labels[i].show()
             current_row += 1
             
             # separator
             sep = gtk.HSeparator()
+            sep.set_size_request(WIDTH - 30, 4)
             self.table.attach(sep, 0, 2, current_row, current_row + 1, yoptions=gtk.FILL)
             current_row += 1
             sep.show()
@@ -251,9 +262,9 @@ class LunchApp(object):
         @param command L{Command} 
         @param new_state str
         """
-        txt = new_state
+        txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
         i = self.commands.index(command)
-        self.state_labels[i].set_label(txt)
+        self.state_labels[i].set_markup(txt)
         print("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
 
     def destroy_app(self, widget, data=None):
