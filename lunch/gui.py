@@ -24,6 +24,9 @@ if __name__ == "__main__":
     gtk2reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import defer
+from twisted.internet import utils
+from twisted.python import procutils
+
 import glib
 import gtk
 import sys
@@ -49,6 +52,25 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Lunch.  If not, see <http://www.gnu.org/licenses/>."""
+
+def open_path(path):
+    """
+    Opens a directory or file using gnome-open.
+    Returns a Deferred or None.
+    """
+    def _cb(result):
+        #print(result)
+        pass
+    try:
+        executable = procutils.which("gnome-open")[0]
+    except IndexError:
+        print("Could not find gnome-open")
+        return None
+    else:
+        print("Calling %s %s" % (executable, path))
+        d = utils.getProcessOutput(executable, [path], os.environ, os.getcwd(), reactor)
+        d.addCallback(_cb)
+        return d
 
 class About(object):
     """
@@ -108,7 +130,7 @@ class LunchApp(object):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
         self.window.connect("destroy", self.destroy_app)
-        self.window.set_default_size(320, 480)
+        self.window.set_default_size(400, 600)
         
         # Vertical Box
         vbox = gtk.VBox(False)
@@ -175,7 +197,9 @@ class LunchApp(object):
 
     def on_menu_open_logs(self, widget, data):
         #TODO:
-        print "open logs"
+        if hasattr(self.master, "log_dir"):
+            open_path(self.master.log_dir)
+        #print "open logs"
 
     def create_main_menu(self, window):
         menu_items = (
@@ -200,22 +224,15 @@ class LunchApp(object):
         return item_factory.get_widget("<main>")
 
     def on_about(self, widget, data):
-        print "on about"
+        #print "on about"
         About().show_about_dialog()
     
-    def on_clicked(self, widget, data=None):
-        """
-        Our callback.
-        The data passed to this method is printed to stdout
-        """
-        print "Hello again - %s was pressed" % data
-
     def on_start_clicked(self, widget, info): # index as info
         #print "Button %s was pressed" % (info)
         print("Toggle start/stop %d" % (info))
 
-    def on_stopall_clicked(self, widget): # index as info
-        print("Stop All")
+    #def on_stopall_clicked(self, widget): # index as info
+    #    print("Stop All")
 
     def on_command_status_changed(self, command, new_state):
         """

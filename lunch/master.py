@@ -553,9 +553,10 @@ class Master(object):
         "127.0.0.1"
         ] # TODO: check IP of each network interface.
     
-    def __init__(self):
+    def __init__(self, log_dir=None):
         reactor.callLater(0, self.start_all)
-
+        self.log_dir = log_dir
+        
     def start_all(self, group_name=None):
         """
         Starts all slaves in a group, iterating asynchronously.
@@ -771,7 +772,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
     else:
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
-    m = Master()
+    m = Master(log_dir=log_dir)
     reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown)
     return m
 
