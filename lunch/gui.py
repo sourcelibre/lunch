@@ -146,12 +146,13 @@ class LunchApp(object):
         vbox.add(scroller)
         
         self.commands = master.get_all_commands()
-        num_rows = len(self.commands) + 1
+        row_per_command = 2
+        num_rows = len(self.commands) * row_per_command
         num_columns = 2
         offset = 0
         self.table = gtk.Table(num_rows, num_columns, True)
         scroller.add_with_viewport(self.table)
-        
+        current_row = 0
         
         # Buttons
         self.title_labels = {}
@@ -165,9 +166,11 @@ class LunchApp(object):
             txt = "%s\n<small>%s</small>" % (command.identifier, command.command)
             self.title_labels[i].set_markup(txt) # pango markup
             #self.title_labels[i].set_line_wrap(True)
+            #self.title_labels[i].set_selectable(True)
             self.title_labels[i].set_justify(gtk.JUSTIFY_LEFT)
+            gtk.Misc.set_alignment(self.title_labels[i], 0.0, 0.0) # withinin range [0.,1.]
 
-            self.table.attach(self.title_labels[i], 0, 1, i + offset, i + offset + 1)
+            self.table.attach(self.title_labels[i], 0, 1, current_row, current_row + 1)
             self.title_labels[i].set_width_chars(20)
             self.title_labels[i].show()
 
@@ -176,10 +179,18 @@ class LunchApp(object):
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
             
             self.state_labels[i] = gtk.Label("%s" % (command.child_state))
-            self.table.attach(self.state_labels[i], 1, 2, i + offset, i + offset + 1)
+            self.table.attach(self.state_labels[i], 1, 2, current_row, current_row + 1)
             self.state_labels[i].set_width_chars(20)
+            gtk.Misc.set_alignment(self.state_labels[i], 1.0, 1.0) # withinin range [0.,1.]
             self.state_labels[i].show()
+            current_row += 1
             
+            # separator
+            sep = gtk.HSeparator()
+            self.table.attach(sep, 0, 2, current_row, current_row + 1, yoptions=gtk.FILL)
+            current_row += 1
+            sep.show()
+
             #self.start_buttons[i] = gtk.Button("Stop")
             #self.hboxes[i].pack_start(self.start_buttons[i], True, True, 0)
             #self.start_buttons[i].connect("clicked", self.on_start_clicked, i)
