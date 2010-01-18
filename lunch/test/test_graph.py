@@ -76,5 +76,15 @@ class Test_Graph(unittest.TestCase):
         # root <-- a <-- b <-- c
         if not g.depends_on("c", "a"):
             self.fail("Did not detect dependency.")
-    test_detect_circularity.skip = "Not ready yet."
+    #test_detect_circularity.skip = "Not ready yet."
         
+    def test_detect_circularity_when_adding(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        try:
+            g.add_dependency("a", "b")
+        except graph.GraphError, e:
+            pass
+        else:
+            self.fail("Should have raised an error.")

@@ -68,10 +68,14 @@ class DirectedGraph(object):
         @param node_from: str
         @param node_to: str
         """
-        # makes sure we already have this node
+        # makes sure we don't already have this node
         dependencies = self.get_dependencies(node_from)
         if node_to not in dependencies:
-            dependencies.append(node_to)
+            # prevent from circular dependencies
+            if self.depends_on(node_to, node_from):
+                raise GraphError("Circular dependency detected. A node cannot depend on itself.")
+            else:
+                dependencies.append(node_to)
 
     def get_dependencies(self, node):
         """
@@ -131,20 +135,32 @@ class DirectedGraph(object):
                 ret.append(k)
         return ret
 
-    #def depends_on(self, node, searched):
-    #    curr = node
-    #    while curr is not searched and curr is not self.root:
-    #        if curr is searched:
-    #            return True
-    #        elif curr is self.root:
-    #            return False
-    #        curr = self.get
-    #    return False
+    def depends_on(self, node, searched):
+        """
+        Checks if a node depends on another.
+        Recursive method. (might be limited by sys.getrecursionlimit())
+        """
+        if node is self.ROOT:
+            return False
+        #elif node is searched:
+        #    raise GraphError("Both given nodes are the same.")
+        else:
+            li = self.get_dependencies(node)
+            for i in li:
+                if i is searched:
+                    return True
+                else:
+                    if i is not self.ROOT:
+                        res = self.depends_on(i, searched)
+                        if res:
+                            return True
+            # if not found
+            return False
 
     def _traverse(self, node, indent=0):
         """
         Useful for printing an ASCII tree
-        Recursive method !
+        Recursive method ! (might be limited by sys.getrecursionlimit())
         """
         txt = " " * indent
         txt += " * %s\n" % (node)
