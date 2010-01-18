@@ -131,6 +131,16 @@ class DirectedGraph(object):
                 ret.append(k)
         return ret
 
+    #def depends_on(self, node, searched):
+    #    curr = node
+    #    while curr is not searched and curr is not self.root:
+    #        if curr is searched:
+    #            return True
+    #        elif curr is self.root:
+    #            return False
+    #        curr = self.get
+    #    return False
+
     def _traverse(self, node, indent=0):
         """
         Useful for printing an ASCII tree

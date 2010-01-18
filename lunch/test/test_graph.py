@@ -68,5 +68,13 @@ class Test_Graph(unittest.TestCase):
         li = g.get_dependencies("b")
         self.failUnlessEqual(li, [g.get_root()])
         
-        
+    def test_detect_circularity(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        g.add_node("c", ["b"])
+        # root <-- a <-- b <-- c
+        if not g.depends_on("c", "a"):
+            self.fail("Did not detect dependency.")
+    test_detect_circularity.skip = "Not ready yet."
         
