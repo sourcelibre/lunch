@@ -660,7 +660,8 @@ class Master(object):
         """
         Stops all slaves and quits the application.
         """
-        reactor.stop()
+        if reactor.running:
+            reactor.stop()
 
     def before_shutdown(self):
         """

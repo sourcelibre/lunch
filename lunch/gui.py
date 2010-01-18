@@ -276,9 +276,13 @@ class LunchApp(object):
         when main window closed
         """
         print("Destroying the window.")
-        gtk.main_quit()
-        print("reactor.stop()")
-        reactor.stop()
+        try:
+            gtk.main_quit()
+        except RuntimeError, e:
+            print(str(e))
+        if reactor.running:
+            print("reactor.stop()")
+            reactor.stop()
 
 def start_gui(lunch_master):
     """
