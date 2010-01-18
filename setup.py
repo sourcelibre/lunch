@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="lunch",
-    version="0.2.9",
+    version="0.2.10",
     description="The Lunch Distributed Process Launcher",
     author="SAT",
     author_email="alexandre@quessy.net",

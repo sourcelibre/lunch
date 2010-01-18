@@ -8,6 +8,10 @@ Here is how to kill every lunch master on your system :
 
   for f in /var/tmp/lunch/master-*.pid; do kill -15 $(cat $f); done
 
+[GRAPHICAL USER INTERFACE]
+
+When invoked with the --graphical option, (-g) the lunch master shows a graphical user interface displaying the state of every managed process. When this window is closed, the lunch master exits and kills all its children processes.
+
 [EXAMPLES]
 
 See the examples directory in the source code for examples.
