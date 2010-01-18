@@ -27,7 +27,7 @@ from twisted.internet import defer
 from twisted.internet import utils
 from twisted.python import procutils
 
-import glib
+#import glib
 import gtk
 import sys
 import os
@@ -96,11 +96,14 @@ class About(object):
         self.about_dialog.set_artists(['Rocket000'])
         gtk.about_dialog_set_url_hook(self.show_website)
         self.about_dialog.set_website("http://svn.sat.qc.ca/trac/lunch")
-        try:
+        if not os.path.exists(self.icon_file):
+            print("Could not find icon file %s." % (self.icon_file))
+        else:
+        #try:
             large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
             self.about_dialog.set_logo(large_icon)
-        except glib.GError, e:
-            print(str(e))
+        #except glib.GError, e:
+        #    print(str(e))
         # Add button to show keybindings:
         #shortcut_button = ui.button(text=_("_Shortcuts"))
         #self.about_dialog.action_area.pack_start(shortcut_button)
