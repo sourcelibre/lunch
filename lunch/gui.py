@@ -53,24 +53,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Lunch.  If not, see <http://www.gnu.org/licenses/>."""
 
-def open_path(path):
+def run_once(executable, *args):
     """
-    Opens a directory or file using gnome-open.
+    Runs a command, without looking at its output or return value.
     Returns a Deferred or None.
     """
     def _cb(result):
         #print(result)
         pass
     try:
-        executable = procutils.which("gnome-open")[0]
+        executable = procutils.which(executable)[0]
     except IndexError:
-        print("Could not find gnome-open")
+        print("Could not find executable %s" % (executable))
         return None
     else:
-        print("Calling %s %s" % (executable, path))
-        d = utils.getProcessValue(executable, [path], os.environ, '.', reactor)
+        print("Calling %s %s" % (executable, list(args)))
+        d = utils.getProcessValue(executable, args, os.environ, '.', reactor)
         d.addCallback(_cb)
         return d
+
+def open_path(path):
+    """
+    Opens a directory or file using gnome-open.
+    Returns a Deferred or None.
+    """
+    return run_once("gnome-open", path)
 
 class About(object):
     """
