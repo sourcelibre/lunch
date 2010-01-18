@@ -32,6 +32,7 @@ from twisted.internet import defer
 from twisted.internet import error
 from twisted.internet import protocol
 from twisted.internet import reactor
+from twisted.internet import task
 from twisted.internet import utils
 from twisted.python import failure
 from twisted.python import log
@@ -39,6 +40,7 @@ from twisted.python import logfile
 from twisted.python import procutils
 
 from lunch import sig
+from lunch import graph
 
 # constants for the slave process
 STATE_STARTING = "STARTING"
@@ -173,7 +175,7 @@ class Command(object):
     #TODO: add time_started
     #TODO: add enabled. (for respawning or not a process, without changing its respawn attribute.
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
@@ -191,6 +193,7 @@ class Command(object):
         self.sleep_after = sleep_after
         self.respawn = respawn
         self.enabled = True 
+        self.depends = depends
         self.how_many_times_run = 0
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
@@ -330,7 +333,7 @@ class Command(object):
                 try:
                     method = getattr(self, 'recv_' + key)
                 except AttributeError, e:
-                    self.log('No callback for "%s" got from slave %s. Got: %s' % (key, self.identifier, line), logging.ERROR)
+                    self.log('From slave %s: %s' % (self.identifier, line), logging.ERROR)
                     self.log(line)
                 else:
                     method(mess)
@@ -495,7 +498,7 @@ class Command(object):
     def __str__(self):
         return "%s" % (self.identifier)
     
-def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=100, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None):
+def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None, depends=None):
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
@@ -524,7 +527,7 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
     if title is None:
         title = "default_%d" % (Master.i)
         Master.i += 1
-    c = Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)
+    c = Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title, depends=depends)
     Master.add_command(c)    
 
 def add_local_address(address):
@@ -552,7 +555,8 @@ class Master(object):
     The Lunch Master launches slaves, which in turn launch childs.
     """
     # static class variables :
-    commands = []
+    commands = {}
+    tree = graph.DirectedGraph()
     # For counting default names if they are none :
     i = 0
     # IP to which not use SSH with :
@@ -566,7 +570,10 @@ class Master(object):
         """
         @param command: L{Command} object.
         """    
-        Master.commands.append(command)
+        deps = command.depends
+        identifier = command.identifier
+        Master.tree.add_node(identifier, deps)
+        Master.commands[identifier] = command
     
     def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None):
         """
@@ -575,18 +582,37 @@ class Master(object):
         @param log_file: str Path.
         @param config_file: str Path.
         """
-        reactor.callLater(0, self.start_all)
         # These are all useless within this class, but might be useful to be read from the GUI:
         self.log_dir = log_dir
         self.pid_file = pid_file
         self.log_file = log_file
         self.config_file = config_file
+
+        self._looping_call = task.LoopingCall(self._manage_slaves)
+        self._looping_call.start(0.05, False) # checks process to start/stop 20 times a second.
+        self.wants_to_live = True # The master is either trying to make every child live or die. 
+        reactor.callLater(0, self.start_all)
+
+    def _manage_slaves(self):
+        """
+        Called in a looping call.
+        """
+        if self.wants_to_live:
+            pass
+            # TODO: get children of the root
+            # TODO: get time now
+            # TODO: if not started give them a time to be started, if it doesn't have one
+            # TODO: if started, check if it has children
+            # TODO: if so, give it a time to be started.
         
     def start_all(self):
         """
         Starts all slaves, iterating asynchronously.
         """
+        # FIXME: right now, the commands are not in the right order.
+        # TODO: delete this, use _manage_slaves 
         log.msg("Master.start_all()")
+        self.wants_to_live = True
         iter_commands = iter(self._get_all()) 
         reactor.callLater(0, self._start_next, iter_commands)
 
@@ -594,6 +620,7 @@ class Master(object):
         """
         asynchronous iterating function
         """
+        # TODO: delete this, use _manage_slaves 
         c = None
         try:
             c = iter_commands.next()
@@ -609,7 +636,7 @@ class Master(object):
         """
         Returns all commands.
         """
-        return self.commands
+        return self.commands.values()
 
     def get_all_commands(self):
         """
@@ -624,7 +651,9 @@ class Master(object):
         Stops all commands
         """
         # TODO: use callLaters to check if stopped.
+        #TODO: stop the looping call.
         commands = self._get_all()
+        self.wants_to_live = False
         for c in commands:
             c.enabled = False
             c.stop()
@@ -634,6 +663,7 @@ class Master(object):
         """
         Stops all commands, then wait until they are all done. Starts them all when ready.
         """
+        # TODO: use the looping call to do stuff in the future.
         self.stop_all()
         reactor.callLater(0.1, _start_if_all_stopped)
 
@@ -682,7 +712,7 @@ class Master(object):
             if again:
                 reactor.callLater(0.1, _later, self, data)
             else:
-                log.msg("Stopping Lunch.")
+                log.msg("Stopping the Lunch Master.")
                 deferred.callback(True) # stops reactor
         
         _later(self, _shutdown_data)

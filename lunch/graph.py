@@ -76,6 +76,8 @@ class DirectedGraph(object):
                 raise GraphError("Circular dependency detected. A node cannot depend on itself.")
             else:
                 dependencies.append(node_to)
+        elif node_to not in self.deps:
+            raise GraphError("The is no %s node in the dependencies graph.")
 
     def get_dependencies(self, node):
         """
