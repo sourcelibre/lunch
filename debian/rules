@@ -16,4 +16,4 @@ binary-install/lunch::
 	dh_installman lunch.1
 	help2man --no-info --name="Lunch Slave" ./scripts/lunch-slave --output=lunch-slave.1 
 	dh_installman lunch-slave.1
-	dh_installdocs copyright
+	dh_installdocs debian/copyright
