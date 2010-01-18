@@ -580,9 +580,19 @@ class Master(object):
         "127.0.0.1"
         ] # TODO: check IP of each network interface.
     
-    def __init__(self, log_dir=None):
+    def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None):
+        """
+        @param log_dir: str Path.
+        @param pid_file: str Path.
+        @param log_file: str Path.
+        @param config_file: str Path.
+        """
         reactor.callLater(0, self.start_all)
+        # These are all useless within this class, but might be useful to be read from the GUI:
         self.log_dir = log_dir
+        self.pid_file = pid_file
+        self.log_file = log_file
+        self.config_file = config_file
         
     def start_all(self, group_name=None):
         """
@@ -721,6 +731,11 @@ class Master(object):
         return deferred
 
 def gen_id_from_config_file_name(config_file_name="lunchrc"):
+    """
+    Returns an identifier for the master using the config file name.
+    Useful so that there is not two masters running with the same config file.
+    @rettype str
+    """
     file_name = os.path.split(config_file_name)[1] # remove dir name
     identifier = file_name.replace(".", "") # getting rid of the dot in file name
     return identifier
@@ -732,6 +747,8 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     file_name = "master-%s.pid" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
+    if not os.path.isdir(directory):
+        raise MasterError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
     if os.path.exists(pid_file):
         f = open(pid_file, 'r')
@@ -747,8 +764,13 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     f.write(str(os.getpid()))
     f.close()
     os.chmod(pid_file, 0600)
+    return pid_file
 
 def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
+    """
+    Starts logging the Master infos to a file.
+    @rettype: str
+    """
     file_name = "master-%s.log" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -758,6 +780,7 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     os.chmod(full_path, 0600)
     _log_file = logfile.DailyLogFile(file_name, directory)
     log.startLogging(_log_file)
+    return _log_file.path
 
 def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_config_file=True):
     """
@@ -774,11 +797,12 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
     Might raise a MasterError or a FileNotFoundError
     """
     identifier = gen_id_from_config_file_name(config_file)
-    write_master_pid_file(identifier=identifier, directory=log_dir)
+    pid_file = write_master_pid_file(identifier=identifier, directory=log_dir)
     if log_to_file:
-        start_file_logging(identifier=identifier, directory=log_dir)
+        log_file = start_file_logging(identifier=identifier, directory=log_dir)
     else:
         start_stdout_logging()
+        log_file = None
     log.msg("-------------------- Starting master -------------------")
     log.msg("Using lunch master module %s" % (__file__))
     global _commands
@@ -800,7 +824,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
     else:
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
-    m = Master(log_dir=log_dir)
+    m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file)
     reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown)
     return m
 
