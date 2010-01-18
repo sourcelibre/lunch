@@ -61,6 +61,7 @@ def run_and_wait(executable, *arguments):
     Runs a command and trigger its deferred with the output when done.
     Returns a deferred.
     """
+    # TODO: use it.
     try:
         executable = procutils.which(executable)[0]
     except IndexError:
@@ -498,51 +499,33 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
     """
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
-    
-    Default priority is 100. The lowest the earliest.
+
+    This function is actually an alias of the Master.add_command static method, plus a few variables changes.
     """
     # TODO: remove priority and sleep kwargs in a future version
-    #FIXME: Changed back identifier to title.
-    #global _commands
-    #log.msg("DEBUG: adding %s %s %s %s %s %s %s %s to group %s" % (command, env, host, user, order, sleep_after, respawn, log_dir, group)) # EDIT ME
-
-    log.msg("Adding %s (%s) %s@%s to group %s" % (title, command, user, host, group), logging.INFO)
-    if group is None:
-        group = "default" # default group is "default"
-    if not Master.groups.has_key(group):
-        log.msg("Adding group %s" % (group))
-        Master.groups[group] = Group(group)
+    log.msg("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
+    # ------------- warnings ------------------
+    if group is not None:
+        warnings.warn("Groups are deprecated. Use dependencies instead.")
     if sleep is not None:
         warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
         sleep_after = sleep
     if priority is not None:
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+    # -------------- IP addr ------------------
     # check if addr is local, set it to none if so.
     if host in Master.local_addresses:
         log.msg("Filtering out host %s since it is in list of local addresses." % (host))
         _host = None    
     else:
         _host = host
+    # --------------- title -------------------
     # set default names if they are none:
     if title is None:
         title = "default_%d" % (Master.i)
         Master.i += 1
-    Master.groups[group].commands.append(Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)) # EDIT ME
-    
-class Group(object):
-    """
-    A group contains commands.
-    """
-    def __init__(self, name):
-        #self.state = STATE_STOPPED
-        self.commands = []
-        self.name = name
-    
-    def __str__(self):
-        txt = "Group %s: " % (self.name)
-        for c in self.commands:
-            txt += str(self.commands) + " "
-        return txt
+    c = Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title)
+    Master.add_command(c)    
 
 def add_local_address(address):
     """
@@ -567,11 +550,9 @@ def clear_local_addresses():
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
-    The master manages slaves, grouped in groups.
     """
-    # static class variable :
-    # All the commands are stored in groups of commands :
-    groups = {"default":Group("default")}
+    # static class variables :
+    commands = []
     # For counting default names if they are none :
     i = 0
     # IP to which not use SSH with :
@@ -579,6 +560,13 @@ class Master(object):
         "localhost",
         "127.0.0.1"
         ] # TODO: check IP of each network interface.
+    
+    @staticmethod
+    def add_command(command):
+        """
+        @param command: L{Command} object.
+        """    
+        Master.commands.append(command)
     
     def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None):
         """
@@ -594,64 +582,34 @@ class Master(object):
         self.log_file = log_file
         self.config_file = config_file
         
-    def start_all(self, group_name=None):
+    def start_all(self):
         """
-        Starts all slaves in a group, iterating asynchronously.
-        If group is None, iterates over all commands slaves.
+        Starts all slaves, iterating asynchronously.
         """
         log.msg("Master.start_all()")
-        if group_name is None:
-            groups = Master.groups.keys()
-        else:
-            groups = group_name
-        iter_groups = iter(groups)
-        iter_commands = iter([]) # at first empty
-        reactor.callLater(0, self._start_next, iter_groups, iter_commands)
+        iter_commands = iter(self._get_all()) 
+        reactor.callLater(0, self._start_next, iter_commands)
 
-    def _start_next(self, iter_groups, iter_commands, group_name=None):
-        # define asynchronous iterating function
+    def _start_next(self, iter_commands):
+        """
+        asynchronous iterating function
+        """
         c = None
         try:
             c = iter_commands.next()
         except StopIteration:
-            if group_name is not None:
-                log.msg("Done iterating through commands of group %s." % (group_name))
-            try:
-                group_name = iter_groups.next()
-            except StopIteration:
-                log.msg("Done iterating through groups.")
-                return
-            else:
-                log.msg("Iterating through commands of group %s." % (group_name))
-                g = Master.groups[group_name]
-                iter_commands = iter(g.commands)
-                log.msg("Next command in group %s : %s" % (g.name, g.commands))
-                try:
-                    c = iter_commands.next()
-                except StopIteration:
-                    if group_name is not None:
-                        log.msg("Done iterating through commands in group %s." % (group_name))
-                else:
-                    log.msg("Got command %s" % (c.identifier))
-        sleep = 0
+            log.msg("Done starting all commands.")
         if c is not None:
             log.msg("Starting command %s" % (c.identifier))
             c.start()
             sleep = c.sleep_after
-        reactor.callLater(sleep, self._start_next, iter_groups, iter_commands, group_name)
+            reactor.callLater(sleep, self._start_next, iter_commands)
     
-    def _get_all(self, group_name=None):
+    def _get_all(self):
         """
-        Returns all commands in a group, or in every groups. (all commands)
-        If group_name is None, returns commands from all groups.
+        Returns all commands.
         """
-        if group_name is None: # returns commands from all groups
-            ret = []
-            for g in self.groups.itervalues():
-                ret.extend(g.commands)
-        else:
-            ret = self.groups[group_name].commands
-        return ret
+        return self.commands
 
     def get_all_commands(self):
         """
@@ -661,37 +619,37 @@ class Master(object):
         """
         return self._get_all()
     
-    def stop_all(self, group_name=None):
+    def stop_all(self):
         """
         Stops all commands
         """
-        commands = self._get_all(group_name)
+        # TODO: use callLaters to check if stopped.
+        commands = self._get_all()
         for c in commands:
             c.enabled = False
             c.stop()
-            # TODO: callLaters...
+        log.msg("Done stopping all commands.")
 
-    def restart_all(self, group_name=None):
-        self.stop_all(group_name)
-        commands = self._get_all(group_name)
-        for c in commands:
-            s.enabled = False
-            c.stop()
-        reactor.callLater(0.1, _start_if_all_stopped, group_name)
+    def restart_all(self):
+        """
+        Stops all commands, then wait until they are all done. Starts them all when ready.
+        """
+        self.stop_all()
+        reactor.callLater(0.1, _start_if_all_stopped)
 
-    def _start_if_all_stopped(self, group_name=None):
+    def _start_if_all_stopped(self):
         """
         Checks in loop if all got stopped, if so, start them over.
         """
-        commands = self._get_all(group_name)
+        commands = self._get_all()
         ready_to_restart = True
         for c in commands:
             if c.child_state != STATE_STOPPED:
                 ready_to_restart = False
         if ready_to_restart:
-            self.start_all(group_name)
+            self.start_all()
         else:
-            reactor.callLater(0.1, _start_if_all_stopped, group_name)
+            reactor.callLater(0.1, _start_if_all_stopped)
 
     def quit_master(self):
         """
