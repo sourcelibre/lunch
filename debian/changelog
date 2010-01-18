@@ -1,3 +1,9 @@
+lunch (0.2.9-0ubuntu1) hardy; urgency=low
+
+  * Progress in GUI, but mostly an update of the package distro.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Sun, 17 Jan 2010 21:59:52 -0500
+
 lunch (0.2.8-0ubuntu2) hardy; urgency=low
 
   * Fixed name of the distro.
