@@ -28,13 +28,15 @@ import sys
 import logging
 import warnings
 
-from twisted.internet import protocol
-from twisted.internet import error
-from twisted.internet import reactor
 from twisted.internet import defer
-from twisted.python import procutils
+from twisted.internet import error
+from twisted.internet import protocol
+from twisted.internet import reactor
+from twisted.internet import utils
+from twisted.python import failure
 from twisted.python import log
 from twisted.python import logfile
+from twisted.python import procutils
 
 from lunch import sig
 
@@ -53,6 +55,31 @@ class MasterError(Exception):
     Raised by the L{Master} when dealing with the L{SlaveProcessprotocol}
     """
     pass
+
+def run_and_wait(executable, *arguments):
+    """
+    Runs a command and trigger its deferred with the output when done.
+    Returns a deferred.
+    """
+    try:
+        executable = procutils.which(executable)[0]
+    except IndexError:
+        msg = "Could not find executable %s" % (executable)
+        return failure.Failure(MasterError(msg))
+    d = utils.getProcessOutput(executable, arguments)
+    def cb(result, executable, arguments):
+        print 'Call to %s %s returned.\nResult: %s\n' % (executable, arguments, result)
+        return result
+    def eb(reason, executable, arguments):
+        print 'Calling %s %s failed.\nError: %s' % (executable, arguments, reason)
+        return reason
+    d.addCallback(cb, executable, list(arguments))
+    d.addErrback(eb, executable, list(arguments))
+    return d
+
+#reactor.callLater(0, run_and_wait, 'echo', 'Hello')
+#reactor.callLater(1.0, reactor.stop)
+#reactor.run()
 
 class FileNotFoundError(Exception):
     """
