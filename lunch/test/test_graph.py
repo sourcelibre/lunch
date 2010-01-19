@@ -126,8 +126,8 @@ class Test_Graph(unittest.TestCase):
         #        `-- d
         #  e -- f
         #  g
-        #  h -.
-        #  i -- j
+        #  h -\
+        #  j -- i
         current = g.ROOT
         visited = [] # list of visited nodes.
         stack = [] # stack of iterators
@@ -145,3 +145,32 @@ class Test_Graph(unittest.TestCase):
                 break
         
         self.failUnlessEqual(visited, [g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
+
+    def test_get_all_dependencies(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        g.add_node("c", ["b"])
+        g.add_node("d", ["b"])
+        g.add_node("e")
+        g.add_node("f", ["e"])
+        g.add_node("g")
+        g.add_node("h")
+        g.add_node("j")
+        g.add_node("i", ['h', 'j'])
+        #  a -- b -- c
+        #        `-- d
+        #  e -- f
+        #  g
+        #  h -\
+        #  j -- i
+
+        li = g.get_all_dependencies("d")
+        self.failUnlessEqual(li, ["b", "a"])
+        
+        li = g.get_all_dependencies("i")
+        self.failUnlessEqual(li, ["h", "j"])
+        
+        li = g.get_all_dependencies("g")
+        self.failUnlessEqual(li, [])
+        

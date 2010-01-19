@@ -166,6 +166,17 @@ class DirectedGraph(object):
                 ret.extend(self.get_all_dependees(k))
         return ret
         
+    def get_all_dependencies(self, node):
+        """
+        Returns the list of all the nodes that are supported by the given one, recursively !
+        @param node: str 
+        """
+        ret = []
+        for k in self.get_dependencies(node):
+            if k != self.ROOT:
+                ret.append(k)
+                ret.extend(self.get_all_dependencies(k))
+        return ret
 
     def depends_on(self, node, searched):
         """
