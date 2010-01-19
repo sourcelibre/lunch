@@ -109,3 +109,39 @@ class Test_Graph(unittest.TestCase):
         # root <-- a <-- b <-- c,d
         all = g.get_all_dependees("a")
         self.failUnlessEqual(all, ["b", "c", "d"])
+
+    def test_no_recursion(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        g.add_node("c", ["b"])
+        g.add_node("d", ["b"])
+        g.add_node("e")
+        g.add_node("f", ["e"])
+        g.add_node("g")
+        g.add_node("h")
+        g.add_node("j")
+        g.add_node("i", ['h', 'j'])
+        #  a -- b -- c
+        #        `-- d
+        #  e -- f
+        #  g
+        #  h -.
+        #  i -- j
+        current = g.ROOT
+        visited = [] # list of visited nodes.
+        stack = [] # stack of iterators
+        while True:
+            if current not in visited:
+                visited.append(current)
+                # DO YOUR STUFF HERE
+                children = g.get_supported_by(current)
+                stack.append(iter(children))
+            try:
+                current = stack[-1].next()
+            except StopIteration:
+                stack.pop()
+            except IndexError:
+                break
+        
+        self.failUnlessEqual(visited, [g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
