@@ -627,7 +627,6 @@ class Master(object):
         # Trying to make all child live. (False if in the process of quitting)
         #orphans = Master.tree.get_supported_by(Master.tree.ROOT)
         #self._manage_siblings(orphans, should_run=self.wants_to_live)
-        
         current = Master.tree.ROOT
         visited = [] # list of visited nodes.
         stack = [] # stack of iterators
@@ -635,8 +634,9 @@ class Master(object):
             if current not in visited:
                 visited.append(current)
                 # DO YOUR STUFF HERE
-                self._treat_node(current)
-                children = g.get_supported_by(current)
+                if current != Master.tree.ROOT:
+                    self._treat_node(current)
+                children = Master.tree.get_supported_by(current)
                 stack.append(iter(children))
             try:
                 current = stack[-1].next()
@@ -647,12 +647,13 @@ class Master(object):
     
     def _treat_node(self, node):
         command = Master.commands[node]
+        all_dependencies = Master.tree.get_all_dependencies(node)
         if command.child_state == STATE_RUNNING:
             if self.wants_to_live is False:
                 command.stop()
             else:
                 kill_it = False
-                for dependency in Master.tree.get_all_dependees(node):
+                for dependency in all_dependencies:
                     dep_command = Master.commands[dependency]
                     if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
                         kill_it = True
@@ -661,7 +662,7 @@ class Master(object):
         elif command.child_state == STATE_STOPPED:
             if self.wants_to_live:
                 start_it = True
-                for dependency in Master.tree.get_all_dependees(node):
+                for dependency in all_dependencies:
                     dep_command = Master.commands[dependency]
                     if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
                         start_it = False
@@ -669,12 +670,6 @@ class Master(object):
                         start_it = False
                 if start_it:
                     command.start()
-                command.stop()
-            
-            
-                    
-            
-        
 
     def _manage_siblings(self, siblings, should_run=True):
         """
