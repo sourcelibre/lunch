@@ -19,6 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Module for handling dependencies between processes in a launching sequence.
+
+Example : sc needs jackd. We would start jackd first, then sc. If jackd crashes, 
+we stop both, start jackd again, and then sc.
+"""
+
 class GraphError(Exception):
     """
     Any error thrown by handling graph nodes.
@@ -50,16 +57,21 @@ class DirectedGraph(object):
         Adds a node to the graph, pointing to its dependencies. If no dependency is specified, it will point to the root.
         @param node: L{str} or L{str} The node to add.
         @param deps: :{list} of L{str} Its dependencies.
+        Raises a GraphError if creating circular dependencies.
         """
         if node not in self.get_all_nodes():
             self.deps.append([node, []])
         if deps is not None:
-            if type(deps) is not list:
+            if type(deps) is list:
+                self.add_dependencies(node, deps)
+            else:
                 self.add_dependency(node, deps)
-            for dep in deps:
-                self.add_dependency(node, dep)
         else:
             self.add_dependency(node, self.ROOT)
+
+    def add_dependencies(self, node_from, nodes_to):
+        for d in nodes_to:
+            self.add_dependency(node_from, d)
         
     def add_dependency(self, node_from, node_to):
         """
@@ -77,7 +89,7 @@ class DirectedGraph(object):
             else:
                 dependencies.append(node_to)
         elif node_to not in self.deps:
-            raise GraphError("The is no %s node in the dependencies graph.")
+            raise GraphError("The is no %s node in the dependencies graph." % (node_to))
 
     def get_dependencies(self, node):
         """
@@ -127,15 +139,33 @@ class DirectedGraph(object):
         else:
             raise GraphError("No node %s in graph." % (node))
 
-    def get_supported_by(self, node):
+    def get_supported_by(self, node=None):
         """
-        Returns the list of nodes that are supported by the given one.
+        Returns the list of nodes that are directly supported by the given one.
+        @param node: str or None. If None, will return the nodes supported by the root.
         """
+        if node is None:
+            node = self.ROOT
         ret = []
         for k, v in self.deps:
             if node in v:
                 ret.append(k)
         return ret
+
+    def get_all_dependees(self, node=None):
+        """
+        Returns the list of all the nodes that are supported by the given one, recursively !
+        @param node: str or None. If None, will return the nodes supported by the root.
+        """
+        if node is None:
+            node = self.ROOT
+        ret = []
+        for k, v in self.deps:
+            if node in v:
+                ret.append(k)
+                ret.extend(self.get_all_dependees(k))
+        return ret
+        
 
     def depends_on(self, node, searched):
         """

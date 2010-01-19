@@ -20,6 +20,7 @@
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
 The Lunch master manages lunch slaves.
+Author: Alexandre Quessy <alexandre@quessy.net>
 """
 import os
 import stat
@@ -174,6 +175,8 @@ class Command(object):
     #TODO: add clear_old_logs
     #TODO: add time_started
     #TODO: add enabled. (for respawning or not a process, without changing its respawn attribute.
+    #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
+    #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
     def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None):
         """
@@ -213,52 +216,66 @@ class Command(object):
             #self.send_stop()
         self._process_protocol = None
         self._process_transport = None
-        
-        # the slave log file
-        slave_log_file = "slave-%s.log" % (self.identifier)
-        if not os.path.exists(self.slave_log_dir):
-            try:
-                os.makedirs(self.slave_log_dir)
-            except OSError, e:
-                raise MasterError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
-        self.slave_logger = logfile.LogFile(slave_log_file, self.slave_log_dir)
+        # Some attributes might be changed by the master, namely identifier and host.
+        # That's why we sait until start() is called to initiate the slave_logger.
+        self.slave_logger = None
+        self.scheduled_launch_time = None # None or float (if planning to launch, None otherwise) 
+    
+    def _start_logger(self):
+        if self.slave_logger is None:
+            # the slave log file
+            slave_log_file = "slave-%s.log" % (self.identifier)
+            if not os.path.exists(self.slave_log_dir):
+                try:
+                    os.makedirs(self.slave_log_dir)
+                except OSError, e:
+                    raise MasterError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
+            self.slave_logger = logfile.LogFile(slave_log_file, self.slave_log_dir)
     
     def start(self):
         """
-        Starts the slave Lunch
+        Starts the slave Lunch and its child if not started. If started, starts its child.
         """
-        if self.slave_state in [STATE_RUNNING, STATE_STARTING, STATE_STOPPING]:
-            self.log("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
-            return # XXX
-        if self.host is None:
-            # if self.user is not None:
-                # TODO: Set gid if user is not None...
-            is_remote = False # not using SSH
-            _command = ["lunch-slave", "--id", self.identifier]
+        self.enabled = True
+        self._start_logger()
+        if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
+            self.send_all_startup_commands()
+        elif self.child_state in [STATE_STOPPING, STATE_STARTING]:
+            self.log("Cannot start child %s that is %s." % (self.identifier, self.child_state))
         else:
-            self.log("We will use SSH since host is %s" % (self.host))
-            is_remote = True # using SSH
-            _command = ["ssh"]
-            if self.user is not None:
-                _command.extend(["-l", self.user])
-            _command.extend([self.host])
-            _command.extend(["lunch-slave", "--id", self.identifier])
-            # I hope you put your SSH key on the remote host !
-            # FIXME: we should pop-up a terminal if keys are not set up.
-        try:
-            _command[0] = procutils.which(_command[0])[0]
-        except IndexError:
-            raise MasterError("Could not find path of executable %s." % (_command[0]))
-        log.msg("Will run command: %s" % (" ".join(_command)))
-        self._process_protocol = SlaveProcessProtocol(self)
-        #try:
-        proc_path = _command[0]
-        args = _command
-        environ = {}
-        environ.update(os.environ) # passing the whole env (for SSH keys and more)
-        self.set_slave_state(STATE_STARTING)
-        self.log("Starting: %s" % (self.identifier))
-        self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
+            if self.slave_state in [STATE_RUNNING, STATE_STARTING, STATE_STOPPING]:
+                self.log("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
+                return # XXX
+            else: # slave is STOPPED
+                if self.host is None:
+                    # if self.user is not None:
+                        # TODO: Set gid if user is not None...
+                    is_remote = False # not using SSH
+                    _command = ["lunch-slave", "--id", self.identifier]
+                else:
+                    self.log("We will use SSH since host is %s" % (self.host))
+                    is_remote = True # using SSH
+                    _command = ["ssh"]
+                    if self.user is not None:
+                        _command.extend(["-l", self.user])
+                    _command.extend([self.host])
+                    _command.extend(["lunch-slave", "--id", self.identifier])
+                    # I hope you put your SSH key on the remote host !
+                    # FIXME: we should pop-up a terminal if keys are not set up.
+                try:
+                    _command[0] = procutils.which(_command[0])[0]
+                except IndexError:
+                    raise MasterError("Could not find path of executable %s." % (_command[0]))
+                log.msg("Will run command: %s" % (" ".join(_command)))
+                self._process_protocol = SlaveProcessProtocol(self)
+                #try:
+                proc_path = _command[0]
+                args = _command
+                environ = {}
+                environ.update(os.environ) # passing the whole env (for SSH keys and more)
+                self.set_slave_state(STATE_STARTING)
+                self.log("Starting: %s" % (self.identifier))
+                self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
         txt = ""
@@ -275,9 +292,9 @@ class Command(object):
 
     def send_do(self):
         """
-        Send to the slave the command line to luanch its child.
+        Send to the slave the command line to launch its child.
         """
-        self.send_message("do", self.command) # FIXME sends a string
+        self.send_message("do", self.command) 
     
     def send_ping(self):
         self.send_message("ping") # for fun
@@ -302,8 +319,8 @@ class Command(object):
         self._process_transport.write(msg)
     
     def __del__(self):
-        self.slave_logger.close()
-
+        if self.slave_logger is not None:
+            self.slave_logger.close()
         
     def _received_message(self, line):
         """
@@ -316,7 +333,8 @@ class Command(object):
             key = words[0]
             mess = line[len(key) + 1:]
         except IndexError, e:
-            self.log("Index error parsing message from slave. %s" % (e), logging.ERROR)
+            #self.log("Index error parsing message from slave. %s" % (e), logging.ERROR)
+            self.log('From slave %s: %s' % (self.identifier, line), logging.ERROR)
         else:
             try:
                 if words[1] == "password:":
@@ -376,7 +394,7 @@ class Command(object):
 
     def recv_state(self, mess):
         """
-        Callback for the "state" message from the slave.
+        Callback for the "state" message from the child.
         Received child state.
         """
         words = mess.split(" ")
@@ -389,14 +407,16 @@ class Command(object):
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:
                 self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
-            else:
-                self.send_all_startup_commands()
+                self.enabled = False # XXX
+            #else:
+            #    self.send_all_startup_commands()
         elif new_state == STATE_RUNNING:
             self.log("Child %s is running." % (self.identifier))
 
     def recv_ready(self, mess):
         """
         Callback for the "ready" message from the slave.
+        
         The slave sends that to the master when launched.
         It means it is ready to received commands.
         """
@@ -429,6 +449,7 @@ class Command(object):
         """
         Tells the slave to stop its child.
         """
+        self.enabled = False
         if self.child_state in [STATE_RUNNING, STATE_STARTING]:
             self.log('Will stop process %s.' % (self.identifier))
             self.send_stop()
@@ -442,6 +463,7 @@ class Command(object):
     def quit_slave(self):
         """
         Stops the slave Lunch
+        If called for a second time, send kill -9 to slave.
         """
         def _cl_sigint(self):
             def _cl_sigkill(self):
@@ -453,7 +475,7 @@ class Command(object):
         else:
             if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
                 if self.child_state in [STATE_RUNNING, STATE_STARTING]:
-                    self.send_stop()
+                    self.stop() # self.send_stop()
                 elif self.child_state == STATE_STOPPED:
                     self._process_transport.signalProcess(15) # signal.SIGTERM
                 self.set_slave_state(STATE_STOPPING)
@@ -464,6 +486,9 @@ class Command(object):
                 self._process_transport.signalProcess(9) # signal.SIGKILL
 
     def _on_process_ended(self, exit_code):
+        """
+        The slave died ! Its child is probably dead too.
+        """
         #self.log("Exit code: " % (exit_code))
         former_slave_state = self.slave_state
         if former_slave_state == STATE_STARTING:
@@ -477,15 +502,18 @@ class Command(object):
             self.log('Slave exited as expected.')
         self.set_slave_state(STATE_STOPPED)
         self._process_transport.loseConnection()
-        if self.respawn and self.enabled:
-            self.log("Restarting the slave %s." % (self.identifier), logging.INFO)
-            self.start()
+        #if self.respawn and self.enabled:
+        #    self.log("Restarting the slave %s." % (self.identifier), logging.INFO)
+        #    self.start()
         
     def log(self, msg, level=logging.DEBUG):
-        """Logs both to the slave's log file, and to the main app log. """
-        prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        self.slave_logger.write("%s %s\n" % (prefix, msg))
-        self.slave_logger.flush()
+        """
+        Logs both to the slave's log file, and to the main app log. 
+        """
+        if self.slave_logger is not None:
+            prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            self.slave_logger.write("%s %s\n" % (prefix, msg))
+            self.slave_logger.flush()
         log.msg(msg, level)
 
     def set_slave_state(self, new_state):
@@ -515,19 +543,7 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         sleep_after = sleep
     if priority is not None:
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-    # -------------- IP addr ------------------
-    # check if addr is local, set it to none if so.
-    if host in Master.local_addresses:
-        log.msg("Filtering out host %s since it is in list of local addresses." % (host))
-        _host = None    
-    else:
-        _host = host
-    # --------------- title -------------------
-    # set default names if they are none:
-    if title is None:
-        title = "default_%d" % (Master.i)
-        Master.i += 1
-    c = Command(command=command, env=env, host=_host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title, depends=depends)
+    c = Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title, depends=depends)
     Master.add_command(c)    
 
 def add_local_address(address):
@@ -553,6 +569,7 @@ def clear_local_addresses():
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
+    There should be only one instance of this class in the application. (singleton)
     """
     # static class variables :
     commands = {}
@@ -568,12 +585,21 @@ class Master(object):
     @staticmethod
     def add_command(command):
         """
+        This static method is wrapped (called) by the add_command function.
         @param command: L{Command} object.
         """    
-        deps = command.depends
-        identifier = command.identifier
-        Master.tree.add_node(identifier, deps)
-        Master.commands[identifier] = command
+        # check if addr is local, set it to none if so.
+        if command.host in Master.local_addresses:
+            log.msg("Filtering out host %s since it is in list of local addresses." % (command.host))
+            command.host = None    
+        # set default names if they are none:
+        if command.identifier is None:
+            command.identifier = "default_%d" % (Master.i)
+            Master.i += 1
+        while command.identifier in Master.commands: # making sure it is unique
+            command.identifier += "X"
+        Master.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
+        Master.commands[command.identifier] = command
     
     def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None):
         """
@@ -589,21 +615,64 @@ class Master(object):
         self.config_file = config_file
 
         self._looping_call = task.LoopingCall(self._manage_slaves)
-        self._looping_call.start(0.05, False) # checks process to start/stop 20 times a second.
+        self._looping_call.start(0.5, False) # checks process to start/stop 20 times a second.
         self.wants_to_live = True # The master is either trying to make every child live or die. 
         reactor.callLater(0, self.start_all)
 
     def _manage_slaves(self):
         """
         Called in a looping call.
+        This is actually the main loop of the application.
         """
-        if self.wants_to_live:
-            pass
-            # TODO: get children of the root
-            # TODO: get time now
-            # TODO: if not started give them a time to be started, if it doesn't have one
-            # TODO: if started, check if it has children
-            # TODO: if so, give it a time to be started.
+        # Trying to make all child live. (False if in the process of quitting)
+        orphans = Master.tree.get_supported_by(Master.tree.ROOT)
+        self._manage_siblings(orphans, should_run=self.wants_to_live)
+
+    def _manage_siblings(self, siblings, should_run=True):
+        """
+        Starts/stops commands in a branch of the dependency tree.
+        @param siblings: list of str. Command identifiers.
+        """
+        # get children of the root
+        # get time now
+        # if not started give them a time to be started, if it doesn't have one
+        # if started, check if it has children
+        # if so, give it a time to be started.
+        time_to_wait = 0.0 # adding up sleep_after value of each slave
+        now = time.time()
+        for command_name in siblings:
+            command = Master.commands[command_name]
+            dependees = Master.tree.get_supported_by(command.identifier) # direct dependees
+            all_dependees = Master.tree.get_all_dependees(command.identifier) # the whole subtree
+            #log.msg("Dependees on %s are : %s" % (command.identifier, dependees))
+            dependees_should_run = False
+            
+            if command.child_state == STATE_STOPPED:
+                if command.enabled and should_run:
+                    to_start = True
+                    if command.respawn is False and command.how_many_times_run == 1:
+                        to_start = False
+                        dependees_should_run = True
+                    if to_start and command.scheduled_launch_time is None: # avoiding to reschedule twice the same
+                        # stop dependees!
+                        self._manage_siblings(dependees, should_run=False)
+                        # schedule this one to start.
+                        time_to_wait += command.sleep_after
+                        command.scheduled_launch_time = now + time_to_wait
+                        log.msg("Scheduled %s to start in %f seconds." % (command.identifier, time_to_wait))
+                    if command.scheduled_launch_time is not None:
+                        if command.scheduled_launch_time >= now:
+                            command.scheduled_launch_time = None
+                            log.msg("Time to start %s" % (command.identifier))
+                            command.start()
+            else:
+                if command.child_state == STATE_RUNNING:
+                    if not should_run:
+                    #    pass #command.start()
+                    #else:
+                        log.msg("Will stop %s since a process its depends on is dead." % (command.identifier))
+                        command.stop()
+                    self._manage_siblings(dependees, should_run=should_run) # TODO: stop children if this node is dead.
         
     def start_all(self):
         """
@@ -613,24 +682,25 @@ class Master(object):
         # TODO: delete this, use _manage_slaves 
         log.msg("Master.start_all()")
         self.wants_to_live = True
-        iter_commands = iter(self._get_all()) 
-        reactor.callLater(0, self._start_next, iter_commands)
-
-    def _start_next(self, iter_commands):
-        """
-        asynchronous iterating function
-        """
-        # TODO: delete this, use _manage_slaves 
-        c = None
-        try:
-            c = iter_commands.next()
-        except StopIteration:
-            log.msg("Done starting all commands.")
-        if c is not None:
-            log.msg("Starting command %s" % (c.identifier))
-            c.start()
-            sleep = c.sleep_after
-            reactor.callLater(sleep, self._start_next, iter_commands)
+#        iter_commands = iter(self._get_all()) 
+#        reactor.callLater(0, self._start_next, iter_commands)
+#
+#    def _start_next(self, iter_commands):
+#        """
+#        asynchronous iterating function
+#        """
+#        # TODO: delete this, use _manage_slaves 
+#        c = None
+#        try:
+#            c = iter_commands.next()
+#        except StopIteration:
+#            log.msg("Done starting all commands.")
+#        if c is not None:
+#            #TODO: is c.respawn is False : slave.how_many_times_run == 0
+#            log.msg("Starting command %s" % (c.identifier))
+#            c.start()
+#            sleep = c.sleep_after
+#            reactor.callLater(sleep, self._start_next, iter_commands)
     
     def _get_all(self):
         """

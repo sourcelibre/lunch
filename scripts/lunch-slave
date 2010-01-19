@@ -165,6 +165,7 @@ class Slave(object):
         if self.identifier is None:
             self.identifier = "default"
         self.log_level = logging.DEBUG
+        self._delayed_kill = None # DelayedCall instance
     
     def _before_shutdown(self):
         """
@@ -291,6 +292,7 @@ class Slave(object):
                 elif self.state in [STATE_STOPPED]:
                     msg = "Successfully killed process after least than the %f seconds. State is %s." % (self.options["delay_kill"], self.state)
                     self.log(msg)
+            self._delayed_kill = None
         
         # TODO: do callLater calls to check if the process is still running or not.
         #see twisted.internet.process._BaseProcess.reapProcess
@@ -300,7 +302,7 @@ class Slave(object):
             self.log('Will stop process using SIGTERM.')
             signal_to_send = 15 #"TERM"
             # closing files handles in _on_process_ended
-            reactor.callLater(self.options["delay_kill"], _later_check, self, self.pid) # XXX important.
+            self._delayed_kill = reactor.callLater(self.options["delay_kill"], _later_check, self, self.pid) # XXX important.
         elif self.state == STATE_STOPPING:
             self.log('Trying to kill again the child process using SIGKILL.')
             signal_to_send = 9 #"KILL"
@@ -334,6 +336,10 @@ class Slave(object):
         self._child_running_time = time.time() - self._time_stated_child
         if self.state == STATE_STOPPING:
             self.log('Child process exited as expected.')
+            if self._delayed_kill is not None:
+                if self._delayed_kill.active:
+                    self._delayed_kill.cancel()
+                self._delayed_kill = None
         elif self.state == STATE_STARTING:
             self.log('Child process exited while trying to start it.')
         elif self.state == STATE_RUNNING:

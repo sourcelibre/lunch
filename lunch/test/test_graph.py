@@ -54,15 +54,15 @@ class Test_Graph(unittest.TestCase):
 
     def test_remove_dep(self):
         g = graph.DirectedGraph()
-        g.add_node("a")
-        g.add_node("b", ["a"])
+        g.add_node("aaa")
+        g.add_node("b", "aaa")
         
-        li = g.get_supported_by("a")
+        li = g.get_supported_by("aaa")
         self.failUnlessEqual(li, ["b"])
         
-        g.remove_dependency("b", "a")
+        g.remove_dependency("b", "aaa")
         
-        li = g.get_supported_by("a")
+        li = g.get_supported_by("aaa")
         self.failUnlessEqual(li, [])
 
         li = g.get_dependencies("b")
@@ -82,9 +82,30 @@ class Test_Graph(unittest.TestCase):
         g = graph.DirectedGraph()
         g.add_node("a")
         g.add_node("b", ["a"])
+        # root <-- a <-- b
         try:
             g.add_dependency("a", "b")
         except graph.GraphError, e:
             pass
         else:
-            self.fail("Should have raised an error.")
+            self.fail("Adding dep a->b should have raised an error.")
+        
+        g.add_node("c", ["b"])
+        # root <-- a <-- b <-- c
+        
+        try:
+            g.add_dependency("a", "c")
+        except graph.GraphError, e:
+            pass
+        else:
+            self.fail("Adding dep a->c should have raised an error.")
+        
+    def test_get_all_dependees(self):
+        g = graph.DirectedGraph()
+        g.add_node("a")
+        g.add_node("b", ["a"])
+        g.add_node("c", ["b"])
+        g.add_node("d", ["b"])
+        # root <-- a <-- b <-- c,d
+        all = g.get_all_dependees("a")
+        self.failUnlessEqual(all, ["b", "c", "d"])
