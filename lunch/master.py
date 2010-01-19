@@ -627,6 +627,7 @@ class Master(object):
         # Trying to make all child live. (False if in the process of quitting)
         #orphans = Master.tree.get_supported_by(Master.tree.ROOT)
         #self._manage_siblings(orphans, should_run=self.wants_to_live)
+        log.msg("----- Managing slaves LOOP ----")
         current = Master.tree.ROOT
         visited = [] # list of visited nodes.
         stack = [] # stack of iterators
@@ -648,6 +649,7 @@ class Master(object):
     def _treat_node(self, node):
         command = Master.commands[node]
         all_dependencies = Master.tree.get_all_dependencies(node)
+        all_dependees = Master.tree.get_all_dependees(node)
         if command.child_state == STATE_RUNNING:
             if self.wants_to_live is False:
                 command.stop()
@@ -658,18 +660,28 @@ class Master(object):
                     if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
                         kill_it = True
                 if kill_it:
+                    log.msg("Will kill %s" % (command.identifier))
                     command.stop()
         elif command.child_state == STATE_STOPPED:
             if self.wants_to_live:
-                start_it = True
-                for dependency in all_dependencies:
-                    dep_command = Master.commands[dependency]
-                    if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
-                        start_it = False
-                    elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
-                        start_it = False
-                if start_it:
-                    command.start()
+                dependees_to_wait_for = False # to wait so that they quit
+                for dependee_name in all_dependees:
+                    dependee = Master.commands[dependee_name]
+                    if dependee.child_state != STATE_STOPPED:
+                        dependees_to_wait_for = True
+                    if dependee.child_state == STATE_RUNNING:
+                        dependee.stop()
+                if not dependees_to_wait_for:
+                    start_it = True
+                    for dependency in all_dependencies:
+                        dep_command = Master.commands[dependency]
+                        if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
+                            start_it = False
+                        elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
+                            start_it = False
+                    if start_it:
+                        log.msg("Will start %s." % (command.identifier))
+                        command.start()
 
     def _manage_siblings(self, siblings, should_run=True):
         """
