@@ -1,0 +1,3 @@
+add_command("ls -l", respawn=False)
+add_command("xeyes")
+
