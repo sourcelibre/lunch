@@ -1,3 +1,9 @@
+lunch (0.2.11-0ubuntu1) hardy; urgency=low
+
+  * Major progress: added dependencies between processes.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Wed, 20 Jan 2010 17:35:44 -0500
+
 lunch (0.2.10-0ubuntu2) hardy; urgency=low
 
   * Moved copyright file to the right location in the rules file.
