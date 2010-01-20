@@ -45,6 +45,7 @@ class Example:
         # The ListStore contains the data.
         self.list_store = gtk.ListStore(str, str, str, float, int, str)
         # The TreeModelSort sorts the data
+        # TODO: get rid of the TreeModelSort, use a TreeSortable instead.
         self.model_sort = gtk.TreeModelSort(self.list_store)
         self.rand = random.Random() #TODO: remove
         # Set initial sorting column and order.
@@ -76,8 +77,12 @@ class Example:
         for i in range(NUM_COLUMNS):
             self.cells[i] = gtk.CellRendererText()
             self.tree_view.append_column(self.columns[i])
+            
+            self.columns[i].set_expand(True)
+            self.columns[i].set_max_width(400)
+            self.columns[i].set_resizable(True)
             self.columns[i].set_sort_column_id(i)
-            self.columns[i].pack_start(self.cells[i], True)
+            self.columns[i].pack_start(self.cells[i], False) #True)
             self.columns[i].set_attributes(self.cells[i], text=i)
         # Done with the table. Showing the window.
         self.window.show_all()
