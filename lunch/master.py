@@ -613,21 +613,37 @@ class Master(object):
         self.pid_file = pid_file
         self.log_file = log_file
         self.config_file = config_file
+        self.main_loop_every = 0.5 # checks process to start/stop 20 times a second.
 
-        self._looping_call = task.LoopingCall(self._manage_slaves)
-        self._looping_call.start(0.5, False) # checks process to start/stop 20 times a second.
+        self._time_now = time.time()
+        self.launch_next_time = time.time() # time in future
+        self._looping_call = task.LoopingCall(self.main_loop)
+        self._looping_call.start(self.main_loop_every, False) 
         self.wants_to_live = True # The master is either trying to make every child live or die. 
-        reactor.callLater(0, self.start_all)
 
-    def _manage_slaves(self):
+    def main_loop(self):
         """
         Called in a looping call.
         This is actually the main loop of the application.
+        
+        Starting by the process with no dependency, starts them, in the order they were given, sleeping some time before each, as configured using their sleep_after attribute. 
+        
+        The master is set up to either keep every child alive, or keep them dead. Stopping them is done as soon as possible. Starting them is done using the sequence described above. 
+
+        
+        # get children of the root
+        # get time now
+        # if not started give them a time to be started, if it doesn't have one
+        # if started, check if it has children
+        # if so, give it a time to be started.
+
         """
         # Trying to make all child live. (False if in the process of quitting)
         #orphans = Master.tree.get_supported_by(Master.tree.ROOT)
         #self._manage_siblings(orphans, should_run=self.wants_to_live)
-        log.msg("----- Managing slaves LOOP ----")
+        #log.msg("----- Managing slaves LOOP ----")
+
+        self._time_now = time.time()
         current = Master.tree.ROOT
         visited = [] # list of visited nodes.
         stack = [] # stack of iterators
@@ -647,9 +663,13 @@ class Master(object):
                 break
     
     def _treat_node(self, node):
+        """
+        Called once for each command on each main loop iteration.
+        """
         command = Master.commands[node]
         all_dependencies = Master.tree.get_all_dependencies(node)
         all_dependees = Master.tree.get_all_dependees(node)
+        # If RUNNING, check if we should stop it:
         if command.child_state == STATE_RUNNING:
             if self.wants_to_live is False:
                 command.stop()
@@ -662,8 +682,9 @@ class Master(object):
                 if kill_it:
                     log.msg("Will kill %s" % (command.identifier))
                     command.stop()
+        # If STOPPED, check if we should start it:
         elif command.child_state == STATE_STOPPED:
-            if self.wants_to_live:
+            if self.wants_to_live and self.launch_next_time <= self._time_now:
                 dependees_to_wait_for = False # to wait so that they quit
                 for dependee_name in all_dependees:
                     dependee = Master.commands[dependee_name]
@@ -680,6 +701,7 @@ class Master(object):
                         elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
                             start_it = False
                     if start_it:
+                        self.launch_next_time = self._time_now + command.sleep_after
                         log.msg("Will start %s." % (command.identifier))
                         command.start()
 
@@ -729,33 +751,6 @@ class Master(object):
                         command.stop()
                     self._manage_siblings(dependees, should_run=should_run) # TODO: stop children if this node is dead.
         
-    def start_all(self):
-        """
-        Starts all slaves, iterating asynchronously.
-        """
-        # FIXME: right now, the commands are not in the right order.
-        # TODO: delete this, use _manage_slaves 
-        log.msg("Master.start_all()")
-        self.wants_to_live = True
-#        iter_commands = iter(self._get_all()) 
-#        reactor.callLater(0, self._start_next, iter_commands)
-#
-#    def _start_next(self, iter_commands):
-#        """
-#        asynchronous iterating function
-#        """
-#        # TODO: delete this, use _manage_slaves 
-#        c = None
-#        try:
-#            c = iter_commands.next()
-#        except StopIteration:
-#            log.msg("Done starting all commands.")
-#        if c is not None:
-#            #TODO: is c.respawn is False : slave.how_many_times_run == 0
-#            log.msg("Starting command %s" % (c.identifier))
-#            c.start()
-#            sleep = c.sleep_after
-#            reactor.callLater(sleep, self._start_next, iter_commands)
     
     def _get_all(self):
         """
