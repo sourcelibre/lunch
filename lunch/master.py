@@ -178,7 +178,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.2, log_dir=None, depends=None, verbose=False):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
@@ -191,13 +191,13 @@ class Command(object):
             self.env.update(env)
         self.user = user
         self.host = host
-        self.group = group
         self.order = order
         self.sleep_after = sleep_after
         self.respawn = respawn
         self.enabled = True 
         self.depends = depends
         self.how_many_times_run = 0
+        self.verbose = verbose
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
@@ -219,7 +219,6 @@ class Command(object):
         # Some attributes might be changed by the master, namely identifier and host.
         # That's why we sait until start() is called to initiate the slave_logger.
         self.slave_logger = None
-        self.scheduled_launch_time = None # None or float (if planning to launch, None otherwise) 
     
     def _start_logger(self):
         if self.slave_logger is None:
@@ -315,7 +314,8 @@ class Command(object):
         @param data: string
         """
         msg = "%s %s\n" % (key, data)
-        self.log("Master->%s: %s" % (self.identifier, msg.strip()))
+        if self.verbose:
+            self.log("Master->%s: %s" % (self.identifier, msg.strip()))
         self._process_transport.write(msg)
     
     def __del__(self):
@@ -601,7 +601,7 @@ class Master(object):
         Master.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
         Master.commands[command.identifier] = command
     
-    def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None):
+    def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
         @param log_dir: str Path.
         @param pid_file: str Path.
@@ -613,13 +613,22 @@ class Master(object):
         self.pid_file = pid_file
         self.log_file = log_file
         self.config_file = config_file
-        self.main_loop_every = 0.5 # checks process to start/stop 20 times a second.
+        self.verbose = verbose
+        self.main_loop_every = 0.05 # checks process to start/stop 20 times a second.
 
         self._time_now = time.time()
         self.launch_next_time = time.time() # time in future
         self._looping_call = task.LoopingCall(self.main_loop)
         self._looping_call.start(self.main_loop_every, False) 
         self.wants_to_live = True # The master is either trying to make every child live or die. 
+        self.prepare_all_commands()
+
+    def prepare_all_commands(self):
+        """
+        Called to change some attribute of all the commands before to start them for the first time. The config file is already loaded at this time.
+        """
+        for c in self._get_all():
+            c.verbose = self.verbose
 
     def main_loop(self):
         """
@@ -705,53 +714,6 @@ class Master(object):
                         log.msg("Will start %s." % (command.identifier))
                         command.start()
 
-    def _manage_siblings(self, siblings, should_run=True):
-        """
-        Starts/stops commands in a branch of the dependency tree.
-        @param siblings: list of str. Command identifiers.
-        """
-        # get children of the root
-        # get time now
-        # if not started give them a time to be started, if it doesn't have one
-        # if started, check if it has children
-        # if so, give it a time to be started.
-        time_to_wait = 0.0 # adding up sleep_after value of each slave
-        now = time.time()
-        for command_name in siblings:
-            command = Master.commands[command_name]
-            dependees = Master.tree.get_supported_by(command.identifier) # direct dependees
-            all_dependees = Master.tree.get_all_dependees(command.identifier) # the whole subtree
-            #log.msg("Dependees on %s are : %s" % (command.identifier, dependees))
-            dependees_should_run = False
-            
-            if command.child_state == STATE_STOPPED:
-                if command.enabled and should_run:
-                    to_start = True
-                    if command.respawn is False and command.how_many_times_run == 1:
-                        to_start = False
-                        dependees_should_run = True
-                    if to_start and command.scheduled_launch_time is None: # avoiding to reschedule twice the same
-                        # stop dependees!
-                        self._manage_siblings(dependees, should_run=False)
-                        # schedule this one to start.
-                        time_to_wait += command.sleep_after
-                        command.scheduled_launch_time = now + time_to_wait
-                        log.msg("Scheduled %s to start in %f seconds." % (command.identifier, time_to_wait))
-                    if command.scheduled_launch_time is not None:
-                        if command.scheduled_launch_time >= now:
-                            command.scheduled_launch_time = None
-                            log.msg("Time to start %s" % (command.identifier))
-                            command.start()
-            else:
-                if command.child_state == STATE_RUNNING:
-                    if not should_run:
-                    #    pass #command.start()
-                    #else:
-                        log.msg("Will stop %s since a process its depends on is dead." % (command.identifier))
-                        command.stop()
-                    self._manage_siblings(dependees, should_run=should_run) # TODO: stop children if this node is dead.
-        
-    
     def _get_all(self):
         """
         Returns all commands.
@@ -890,7 +852,7 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_config_file=True):
+def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_config_file=True, verbose=False):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -932,7 +894,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
     else:
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
-    m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file)
+    m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
     reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown)
     return m
 
