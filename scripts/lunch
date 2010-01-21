@@ -34,6 +34,7 @@ if __name__ == "__main__":
     """
     import os
     import sys
+    import traceback
     from optparse import OptionParser
     parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-f", "--config-file", type="string", help="Specifies the python config file. You can also simply specify the config file as the first argument.")
@@ -50,9 +51,6 @@ if __name__ == "__main__":
         config_file = args[0] 
     else:
         config_file = DEFAULT_CONFIG_FILE
-    if not os.path.exists(config_file):
-        print("No such file: %s." % (config_file))
-        sys.exit(1)
     if _is_in_devel():
         d = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
         sys.path.insert(0, d)
@@ -78,20 +76,42 @@ if __name__ == "__main__":
         print("Using lunch master without the GUI.")
         GUI_ENABLED = False
     from twisted.internet import reactor
+    from twisted.internet import defer
     # --------- load the module and run
     from lunch.master import run_master
     from lunch.master import FileNotFoundError
     from lunch.master import MasterError
-    try:
-        #print("DEBUG: using config_file %s" % (config_file))
-        master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir)
-    except FileNotFoundError, e:
-        print("Error starting lunch as master.")
-        print(str(e))
-        print("A configuration file is missing. Try the --help flag.")
-        sys.exit(1)
-    except MasterError, e:
-        print(str(e))
+    error_message = None
+    if not os.path.exists(config_file):
+        error_message = "No such file: %s." % (config_file)
+    else:
+        try:
+            #print("DEBUG: using config_file %s" % (config_file))
+            master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir)
+        except FileNotFoundError, e:
+            #print("Error starting lunch as master.")
+            msg = "A configuration file is missing. Try the --help flag. "
+            msg += str(e)
+            error_message = msg
+            #sys.exit(1)
+        except MasterError, e:
+            #print(str(e))
+            error_message = str(e)
+            #sys.exit(1)
+        except Exception, e:
+            error_message = "There is an error in your lunch file !\n"
+            error_message += traceback.format_exc()
+    if error_message is not None:
+        print(error_message)
+        if GUI_ENABLED:
+            def _cb(result):
+                reactor.stop()
+            d = defer.Deferred()
+            d.addCallback(_cb)
+            error_dialog = gui.ErrorDialog(d, error_message)
+            print("Running reactor to show error dialog.")
+            reactor.run() # need it for the GTK error dialog
+            print("Reactor stopped. Exiting.")
         sys.exit(1)
     if GUI_ENABLED:
         app = gui.start_gui(master)
