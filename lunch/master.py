@@ -242,7 +242,7 @@ class Command(object):
         elif self.child_state in [STATE_STOPPING, STATE_STARTING]:
             self.log("Cannot start child %s that is %s." % (self.identifier, self.child_state))
         else:
-            if self.slave_state in [STATE_RUNNING, STATE_STARTING, STATE_STOPPING]:
+            if self.slave_state in [STATE_STARTING, STATE_STOPPING]:
                 self.log("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
                 return # XXX
             else: # slave is STOPPED
@@ -703,6 +703,8 @@ class Master(object):
                         dependee.stop()
                 if not dependees_to_wait_for:
                     start_it = True
+                    if not command.respawn and command.how_many_times_run >= 1:
+                        start_it = False
                     for dependency in all_dependencies:
                         dep_command = Master.commands[dependency]
                         if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
