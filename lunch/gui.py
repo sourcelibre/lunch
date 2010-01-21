@@ -196,12 +196,14 @@ class LunchApp(object):
     """
     def __init__(self, master=None):
         self.master = master
+        self.commands = master.get_all_commands()
+
         # Window and framework
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
         self.window.connect("destroy", self.destroy_app)
-        WIDTH = 400
-        HEIGHT = 600
+        WIDTH = 640
+        HEIGHT = 480
         self.window.set_default_size(WIDTH, HEIGHT)
         
         # Vertical Box
@@ -215,77 +217,117 @@ class LunchApp(object):
 
         # Scrollable
         scroller = gtk.ScrolledWindow()
-        vbox.add(scroller)
-        
-        self.commands = master.get_all_commands()
-        row_per_command = 2
-        num_rows = len(self.commands) * row_per_command
-        num_columns = 2
-        offset = 0
-        self.table = gtk.Table(num_rows, num_columns, True)
-        scroller.add_with_viewport(self.table)
-        current_row = 0
-        
-        # Buttons
-        self.title_labels = {}
-        self.state_labels = {}
-        #self.start_buttons = {}
-        
-        for i in range(len(self.commands)):
-            command = self.commands[i]
+        scroller.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        scroller.set_shadow_type(gtk.SHADOW_IN)
+        vbox.pack_start(scroller, expand=True, fill=True)
+        #vbox.add(scroller)
 
-            self.title_labels[i] = gtk.Label()
-            user_host = ""
-            #if command.host is not None:
-            #    if command.user is not None:
-            #        user_host = "(%s@%s)" % (command.user, command.host)
-            #    else:
-            #        user_host = "(%s)" % (command.host)
-            txt = "%s\n<small>%s</small>" % (command.identifier, command.command)
-            #txt = "%s <small>%s<small>\n<small>%s</small>" % (command.identifier, user_host, command.command)
-            self.title_labels[i].set_markup(txt) # pango markup
-            #self.title_labels[i].set_line_wrap(True)
-            #self.title_labels[i].set_selectable(True)
-            self.title_labels[i].set_justify(gtk.JUSTIFY_LEFT)
-            gtk.Misc.set_alignment(self.title_labels[i], 0.0, 0.0) # withinin range [0.,1.]
-
-            self.table.attach(self.title_labels[i], 0, 1, current_row, current_row + 1)
-            #self.title_labels[i].set_width_chars(20)
-            self.title_labels[i].show()
-
+        # The ListStore contains the data.
+        list_store = gtk.ListStore(str, str, str, int, str)
+        # The TreeModelSort sorts the data
+        self.model_sort = gtk.TreeModelSort(list_store)
+        # The TreeView displays the sorted data in the GUI.
+        self.tree_view = gtk.TreeView(self.model_sort)
+        self._setup_treeview()
+        scroller.add(self.tree_view)
+        for command in self.commands:
+            self._add_command_in_tree(command)
             if hasattr(command, "child_state_changed_signal"):
-                print("Connecting state changed signal to GUI.")
+                #print("Connecting state changed signal to GUI.")
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
-            
-            self.state_labels[i] = gtk.Label()
-            self.state_labels[i].set_markup("%s\n<small>(ran 0 time)</small>" % (command.child_state))
-            self.table.attach(self.state_labels[i], 1, 2, current_row, current_row + 1)
-            #self.state_labels[i].set_width_chars(20)
-            gtk.Misc.set_alignment(self.state_labels[i], 1.0, 1.0) # withinin range [0.,1.]
-            self.state_labels[i].show()
-            current_row += 1
-            
-            # separator
-            sep = gtk.HSeparator()
-            sep.set_size_request(WIDTH - 30, 4)
-            self.table.attach(sep, 0, 2, current_row, current_row + 1, yoptions=gtk.FILL)
-            current_row += 1
-            sep.show()
 
-            #self.start_buttons[i] = gtk.Button("Stop")
-            #self.hboxes[i].pack_start(self.start_buttons[i], True, True, 0)
-            #self.start_buttons[i].connect("clicked", self.on_start_clicked, i)
-            #self.start_buttons[i].show()
+        self.window.show_all()
 
+    ROW_IDENTIFIER = 0 # the row in the treeview that contains the command identifier.
+
+    def _setup_treeview(self):
+        """
+        Needs attributes;
+         * self.tree_view
+         * self.model_sort
+        """
+        # Set initial sorting column and order.
+        sorting_column_number = 0
+        self.model_sort.set_sort_column_id(sorting_column_number, gtk.SORT_ASCENDING)
+
+        NUM_COLUMNS = 5
+        columns = [None] * NUM_COLUMNS
+        # Set column title
+        columns[0] = gtk.TreeViewColumn("Title")
+        columns[1] = gtk.TreeViewColumn("Command")
+        columns[2] = gtk.TreeViewColumn("Host")
+        columns[3] = gtk.TreeViewColumn("Executions") # How many times
+        columns[4] = gtk.TreeViewColumn("State") # str
+        
+        # Set default properties for each column
+        cells = [None] * NUM_COLUMNS
+        for i in range(NUM_COLUMNS):
+            self.tree_view.append_column(columns[i])
+            columns[i].set_expand(True)
+            columns[i].set_max_width(400)
+            columns[i].set_resizable(True)
+            columns[i].set_sort_column_id(i)
+
+            cells[i] = gtk.CellRendererText()
+            cells[i].set_property("width-chars", 20) 
+            columns[i].pack_start(cells[i], False) #True)
+            columns[i].set_attributes(cells[i], text=i)
+        # Set some custom properties
+        cells[0].set_property("width-chars", 14) # Title
+        cells[1].set_property("width-chars", 20) # Lifetime
+        cells[2].set_property("width-chars", 12) # host
+        cells[3].set_property("width-chars", 8) # Executions
+        cells[4].set_property("width-chars", 8) # State
+        #cells[4].set_property("foreground", 'green')
+
+    def _add_command_in_tree(self, command):
+        """
+        adds a row with the data of the command.
+        """
+        list_store = self.model_sort.get_model()
+        list_store.append(self._format_command(command))
+        #self.commands[command.identifier] = command
+
+    def _update_row(self, command):
+        list_store = self.model_sort.get_model()
+        looking_for = command.identifier
+        #print "look for:", looking_for
+        for row in iter(list_store):
+            identifier = row[self.ROW_IDENTIFIER]
+            if identifier == looking_for:
+                #print identifier, "MATCHES!!!!!!!!!"
+                #TODO: update only columns how_many_times_run and child_state
+                cells = self._format_command(command)
+                for i in range(len(cells)):
+                    row[i] = cells[i]
+                break
+            for v in row:
+                print v
+
+    def _format_command(self, command):
+        """
+        Returns a list of values for the cells in the row of a command
+        """
+        host = "localhost"
+        if command.host is not None:
+            host = command.host
+        executions = command.how_many_times_run
+        state = command.child_state
+        return [
+                command.identifier, 
+                command.command,
+                host,
+                executions,
+                state
+            ]
+
+    #def _create_buttons(self): 
+        #TODO: open log
+        #TODO: disable/enable/restart
         #self.stopall_button = gtk.Button("Stop All")
         #self.stopall_button.connect("clicked", self.on_stopall_clicked)
         #self.table.attach(self.stopall_button, 0, 2, num_rows - 1, num_rows)
         #self.stopall_button.show()
-
-        self.table.show()
-        scroller.show()
-        vbox.show()
-        self.window.show()
 
     def on_menu_open_logs(self, widget, data):
         #TODO:
@@ -332,10 +374,11 @@ class LunchApp(object):
         @param command L{Command} 
         @param new_state str
         """
-        txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
-        i = self.commands.index(command)
-        self.state_labels[i].set_markup(txt)
+        #txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
+        #i = self.commands.index(command)
+        #self.state_labels[i].set_markup(txt)
         print("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
+        self._update_row(command)
 
     def destroy_app(self, widget, data=None):
         """
