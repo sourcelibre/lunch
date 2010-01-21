@@ -1,3 +1,10 @@
+lunch (0.2.12-0ubuntu1) hardy; urgency=low
+
+  * Fixed critical error in previous version. Child with respawn=False were
+    ran again and again.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Wed, 20 Jan 2010 20:56:19 -0500
+
 lunch (0.2.11-0ubuntu1) hardy; urgency=low
 
   * Major progress: added dependencies between processes.
