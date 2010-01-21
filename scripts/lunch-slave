@@ -129,7 +129,7 @@ class ChildProcess(protocol.ProcessProtocol):
         of receiving a signal, and if the exit code was 0), or a ProcessTerminated 
         object (with an .exitCode attribute) if something went wrong.
         """
-        self.slave.log("process has exited " + str(reason))
+        self.slave.log("process has exited " + str(reason.value))
     
 class Slave(object):
     """
