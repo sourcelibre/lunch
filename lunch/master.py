@@ -178,7 +178,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.2, log_dir=None, depends=None, verbose=False):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.

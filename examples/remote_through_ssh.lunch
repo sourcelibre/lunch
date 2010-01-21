@@ -8,4 +8,4 @@ USER = "johndoe"
 #USER = None
 
 add_command("xeyes", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xeyes")
-add_command("xlogo", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xeyes")
+add_command("xlogo", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xlogo")
