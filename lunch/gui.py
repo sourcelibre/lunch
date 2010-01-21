@@ -100,6 +100,45 @@ def tail_child_log(command):
     print("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
 
+class ErrorDialog(object):
+    """
+    Error dialog. Fires the deferred given to it once done.
+    """
+    def __init__(self, deferred, message):
+        """
+        @param deferred: L{Deferred}
+        @param message: str
+        """
+        self.deferredResult = deferred
+        parent = None
+        error_dialog = gtk.MessageDialog(
+            parent=None, 
+            flags=0, 
+            type=gtk.MESSAGE_ERROR, 
+            buttons=gtk.BUTTONS_CLOSE, 
+            message_format=message)
+        error_dialog.connect("close", self.on_close)
+        error_dialog.connect("response", self.on_response)
+        error_dialog.show()
+
+    def on_close(self, dialog, *params):
+        print("on_close %s %s" % (dialog, params))
+
+    def on_response(self, dialog, response_id, *params):
+        #print("on_response %s %s %s" % (dialog, response_id, params))
+        if response_id == gtk.RESPONSE_DELETE_EVENT:
+            print("Deleted")
+        elif response_id == gtk.RESPONSE_CANCEL:
+            print("Cancelled")
+        elif response_id == gtk.RESPONSE_OK:
+            print("Accepted")
+        self.terminate(dialog)
+
+    def terminate(self, dialog):
+        dialog.destroy()
+        self.deferredResult.callback(True)
+
+
 class About(object):
     """
     About dialog
