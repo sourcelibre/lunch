@@ -653,24 +653,11 @@ class Master(object):
         #log.msg("----- Managing slaves LOOP ----")
 
         self._time_now = time.time()
-        current = Master.tree.ROOT
-        visited = [] # list of visited nodes.
-        stack = [] # stack of iterators
-        while True:
-            if current not in visited:
-                visited.append(current)
-                # DO YOUR STUFF HERE
-                if current != Master.tree.ROOT:
-                    self._treat_node(current)
-                children = Master.tree.get_supported_by(current)
-                stack.append(iter(children))
-            try:
-                current = stack[-1].next()
-            except StopIteration:
-                stack.pop()
-            except IndexError:
-                break
-    
+        iterator = graph.iter_from_root_to_leaves(Master.tree)
+        for current in iterator:
+            if current != Master.tree.ROOT:
+                self._treat_node(current)
+
     def _treat_node(self, node):
         """
         Called once for each command on each main loop iteration.

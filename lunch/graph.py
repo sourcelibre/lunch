@@ -217,3 +217,27 @@ class DirectedGraph(object):
         txt += "Graph nodes:\n"
         txt += self._traverse(self.ROOT)
         return txt
+
+def iter_from_root_to_leaves(graph):
+    """
+    Generator function to iterate through all nodes of a graph, 
+    from the root to its leaves, prioritizing each next node on the same
+    level by the order in which it was added.
+    @return: An iterator.
+    """
+    current = graph.ROOT
+    visited = [] # list of visited nodes.
+    stack = [] # stack of iterators
+    while True:
+        if current not in visited:
+            visited.append(current)
+            # DO YOUR STUFF HERE
+            yield current
+            children = graph.get_supported_by(current)
+            stack.append(iter(children))
+        try:
+            current = stack[-1].next()
+        except StopIteration:
+            stack.pop()
+        except IndexError:
+            break

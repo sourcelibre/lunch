@@ -110,67 +110,50 @@ class Test_Graph(unittest.TestCase):
         all = g.get_all_dependees("a")
         self.failUnlessEqual(all, ["b", "c", "d"])
 
-    def test_no_recursion(self):
-        g = graph.DirectedGraph()
-        g.add_node("a")
-        g.add_node("b", ["a"])
-        g.add_node("c", ["b"])
-        g.add_node("d", ["b"])
-        g.add_node("e")
-        g.add_node("f", ["e"])
-        g.add_node("g")
-        g.add_node("h")
-        g.add_node("j")
-        g.add_node("i", ['h', 'j'])
+class Test_Traversal(unittest.TestCase):
+    """
+    Many tests using the same tree which contains all the cases.
+    """
+    def setUp(self):
+        self.g = graph.DirectedGraph()
+        self.g.add_node("a")
+        self.g.add_node("b", ["a"])
+        self.g.add_node("c", ["b"])
+        self.g.add_node("d", ["b"])
+        self.g.add_node("e")
+        self.g.add_node("f", ["e"])
+        self.g.add_node("g")
+        self.g.add_node("h")
+        self.g.add_node("j")
+        self.g.add_node("i", ['h', 'j'])
         #  a -- b -- c
         #        `-- d
         #  e -- f
         #  g
         #  h -\
         #  j -- i
-        current = g.ROOT
-        visited = [] # list of visited nodes.
-        stack = [] # stack of iterators
-        while True:
-            if current not in visited:
-                visited.append(current)
-                # DO YOUR STUFF HERE
-                children = g.get_supported_by(current)
-                stack.append(iter(children))
-            try:
-                current = stack[-1].next()
-            except StopIteration:
-                stack.pop()
-            except IndexError:
-                break
         
-        self.failUnlessEqual(visited, [g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
-
     def test_get_all_dependencies(self):
-        g = graph.DirectedGraph()
-        g.add_node("a")
-        g.add_node("b", ["a"])
-        g.add_node("c", ["b"])
-        g.add_node("d", ["b"])
-        g.add_node("e")
-        g.add_node("f", ["e"])
-        g.add_node("g")
-        g.add_node("h")
-        g.add_node("j")
-        g.add_node("i", ['h', 'j'])
-        #  a -- b -- c
-        #        `-- d
-        #  e -- f
-        #  g
-        #  h -\
-        #  j -- i
-
-        li = g.get_all_dependencies("d")
+        li = self.g.get_all_dependencies("d")
         self.failUnlessEqual(li, ["b", "a"])
         
-        li = g.get_all_dependencies("i")
+        li = self.g.get_all_dependencies("i")
         self.failUnlessEqual(li, ["h", "j"])
         
-        li = g.get_all_dependencies("g")
+        li = self.g.get_all_dependencies("g")
         self.failUnlessEqual(li, [])
         
+    def test_get_all_dependees(self):
+        li = self.g.get_all_dependees("a")
+        self.failUnlessEqual(li, ["b", "c", "d"])
+        
+        li = self.g.get_all_dependees("e")
+        self.failUnlessEqual(li, ["f"])
+
+    def test_iterator(self):
+        iterator = graph.iter_from_root_to_leaves(self.g)
+        visited = []
+        for n in iterator:
+            visited.append(n)
+        self.failUnlessEqual(visited, [self.g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
+
