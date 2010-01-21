@@ -79,6 +79,27 @@ def open_path(path):
     """
     return run_once("gnome-open", path)
 
+def tail_child_log(command):
+    """
+    Opens a terminal window with the tail of the log file for the child 
+    process of a command. Uses SSH if needed.
+    @param command: L{Command}
+    """
+    #TODO: really need to make a valid path in add_command and keep it.
+    child_log_path = os.path.join(command.child_log_dir, "child-%s.log" % (command.identifier))
+    xterm_title = 'tail -F %s' % (command.identifier)
+    cmd = []
+    if command.host is not None: # using SSH
+        cmd.extend(["ssh"])
+        if command.user is not None:
+            cmd.extend(["-l", command.user])
+        cmd.extend([command.host])
+        xterm_title += " on " + command.host
+    cmd.extend(["xterm", "-title", '"%s"' % (xterm_title), "-e"])
+    cmd.extend(["tail", "-F", child_log_path])
+    print("$ %s" % (" ".join(cmd)))
+    run_once(*cmd)
+
 class About(object):
     """
     About dialog
