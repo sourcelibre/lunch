@@ -1,3 +1,5 @@
+#!/usr/bin/env lunch -g 
+# In this example, some commands are ran only once.
 add_command("ls -l", respawn=False)
 add_command("xeyes")
 

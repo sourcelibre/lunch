@@ -1,11 +1,11 @@
-#!/usr/bin/env python
-# lunch example config file.
-# Copy this to ~/.lunchrc
-#
+#!/usr/bin/env lunch
 # In this example, we run commands on a remote host, via SSH.
+# YOu should change the value of the USER and HOST variables below.
 
-HOST = "brrr"
-USER = "miville"
+HOST = "example.org"
+USER = "johndoe" 
+# set USER to None if the user name is the same than your local user name:
+#USER = None
 
 add_command("xeyes", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xeyes")
 add_command("xlogo", env={"DISPLAY":":0.0"}, user=USER, host=HOST, title="remote_xeyes")

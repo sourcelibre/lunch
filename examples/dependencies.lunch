@@ -1,4 +1,5 @@
 #!/usr/bin/env lunch -g
+# This example demonstrates dependencies.
 
 # A bunch of processes depending on the xeyes:
 add_command("xeyes", title="xeyes")
