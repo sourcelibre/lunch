@@ -1,3 +1,12 @@
+lunch (0.2.13-0ubuntu1) hardy; urgency=low
+
+  * Improved GUI look and feel : using a tree view instead of labels.
+  * Packaging examples. Improved examples a bit.
+  * Added a button to tail -F the log of the selected child process.
+  * Decreased slave verbosity when child dies.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Thu, 21 Jan 2010 16:13:51 -0500
+
 lunch (0.2.12-0ubuntu1) hardy; urgency=low
 
   * Fixed critical error in previous version. Child with respawn=False were
