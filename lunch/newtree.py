@@ -5,7 +5,6 @@ if __name__ == "__main__":
     gtk2reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 import gtk
-import random
 
 class Example:
 
@@ -15,8 +14,6 @@ class Example:
         return False
 
     def add_button_clicked(self, widget):
-        rand = self.rand
-        # add a row of random ints
         i0 = self.model_sort.get_model().append(
             [
                 "Milhouse_r_remote",
@@ -26,10 +23,28 @@ class Example:
                 4,
                 "RUNNING"
             ])
-        # select the new row in each view
+        # select the new row
         selection = self.tree_view.get_selection()
         i1 = self.model_sort.convert_child_iter_to_iter(None, i0)
         selection.select_iter(i1)
+
+    def add_row(self, command):
+        host = "localhost"
+        if command.host is not None:
+            host = command.host
+        life_time = 1.000 # TODO: remove
+        executions = 2
+        state = command.state
+        self.list_store.append(
+            [
+                command.title, 
+                command.command,
+                host,
+                life_time, 
+                executions,
+                state
+            ])
+        
 
     def __init__(self):
 
@@ -41,20 +56,20 @@ class Example:
         self.vbox = gtk.VBox()
         self.window.add(self.vbox)
         self.scrollable = gtk.ScrolledWindow()
+        self.scrollable.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        self.scrollable.set_shadow_type(gtk.SHADOW_IN)
+        self.vbox.pack_start(self.scrollable, expand=True, fill=True)
         
         # The ListStore contains the data.
         self.list_store = gtk.ListStore(str, str, str, float, int, str)
         # The TreeModelSort sorts the data
-        # TODO: get rid of the TreeModelSort, use a TreeSortable instead.
         self.model_sort = gtk.TreeModelSort(self.list_store)
-        self.rand = random.Random() #TODO: remove
         # Set initial sorting column and order.
         sorting_column_number = 0
         self.model_sort.set_sort_column_id(sorting_column_number, gtk.SORT_ASCENDING)
         # The TreeView displays the sorted data in the GUI.
         self.tree_view = gtk.TreeView(self.model_sort)
         
-        self.vbox.pack_start(self.scrollable)
         # Add button
         self.add_button = gtk.Button('Add a Row')
         self.add_button.connect('clicked', self.add_button_clicked)
@@ -63,30 +78,51 @@ class Example:
         self.scrollable.add(self.tree_view)
         
         NUM_COLUMNS = 6
-        self.columns = [None] * NUM_COLUMNS
+        columns = [None] * NUM_COLUMNS
         # Set column title
-        self.columns[0] = gtk.TreeViewColumn("Title")
-        self.columns[1] = gtk.TreeViewColumn("Command")
-        self.columns[2] = gtk.TreeViewColumn("Host")
-        self.columns[3] = gtk.TreeViewColumn("Lifetime")
-        self.columns[4] = gtk.TreeViewColumn("Executions") # How many times
-        self.columns[5] = gtk.TreeViewColumn("State") # str
+        columns[0] = gtk.TreeViewColumn("Title")
+        columns[1] = gtk.TreeViewColumn("Command")
+        columns[2] = gtk.TreeViewColumn("Host")
+        columns[3] = gtk.TreeViewColumn("Lifetime")
+        columns[4] = gtk.TreeViewColumn("Executions") # How many times
+        columns[5] = gtk.TreeViewColumn("State") # str
         
         # Leave that as it is...
-        self.cells = [None] * NUM_COLUMNS
+        cells = [None] * NUM_COLUMNS
         for i in range(NUM_COLUMNS):
-            self.cells[i] = gtk.CellRendererText()
-            self.tree_view.append_column(self.columns[i])
-            
-            self.columns[i].set_expand(True)
-            self.columns[i].set_max_width(400)
-            self.columns[i].set_resizable(True)
-            self.columns[i].set_sort_column_id(i)
-            self.columns[i].pack_start(self.cells[i], False) #True)
-            self.columns[i].set_attributes(self.cells[i], text=i)
+            self.tree_view.append_column(columns[i])
+            columns[i].set_expand(True)
+            columns[i].set_max_width(400)
+            columns[i].set_resizable(True)
+            columns[i].set_sort_column_id(i)
+
+            cells[i] = gtk.CellRendererText()
+            cells[i].set_property("width-chars", 20) # FIXME
+            columns[i].pack_start(cells[i], False) #True)
+            columns[i].set_attributes(cells[i], text=i)
         # Done with the table. Showing the window.
         self.window.show_all()
 
 if __name__ == "__main__":
+    def factory(title="", command="", host=None, state="RUNNING"):
+        class O:
+            def __init__(self):
+                self.title = None
+                self.command = None
+                self.host = None
+                self.state = None
+        obj = O()
+        obj.title = title
+        obj.command = command
+        obj.host = host
+        obj.state = state
+        return obj
+
     example = Example()
+    example.add_row(factory('qweqweqwe', 'ls -lrt /'))
+    example.add_row(factory('milhouse', "milhouse -s --videoport 12309 --address 12.3.2.3 --videosource v4l2 --videocodec mpeg4 --videodevice /dev/video0"))
+    example.add_row(factory('milhouse-rekjfho9er=', 'milhouse -r '))
+    example.add_row(factory('qweqweqwe', 'ls -lrt /'))
+    example.add_row(factory('qweqweqwe', 'ls -lrt /'))
+
     reactor.run()
