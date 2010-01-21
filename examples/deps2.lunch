@@ -1,3 +1,4 @@
+#!/usr/bin/env lunch -g
 command = """xterm -geometry 30x4 -hold -title %s -e echo '%s'"""
 
 

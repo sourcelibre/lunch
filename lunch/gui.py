@@ -283,10 +283,6 @@ class LunchApp(object):
         when main window closed
         """
         print("Destroying the window.")
-        try:
-            gtk.main_quit()
-        except RuntimeError, e:
-            print(str(e))
         if reactor.running:
             print("reactor.stop()")
             reactor.stop()
