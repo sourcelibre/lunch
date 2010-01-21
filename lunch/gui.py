@@ -166,19 +166,11 @@ class About(object):
         if not os.path.exists(self.icon_file):
             print("Could not find icon file %s." % (self.icon_file))
         else:
-        #try:
             large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
             self.about_dialog.set_logo(large_icon)
-        #except glib.GError, e:
-        #    print(str(e))
-        # Add button to show keybindings:
-        #shortcut_button = ui.button(text=_("_Shortcuts"))
-        #self.about_dialog.action_area.pack_start(shortcut_button)
-        #self.about_dialog.action_area.reorder_child(self.about_dialog.action_area.get_children()[-1], -2)
         # Connect to callbacks
         self.about_dialog.connect('response', self.destroy_about)
         self.about_dialog.connect('delete_event', self.destroy_about)
-        #shortcut_button.connect('clicked', self.about_shortcuts)
         self.about_dialog.connect("delete-event", self.destroy_about)
         self.about_dialog.show_all()
      
@@ -235,10 +227,25 @@ class LunchApp(object):
             if hasattr(command, "child_state_changed_signal"):
                 #print("Connecting state changed signal to GUI.")
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
+        
+        # Box with buttons.
+        hbox = gtk.HBox(homogeneous=True)
+        vbox.pack_start(hbox, expand=False)
+        openlog_button = gtk.Button("Open Child Process Log File")
+        openlog_button.connect("clicked", self.on_openlog_clicked)
+        hbox.pack_start(openlog_button)
 
         self.window.show_all()
 
-    ROW_IDENTIFIER = 0 # the row in the treeview that contains the command identifier.
+    #def _create_buttons(self): 
+        #TODO: open log
+        #TODO: disable/enable/restart
+        #self.stopall_button = gtk.Button("Stop All")
+        #self.stopall_button.connect("clicked", self.on_stopall_clicked)
+        #self.table.attach(self.stopall_button, 0, 2, num_rows - 1, num_rows)
+        #self.stopall_button.show()
+
+    IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
 
     def _setup_treeview(self):
         """
@@ -293,7 +300,7 @@ class LunchApp(object):
         looking_for = command.identifier
         #print "look for:", looking_for
         for row in iter(list_store):
-            identifier = row[self.ROW_IDENTIFIER]
+            identifier = row[self.IDENTIFIER_COLUMN]
             if identifier == looking_for:
                 #print identifier, "MATCHES!!!!!!!!!"
                 #TODO: update only columns how_many_times_run and child_state
@@ -320,14 +327,7 @@ class LunchApp(object):
                 executions,
                 state
             ]
-
-    #def _create_buttons(self): 
-        #TODO: open log
-        #TODO: disable/enable/restart
-        #self.stopall_button = gtk.Button("Stop All")
-        #self.stopall_button.connect("clicked", self.on_stopall_clicked)
-        #self.table.attach(self.stopall_button, 0, 2, num_rows - 1, num_rows)
-        #self.stopall_button.show()
+    
 
     def on_menu_open_logs(self, widget, data):
         #TODO:
@@ -339,7 +339,7 @@ class LunchApp(object):
         menu_items = (
             ( "/_File", None, None, 0, "<Branch>" ),
             #( "/File/_New", "<control>N", self.print_hello, 0, None),
-            ( "/File/_Open Logs", "<control>O", self.on_menu_open_logs, 0, None),
+            ( "/File/_Open Logging Directory", "<control>O", self.on_menu_open_logs, 0, None),
             #( "/File/_Save", "<control>S", self.print_hello, 0, None),
             #( "/File/Save _As", None, None, 0, None),
             #( "/File/sep1", None, None, 0, "<Separator>"),
@@ -361,9 +361,23 @@ class LunchApp(object):
         #print "on about"
         About().show_about_dialog()
     
-    def on_start_clicked(self, widget, info): # index as info
+    def on_openlog_clicked(self, widget):
         #print "Button %s was pressed" % (info)
-        print("Toggle start/stop %d" % (info))
+        #print("Will open log %d" % (info))
+        selection = self.tree_view.get_selection()
+        model, rows = selection.get_selected()
+        if rows is None:
+            msg = "To view a process log file, you must first select one in the list."
+            d = defer.Deferred()
+            dialog = ErrorDialog(d, msg)
+        else:
+            print 'getting the currently selected row in the tree view.'
+            row = rows # only one row selected at a time in this version
+            identifier = model.get_value(row, self.IDENTIFIER_COLUMN)
+            print 'id', identifier
+            c = self.master.commands[identifier]
+            tail_child_log(c)
+
 
     #def on_stopall_clicked(self, widget): # index as info
     #    print("Stop All")
