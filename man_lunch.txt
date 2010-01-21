@@ -20,6 +20,7 @@ Here is a simple example of a lunch config file :
 
   add_local_address("192.168.0.2") # will avoid using SSH on this address
   add_command("xeyes", title="local_xeyes")
+  add_command("ls -l", title="listing...", respawn=False)
   add_command("xeyes", title="local_xeyes", user="johndoe", host="192.168.0.2") # we will not use SSH for this one.
   add_command("xeyes -geometry 300x400", title="remote_xeyes", user="johndoe", host="example.org")
 
