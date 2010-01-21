@@ -1,5 +1,5 @@
 [OPERATION]
-The lunch executable is called the lunch master. The lunch-slave executable is called the lunch slave. If run as a master, it launches slaves. The slaves are responsible for launching child processes. The master laucnhes slaves (via SSH or not) which, in turn, launch child processes.
+The lunch executable is called the lunch master. The lunch-slave executable is called the lunch slave. If run as a master, it launches slaves. The slaves are responsible for launching child processes. The master launches slaves (via SSH or not) which, in turn, launch child processes.
 
 The Lunch configuration file can be provided as a argument to the lunch executable. If not given, the Lunch master will look for the ~/.lunchrc file. If not found, lunch will print an error and exit. The lunch config file is written in the Python programming language, and must call the add_command function. 
 
@@ -14,14 +14,16 @@ When invoked with the --graphical option, (-g) the lunch master shows a graphica
 
 [EXAMPLES]
 
-See the examples directory in the source code for examples.
+See the examples directory for examples. On a Debian or Ubuntu system, they should located in the /usr/share/doc/lunch/examples/ directory.
 
 Here is a simple example of a lunch config file :
 
   add_local_address("192.168.0.2") # will avoid using SSH on this address
   add_command("xeyes", title="local_xeyes")
   add_command("ls -l", title="listing...", respawn=False)
-  add_command("xeyes", title="local_xeyes", user="johndoe", host="192.168.0.2") # we will not use SSH for this one.
+  # We will not use SSH for this one, since we just added its host using the "add_local_address" function.
+  add_command("xeyes", title="local_xeyes", user="johndoe", host="192.168.0.2")
+  # We will use SSH for the next one, since its host is not set as being the local host.
   add_command("xeyes -geometry 300x400", title="remote_xeyes", user="johndoe", host="example.org")
 
 [SEE ALSO]
