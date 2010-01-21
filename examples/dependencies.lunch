@@ -1,4 +1,4 @@
-#!/usr/bin/env lunch -g
+#!/usr/bin/env lunch 
 # This example demonstrates dependencies.
 
 # A bunch of processes depending on the xeyes:

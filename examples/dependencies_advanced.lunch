@@ -1,4 +1,4 @@
-#!/usr/bin/env lunch -g
+#!/usr/bin/env lunch 
 # This example demonstrates dependencies.
 # It also uses the strenghts of the Python programming language.
 command = """xterm -geometry 30x4 -hold -title %s -e echo '%s'"""
