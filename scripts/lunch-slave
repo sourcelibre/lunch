@@ -212,17 +212,17 @@ class Slave(object):
             msg = "You must provide a command to be run."
             self.io_protocol.send_error(msg)
             return
-        else:
-            # find full path to executable
-            words = self.command.strip().split(" ")
-            executable_name = words[0]
-            try:
-                full_exec_path = procutils.which(executable_name)[0]
-                #self.command[0] = procutils.which(self.command[0])[0]
-            except IndexError:
-                msg = "Could not find path of executable %s." % (executable_name)
-                self.io_protocol.send_error(msg)
-                return
+        #else:
+        #    # find full path to executable
+        #    words = self.command.strip().split(" ")
+        #    executable_name = words[0]
+        #    try:
+        #        full_exec_path = procutils.which(executable_name)[0]
+        #        #self.command[0] = procutils.which(self.command[0])[0]
+        #    except IndexError:
+        #        msg = "Could not find path of executable %s." % (executable_name)
+        #        self.io_protocol.send_error(msg)
+        #        return
         # create log dir
         if not os.path.exists(self.log_dir):
             try:
