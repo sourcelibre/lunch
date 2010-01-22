@@ -23,7 +23,7 @@
 Main entry point of the lunch master application.
 """
 
-__version__ = "0.2.13"
+__version__ = "0.2.14"
 
 import os
 import sys

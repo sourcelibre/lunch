@@ -33,7 +33,7 @@ import sys
 import os
 import webbrowser
 
-__version__ = "0.2.13"
+__version__ = "0.2.14"
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
@@ -95,10 +95,24 @@ def tail_child_log(command):
             cmd.extend(["-l", command.user])
         cmd.extend([command.host])
         xterm_title += " on " + command.host
-    cmd.extend(["xterm", "-title", '"%s"' % (xterm_title), "-e"])
+    cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
     cmd.extend(["tail", "-F", child_log_path])
     print("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
+
+def tail_master_log(master):
+    log_path = master.log_file
+    if log_path is None:
+        print("No master log file to tail -F") # TODO: error dialog.
+    else:
+        cmd = []
+        xterm_title = "tail -F Lunch Master Log File"
+        cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
+        cmd.extend(["tail", "-F", log_path])
+        print("$ %s" % (" ".join(cmd)))
+        run_once(*cmd)
+    
+    
 
 class ErrorDialog(object):
     """
@@ -335,12 +349,15 @@ class LunchApp(object):
             open_path(self.master.log_dir)
         #print "open logs"
 
+    def on_menu_view_master_log(self, widget, data):
+        tail_master_log(self.master)
+
     def create_main_menu(self, window):
         menu_items = (
             ( "/_File", None, None, 0, "<Branch>" ),
             #( "/File/_New", "<control>N", self.print_hello, 0, None),
             ( "/File/_Open Logging Directory", "<control>O", self.on_menu_open_logs, 0, None),
-            #( "/File/_Save", "<control>S", self.print_hello, 0, None),
+            ( "/File/_View Master Log File", None, self.on_menu_view_master_log, 0, None),
             #( "/File/Save _As", None, None, 0, None),
             #( "/File/sep1", None, None, 0, "<Separator>"),
             ( "/File/Quit", "<control>Q", self.destroy_app, 0, None),
