@@ -1,3 +1,9 @@
+lunch (0.2.15-0ubuntu1) hardy; urgency=low
+
+  * Fixed master log not being shown in gui.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 22 Jan 2010 14:00:20 -0500
+
 lunch (0.2.14-0ubuntu1) hardy; urgency=low
 
   * Fixed problem with command being respawn even if lifetime smaller 
