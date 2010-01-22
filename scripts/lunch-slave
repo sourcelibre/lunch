@@ -145,7 +145,7 @@ class Slave(object):
         """
         self._process_transport = None
         self._child_process = None
-        self._time_stated_child = None
+        self._time_child_started = None
         self._child_running_time = None
         self._stdout_file = None
         self.state = STATE_STOPPED
@@ -270,7 +270,7 @@ class Slave(object):
         shell = "/bin/sh"
         if os.path.exists("/bin/bash"):
             shell = "/bin/bash"
-        self._time_stated_child = time.time()
+        self._time_child_started = time.time()
         self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
         self.pid = self._process_transport.pid
         self.log("Spawned child %s with pid %s." % (self.identifier, self.pid))
@@ -333,7 +333,7 @@ class Slave(object):
             call_callbacks(self.log_callbacks, msg, level)
 
     def _on_process_ended(self, exit_code):
-        self._child_running_time = time.time() - self._time_stated_child
+        self._child_running_time = time.time() - self._time_child_started
         if self.state == STATE_STOPPING:
             self.log('Child process exited as expected.')
             if self._delayed_kill is not None:

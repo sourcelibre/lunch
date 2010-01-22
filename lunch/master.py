@@ -681,6 +681,8 @@ class Master(object):
         # If STOPPED, check if we should start it:
         elif command.child_state == STATE_STOPPED:
             if self.wants_to_live and self.launch_next_time <= self._time_now:
+                #
+                # Check if there are dependees missing so that we start this one
                 dependees_to_wait_for = False # to wait so that they quit
                 for dependee_name in all_dependees:
                     dependee = Master.commands[dependee_name]
@@ -692,12 +694,18 @@ class Master(object):
                     start_it = True
                     if not command.respawn and command.how_many_times_run >= 1:
                         start_it = False
+                    #
+                    # Do not start it if not enabled !
+                    # (maybe lived for not long enough)
+                    if not command.enabled:
+                        start_it = False
                     for dependency in all_dependencies:
                         dep_command = Master.commands[dependency]
                         if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
                             start_it = False
                         elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
                             start_it = False
+                    # Finally, start it if we are ready to.
                     if start_it:
                         self.launch_next_time = self._time_now + command.sleep_after
                         log.msg("Will start %s." % (command.identifier))
