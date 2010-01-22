@@ -21,7 +21,7 @@
 """
 Tools for process management.
 """
-__version__ = "0.2.15"
+__version__ = "0.2.16"
 DESCRIPTION = "The lunch slave utility is an interactive process launcher. It is intended to be run by the lunch master process through an encrypted SSH connection. It launches a single process at a time and allows to specify its environment and to log its standard output and error to a file."
 
 import os
