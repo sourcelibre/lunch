@@ -166,6 +166,7 @@ class YesNoDialog(object):
             type=gtk.MESSAGE_QUESTION, 
             buttons=gtk.BUTTONS_YES_NO, 
             message_format=message)
+        error_dialog.set_modal(True)
         error_dialog.connect("close", self.on_close)
         error_dialog.connect("response", self.on_response)
         error_dialog.show()
@@ -489,7 +490,7 @@ class LunchApp(object):
         # This is useful for popping up 'are you sure you want to quit?'
         # type dialogs. 
         if self.confirm_close:
-            d = YesNoDialog.create("Really quit and stop all launched processes ?")
+            d = YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
             d.addCallback(_cb)
             return True
         else:
