@@ -1,3 +1,24 @@
+lunch (0.2.16-0ubuntu1) hardy; urgency=low
+
+  * Fixed remote child log not being shown in gui.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 22 Jan 2010 14:11:12 -0500
+
+lunch (0.2.15-0ubuntu1) hardy; urgency=low
+
+  * Fixed master log not being shown in gui.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 22 Jan 2010 14:00:20 -0500
+
+lunch (0.2.14-0ubuntu1) hardy; urgency=low
+
+  * Fixed problem with command being respawn even if lifetime smaller 
+  * Removed -g option in examples.
+  * Moved main to lunch/runner.py.
+  * Added menu item to view master log file. Removed shell in .desktop file.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 22 Jan 2010 13:56:46 -0500
+
 lunch (0.2.13-0ubuntu1) hardy; urgency=low
 
   * Improved GUI look and feel : using a tree view instead of labels.

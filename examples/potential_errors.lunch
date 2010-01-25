@@ -1,0 +1,5 @@
+#!/usr/bin/env lunch
+# In this example, we test a non-existing command should not be called again, 
+# since it has a minimum lifetime of 0.5. (default)
+add_command("non-existing-command")
+add_command("xeyes")
