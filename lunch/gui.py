@@ -138,6 +138,55 @@ class ErrorDialog(object):
         dialog.destroy()
         self.deferredResult.callback(True)
 
+class YesNoDialog(object):
+    """
+    Yes/no confirmation dialog.
+    Use the create static method as a factory.
+    """
+    def __init__(self, deferred, message):
+        self.deferredResult = deferred
+        parent = None
+        error_dialog = gtk.MessageDialog(
+            parent=None, 
+            flags=0, 
+            type=gtk.MESSAGE_QUESTION, 
+            buttons=gtk.BUTTONS_YES_NO, 
+            message_format=message)
+        error_dialog.connect("close", self.on_close)
+        error_dialog.connect("response", self.on_response)
+        error_dialog.show()
+
+    @staticmethod
+    def create(message):
+        """
+        Returns a Deferred which will be called with a boolean result.
+        @param message: str
+        @rettype: L{Deferred}
+        """
+        d = defer.Deferred()
+        dialog = YesNoDialog(d, message)
+        return d
+
+    def on_close(self, dialog, *params):
+        print("on_close %s %s" % (dialog, params))
+
+    def on_response(self, dialog, response_id, *params):
+        print("on_response %s %s %s" % (dialog, response_id, params))
+        if response_id == gtk.RESPONSE_DELETE_EVENT:
+            print("Deleted")
+            self.terminate(dialog, False)
+        elif response_id == gtk.RESPONSE_NO:
+            print("Cancelled")
+            self.terminate(dialog, False)
+        elif response_id == gtk.RESPONSE_YES:
+            print("Accepted")
+            self.terminate(dialog, True)
+
+    def terminate(self, dialog, answer):
+        dialog.destroy()
+        self.deferredResult.callback(answer)
+
+
 
 class About(object):
     """
@@ -188,12 +237,14 @@ class LunchApp(object):
     """
     def __init__(self, master=None):
         self.master = master
+        self.confirm_close = True # should we ask if the user is sure to close the app?
         self.commands = master.get_all_commands()
 
         # Window and framework
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
-        self.window.connect("destroy", self.destroy_app)
+        self.window.connect("delete-event", self.destroy_app)
+        #self.window.connect("destroy", self.destroy_app)
         WIDTH = 640
         HEIGHT = 480
         self.window.set_default_size(WIDTH, HEIGHT)
@@ -399,10 +450,26 @@ class LunchApp(object):
         Destroy method causes appliaction to exit
         when main window closed
         """
-        print("Destroying the window.")
-        if reactor.running:
-            print("reactor.stop()")
-            reactor.stop()
+        def _cb(result):
+            if result:
+                print("Destroying the window.")
+                if reactor.running:
+                    print("reactor.stop()")
+                    reactor.stop()
+            else:
+                print("Not quitting.")
+        # If you return FALSE in the "delete_event" signal handler,
+        # GTK will emit the "destroy" signal. Returning TRUE means
+        # you don't want the window to be destroyed.
+        # This is useful for popping up 'are you sure you want to quit?'
+        # type dialogs. 
+        if self.confirm_close:
+            d = YesNoDialog.create("Really quit and stop all launched processes ?")
+            d.addCallback(_cb)
+            return True
+        else:
+            _cb(True)
+            return False
 
 def start_gui(lunch_master):
     """
