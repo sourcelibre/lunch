@@ -248,6 +248,14 @@ class LunchApp(object):
         WIDTH = 640
         HEIGHT = 480
         self.window.set_default_size(WIDTH, HEIGHT)
+
+        #TODO: more robust icon handling.
+        icon_file = "/usr/share/pixmaps/lunch.png"
+        if not os.path.exists(icon_file):
+            print("Could not find icon file %s." % (icon_file))
+        else:
+            icon = gtk.gdk.pixbuf_new_from_file(icon_file)
+            self.window.set_icon_list(icon)
         
         # Vertical Box
         vbox = gtk.VBox(False)
