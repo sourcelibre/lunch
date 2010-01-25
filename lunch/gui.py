@@ -27,7 +27,6 @@ from twisted.internet import defer
 from twisted.internet import utils
 from twisted.python import procutils
 
-#import glib
 import gtk
 import sys
 import os
