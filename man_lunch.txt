@@ -32,8 +32,16 @@ The configuration file above will first start xeyes, and next xlogo, and finally
  
 In the next example, we use SSH to launch processes on a remote host.
 
-  add_local_address("192.168.1.2")
-  add_command("xeyes", title="local_xeyes")
+  add_command("xeyes")
+  add_command("xeyes", user="johndoe", host="example.org")
+
+It will create a process tree such as this one : 
+
+lunch_______________lunch-slave____xeyes
+        |____ssh____lunch-slave____xeyes
+
+The next one is a command that is run only once.
+
   add_command("ls -l", title="listing...", respawn=False)
 
 If, for some reason, it is easier for you to specify the host name for every command you add, even for the local host, you can call "add_local_address" with the master's IP as an argument.
