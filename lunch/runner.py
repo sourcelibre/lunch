@@ -100,11 +100,12 @@ def run():
     if error_message is not None:
         print(error_message)
         if GUI_ENABLED:
+            from lunch import dialogs
             def _cb(result):
                 reactor.stop()
             d = defer.Deferred()
             d.addCallback(_cb)
-            error_dialog = gui.ErrorDialog(d, error_message)
+            error_dialog = dialogs.ErrorDialog(d, error_message)
             print("Running reactor to show error dialog.")
             reactor.run() # need it for the GTK error dialog
             print("Reactor stopped. Exiting.")
