@@ -18,7 +18,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
-
+"""
+Main GUI of the Lunch Master 
+"""
 if __name__ == "__main__":
     from twisted.internet import gtk2reactor
     gtk2reactor.install() # has to be done before importing reactor
@@ -31,6 +33,7 @@ import gtk
 import sys
 import os
 import webbrowser
+from lunch import dialogs
 
 __version__ = "0.2.17"
 
@@ -111,97 +114,6 @@ def tail_master_log(master):
         print("$ %s" % (" ".join(cmd)))
         run_once(*cmd)
     
-    
-
-class ErrorDialog(object):
-    """
-    Error dialog. Fires the deferred given to it once done.
-    """
-    def __init__(self, deferred, message):
-        """
-        @param deferred: L{Deferred}
-        @param message: str
-        """
-        self.deferredResult = deferred
-        parent = None
-        error_dialog = gtk.MessageDialog(
-            parent=None, 
-            flags=0, 
-            type=gtk.MESSAGE_ERROR, 
-            buttons=gtk.BUTTONS_CLOSE, 
-            message_format=message)
-        error_dialog.connect("close", self.on_close)
-        error_dialog.connect("response", self.on_response)
-        error_dialog.show()
-
-    def on_close(self, dialog, *params):
-        print("on_close %s %s" % (dialog, params))
-
-    def on_response(self, dialog, response_id, *params):
-        #print("on_response %s %s %s" % (dialog, response_id, params))
-        if response_id == gtk.RESPONSE_DELETE_EVENT:
-            print("Deleted")
-        elif response_id == gtk.RESPONSE_CANCEL:
-            print("Cancelled")
-        elif response_id == gtk.RESPONSE_OK:
-            print("Accepted")
-        self.terminate(dialog)
-
-    def terminate(self, dialog):
-        dialog.destroy()
-        self.deferredResult.callback(True)
-
-class YesNoDialog(object):
-    """
-    Yes/no confirmation dialog.
-    Use the create static method as a factory.
-    """
-    def __init__(self, deferred, message):
-        self.deferredResult = deferred
-        parent = None
-        error_dialog = gtk.MessageDialog(
-            parent=None, 
-            flags=0, 
-            type=gtk.MESSAGE_QUESTION, 
-            buttons=gtk.BUTTONS_YES_NO, 
-            message_format=message)
-        error_dialog.set_modal(True)
-        error_dialog.connect("close", self.on_close)
-        error_dialog.connect("response", self.on_response)
-        error_dialog.show()
-
-    @staticmethod
-    def create(message):
-        """
-        Returns a Deferred which will be called with a boolean result.
-        @param message: str
-        @rettype: L{Deferred}
-        """
-        d = defer.Deferred()
-        dialog = YesNoDialog(d, message)
-        return d
-
-    def on_close(self, dialog, *params):
-        print("on_close %s %s" % (dialog, params))
-
-    def on_response(self, dialog, response_id, *params):
-        print("on_response %s %s %s" % (dialog, response_id, params))
-        if response_id == gtk.RESPONSE_DELETE_EVENT:
-            print("Deleted")
-            self.terminate(dialog, False)
-        elif response_id == gtk.RESPONSE_NO:
-            print("Cancelled")
-            self.terminate(dialog, False)
-        elif response_id == gtk.RESPONSE_YES:
-            print("Accepted")
-            self.terminate(dialog, True)
-
-    def terminate(self, dialog, answer):
-        dialog.destroy()
-        self.deferredResult.callback(answer)
-
-
-
 class About(object):
     """
     About dialog
@@ -445,7 +357,7 @@ class LunchApp(object):
         if rows is None:
             msg = "To view a process log file, you must first select one in the list."
             d = defer.Deferred()
-            dialog = ErrorDialog(d, msg)
+            dialog = dialogs.ErrorDialog(d, msg)
         else:
             print 'getting the currently selected row in the tree view.'
             row = rows # only one row selected at a time in this version
@@ -489,7 +401,7 @@ class LunchApp(object):
         # This is useful for popping up 'are you sure you want to quit?'
         # type dialogs. 
         if self.confirm_close:
-            d = YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
+            d = dialogs.YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
             d.addCallback(_cb)
             return True
         else:
