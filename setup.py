@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 from distutils.core import setup
 
+__version__ = "0.2.18"
+
 setup(
     name="lunch",
-    version="0.2.17",
+    version=__version__,
     description="The Lunch Distributed Process Launcher",
     author="SAT",
     author_email="alexandre@quessy.net",

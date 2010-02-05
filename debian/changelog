@@ -1,3 +1,11 @@
+lunch (0.2.18-0ubuntu1) lucid; urgency=low
+
+  * Fixed a bug with the error dialog.
+  * Improved man pages.
+  * Packaging for lucid.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Fri, 05 Feb 2010 01:18:37 -0500
+
 lunch (0.2.17-0ubuntu1) hardy; urgency=low
 
   * Added window icon and confirm-close dialog.

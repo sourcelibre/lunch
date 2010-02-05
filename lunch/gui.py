@@ -35,7 +35,7 @@ import os
 import webbrowser
 from lunch import dialogs
 
-__version__ = "0.2.17"
+__version__ = "0.2.18"
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
