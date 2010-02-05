@@ -9,12 +9,8 @@ include /usr/share/cdbs/1/class/python-distutils.mk
 binary-install/lunch::
 	dh_pycentral -plunch
 	dh_install lunch.desktop usr/share/applications
-	convert -geometry 48x48 -background none lunch.svg lunch.png
 	dh_install lunch.png usr/share/pixmaps
-	dh_icons
-	help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./scripts/lunch --output=lunch.1 
 	dh_installman lunch.1
-	help2man --no-info --name="Lunch Slave" ./scripts/lunch-slave --output=lunch-slave.1 
 	dh_installman lunch-slave.1
 	dh_installdocs debian/copyright
 	dh_installdocs examples

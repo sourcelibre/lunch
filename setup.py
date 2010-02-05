@@ -1,7 +1,16 @@
 #!/usr/bin/env python
-from distutils.core import setup
+"""
+setup.py for Lunch
+Also sets up the man pages and the icon.
 
-__version__ = "0.2.18"
+To update the version number : 
+vim -o lunch/runner.py scripts/lunch-slave setup.py lunch/gui.py
+"""
+from distutils.core import setup
+import subprocess
+import sys
+
+__version__ = "0.2.19"
 
 setup(
     name="lunch",
@@ -14,3 +23,13 @@ setup(
     scripts=["scripts/lunch", "scripts/lunch-slave"]
     )
 
+if sys.argv[1] == "build":
+    commands = [
+        'convert -geometry 48x48 -background none lunch.svg lunch.png',
+        'help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./scripts/lunch --output=lunch.1',
+        'help2man --no-info --name="Lunch Slave" ./scripts/lunch-slave --output=lunch-slave.1'
+        ]
+    for c in commands:
+        print(c)
+        retcode = subprocess.call(c, shell=True)
+        print("Command returned %s" % (retcode))
