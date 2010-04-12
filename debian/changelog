@@ -1,3 +1,9 @@
+lunch (0.2.20-0ubuntu1) lucid; urgency=low
+
+  * Making sure the process with the PID of the master is really a lunch.
+
+ -- Alexandre Quessy <alexandre@quessy.net>  Mon, 12 Apr 2010 04:02:15 -0400
+
 lunch (0.2.19-0ubuntu1) lucid; urgency=low
 
   * Removed help2man and convert commands from the debian packaging
