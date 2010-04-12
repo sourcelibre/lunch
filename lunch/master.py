@@ -28,6 +28,7 @@ import time
 import sys
 import logging
 import warnings
+import subprocess # TODO: get rid of blocking IO
 
 from twisted.internet import defer
 from twisted.internet import error
@@ -823,10 +824,23 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
         f.close()
         try:
             os.kill(int(pid), 0) # if it throws, it's dead
-        except OSError:
+        except OSError: # no process with that ID
+            os.remove(pid_file)
+        except ValueError: # invalid int. (pidfile did not contain an int)
             os.remove(pid_file)
         else:
-            raise MasterError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
+            # checks if it's really a lunch master that has this ID.
+            command_check_master = "ps aux | grep %d | grep -v grep" % (int(pid))
+            #d = run_and_wait("bash", ["-c", command_check_master])
+            # blocking... it's easier to debug for now
+            # TODO: get rid of subprocess here.
+            output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
+            if "lunch" in output:
+                raise MasterError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
+            else:
+                #print "found PID, but it's not lunch!"
+                os.remove(pid_file)
+                
     f = open(pid_file, 'w')
     f.write(str(os.getpid()))
     f.close()
