@@ -15,7 +15,6 @@ _trial_temp/*
 
 # ------------- built files ----------
 *.1
-lunch.png
 
 # -------------- debian stuff --------
 debian/lunch*
