@@ -10,7 +10,7 @@ from distutils.core import setup
 import subprocess
 import sys
 
-__version__ = "0.2.21"
+__version__ = "0.2.22"
 
 setup(
     name="lunch",
