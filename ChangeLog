@@ -1,0 +1,98 @@
+0.2.21 2010-05-27 Alexandre Quessy <alexandre@quessy.net>
+	* Working on the Debian packaging
+	* removed .png from ignored files, since it's versionned 
+	* removed debian dir from "trunk"!
+
+0.2.20 2010-04-12 Alexandre Quessy <alexandre@quessy.net>
+	* Made a very nice 48x48 icon with inkscape
+	  inkscape -f lunch.svg -e lunch.png -w 48 -h 48 
+	* removed the command to convert the svg to png in setup.py 
+	* When a process with the PID of the master is found, we check if it 
+	  has the string "lunch" in its command. 
+
+0.2.19 Alexandre Quessy <alexandre@quessy.net>
+	* Working on the Debian packaging
+
+0.2.18 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
+	* Made the confirm close dialog modal. 
+	* fixed bug with dialogs when an error occurs in the lunch file. 
+	* Splitting dialogs from gui.py 
+
+0.2.17 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
+	* Working on the Debian packaging
+
+0.2.16 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
+	* Misc fixes in .desktop file
+	* Fixed problem with command being respawn even if lifetime smaller
+	  than minimum.
+	* Splitted script/lunch to lunch/runner.py 
+	* Fixed remote log file not being tailed in gui 
+
+0.2.13 2010-01-21 Alexandre Quessy <alexandre@quessy.net>
+	* Added view child's log button
+	* Renamed examples
+	* Made the slave less verbose
+	* Using an iterator instead of copy-pasting the traversal algo
+	* Set minimum lifetime to respawn to 0.5 s
+
+0.2.12 2010-01-20 Alexandre Quessy <alexandre@quessy.net>
+	* Not respawning if we not supposed to
+	* Decreased verbosity
+
+0.2.11 2010-01-20 Alexandre Quessy <alexandre@quessy.net>
+	* Check for dependency circularity
+	* Added run_and_wait()
+	* Deprecated groups in favour of dependencies tree 
+
+0.2.10 2010-01-18 Alexandre Quessy <alexandre@quessy.net>
+	* Moved copyright file
+	* Remove glib dep
+	* Improved man page
+
+0.2.9 2010-01-17 Alexandre Quessy <alexandre@quessy.net>
+	* Using getProcessValue and not getProcessOutput
+
+0.2.8 2010-01-17 Alexandre Quessy <alexandre@quessy.net>
+	* GUI looks better in a table
+	* Counting how many times a child runs
+	* Implemented the "open log" menu item
+
+0.2.7 2010-01-16 Alexandre Quessy <alexandre@quessy.net>
+	* Changing permissions on the config file, for security
+
+0.2.6 2010-01-15 Alexandre Quessy <alexandre@quessy.net>
+	* Added test_graph.py
+
+0.2.5 2010-01-15 Alexandre Quessy <alexandre@quessy.net>
+	* Progress in GUI
+	* Child state works
+
+0.2.4 2010-01-14 Alexandre Quessy <alexandre@quessy.net>
+	* Create log dir in slave if it doesn't exist
+
+0.2.3 2010-01-14 Alexandre Quessy <alexandre@quessy.net>
+	* A man page for each executable
+
+0.1.8 2010-01-13 Alexandre Quessy <alexandre@quessy.net>
+	* More doc. 
+	* Work on the packaging
+
+0.2.2 2010-01-13 Alexandre Quessy <alexandre@quessy.net>
+	* Removed lunch-0.1 script
+
+0.1.6 2010-01-12 Alexandre Quessy <alexandre@quessy.net>
+	* Still using the multiprocessing 0.1 branch in productions
+	* Added a PID file
+
+0.2.1 Alexandre Quessy <alexandre@quessy.net>
+
+0.2.0 Alexandre Quessy <alexandre@quessy.net>
+	* Rewritten using Twisted instead of multiprocessing
+
+0.1.5 2010-01-06 Alexandre Quessy <alexandre@quessy.net>
+	* Switched from SVN to Mercurial
+
+0.1.4 Alexandre Quessy <alexandre@quessy.net>
+
+0.1.3 Alexandre Quessy <alexandre@quessy.net>
+
