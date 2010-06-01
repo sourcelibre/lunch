@@ -1,3 +1,9 @@
+0.2.22 2010-06-01 Alexandre Quessy <alexandre@quessy.net>
+	* removed .1 files from the repository
+	* specifying encoding the .desktop file is deprecated
+	* fixed lintian complaint about unknown lunch interpreter
+	* added ChangeLog file
+
 0.2.21 2010-05-27 Alexandre Quessy <alexandre@quessy.net>
 	* Working on the Debian packaging
 	* removed .png from ignored files, since it's versionned 
