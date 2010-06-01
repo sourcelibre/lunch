@@ -1,11 +1,9 @@
 [Desktop Entry]
-Encoding=UTF-8
-Version=1.0
 Exec=lunch -g -q
 Type=Application
 Terminal=false
 Categories=System;RemoteAccess;Network;
 Name=Lunch
-Comment=The Lunch Distributed Process Manager
-Comment[fr]=Le gestionnaire de processus distribué Lunch
+Comment=Distributed Process Launcher
+Comment[fr]=Launceur de processus distribué
 Icon=lunch.png
