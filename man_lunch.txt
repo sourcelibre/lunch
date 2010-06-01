@@ -77,5 +77,11 @@ Next, for each slave host, do:
 
 The latter command should display "Hello" when issued.
 
+[HISTORY]
+2010 - Ported from multiprocessing to Twisted
+
+2009 - Written by Alexandre Quessy <alexandre@quessy.net> with contributions 
+from Simon Piette <simonp@sat.qc.ca>
+
 [SEE ALSO]
 See http://svn.sat.qc.ca/lunch for help and documentation.

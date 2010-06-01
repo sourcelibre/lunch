@@ -39,3 +39,6 @@ html/*
 html-slave/*
 scripts/lunch-slavec
 lunch-readme.html
+# --------- man pages -------------
+lunch.1
+lunch-slave.1
