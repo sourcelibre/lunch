@@ -10,7 +10,7 @@ from distutils.core import setup
 import subprocess
 import sys
 
-__version__ = "0.2.22"
+__version__ = "0.3.0"
 
 setup(
     name="lunch",
@@ -33,3 +33,4 @@ if sys.argv[1] == "build":
         print(c)
         retcode = subprocess.call(c, shell=True)
         print("Command returned %s" % (retcode))
+
