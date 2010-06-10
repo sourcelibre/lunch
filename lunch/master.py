@@ -78,7 +78,7 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         sleep_after = sleep
     if priority is not None:
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-    c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, log_dir=log_dir, identifier=title, depends=depends)
+    c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respaw=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends)
     Master.add_command(c)    
 
 def add_local_address(address):
@@ -155,9 +155,16 @@ class Master(object):
         self.launch_next_time = time.time() # time in future
         self._looping_call = task.LoopingCall(self.main_loop)
         self._looping_call.start(self.main_loop_every, False) 
-        self.wants_to_live = True # The master is either trying to make every child live or die. 
+        self.wants_to_live = False # The master is either trying to make every child live or die. 
         self.prepare_all_commands()
+        self.start_all()
 
+    def start_all(self):
+        """
+        Sets the master so that it starts all the slaves.
+        """
+        self.wants_to_live = True
+    
     def prepare_all_commands(self):
         """
         Called to change some attribute of all the commands before to start them for the first time. The config file is already loaded at this time.
@@ -279,7 +286,7 @@ class Master(object):
         """
         # TODO: use the looping call to do stuff in the future.
         self.stop_all()
-        reactor.callLater(0.1, _start_if_all_stopped)
+        reactor.callLater(0.1, self._start_if_all_stopped)
 
     def _start_if_all_stopped(self):
         """
@@ -293,7 +300,7 @@ class Master(object):
         if ready_to_restart:
             self.start_all()
         else:
-            reactor.callLater(0.1, _start_if_all_stopped)
+            reactor.callLater(0.1, self._start_if_all_stopped)
 
     def quit_master(self):
         """
@@ -431,7 +438,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
             try:
                 os.chmod(config_file, new_mode)
             except OSError, e:
-                print("WARNING: Could not chmod configuration file.")
+                print("WARNING: Could not chmod configuration file. %s" % (e))
         try:
             execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
         except Exception, e:
