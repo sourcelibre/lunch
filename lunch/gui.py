@@ -85,7 +85,7 @@ def tail_child_log(command):
     """
     Opens a terminal window with the tail of the log file for the child 
     process of a command. Uses SSH if needed.
-    @param command: L{Command}
+    @param command: L{lunch.commands.Command}
     """
     #TODO: really need to make a valid path in add_command and keep it.
     child_log_path = os.path.join(command.child_log_dir, "child-%s.log" % (command.identifier))
@@ -373,7 +373,7 @@ class LunchApp(object):
     def on_command_status_changed(self, command, new_state):
         """
         Called when the child_state_changed_signal of the command is triggered.
-        @param command L{Command} 
+        @param command L{lunch.commands.Command} 
         @param new_state str
         """
         #txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
@@ -419,7 +419,9 @@ def start_gui(lunch_master):
     return app
 
 if __name__ == "__main__":
+    # FIXME: this is deprecated!!
     class Command(object):
+        # A dummy command class
         def __init__(self):
             self.state = "RUNNING"
             self.identifier = "/usr/bin/hello"
