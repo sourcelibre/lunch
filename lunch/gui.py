@@ -33,9 +33,8 @@ import gtk
 import sys
 import os
 import webbrowser
+from lunch import __version__
 from lunch import dialogs
-
-__version__ = "0.2.20"
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
