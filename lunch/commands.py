@@ -25,10 +25,8 @@ Author: Alexandre Quessy <alexandre@quessy.net>
 import os
 import stat
 import time
-import sys
 import logging
 import warnings
-import subprocess # TODO: get rid of blocking IO
 
 from twisted.internet import defer
 from twisted.internet import error
@@ -119,14 +117,14 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         log.msg("Slave %s process ended with %s." % (self.command.identifier, exit_code))
         self.command._on_process_ended(reason.value.exitCode)
     
-    def inConnectionLost(self, data):
-        pass #log.msg("Slave stdin has closed. %s" % (str(data)))
+    def inConnectionLost(self):
+        pass #log.msg("Slave stdin has closed.")
 
-    def outConnectionLost(self, data):
-        pass #log.msg("Slave stdout has closed. %s" % (str(data)))
+    def outConnectionLost(self):
+        pass #log.msg("Slave stdout has closed.")
     
-    def errConnectionLost(self, data):
-        pass #log.msg("Slave stderr has closed. %s" % (str(data)))
+    def errConnectionLost(self):
+        pass #log.msg("Slave stderr has closed.")
 
     def processExited(self, reason):
         """
