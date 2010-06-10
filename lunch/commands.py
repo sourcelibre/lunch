@@ -43,13 +43,7 @@ from twisted.python import procutils
 
 from lunch import sig
 from lunch import graph
-
-# constants for the slave process
-STATE_STARTING = "STARTING"
-STATE_RUNNING = "RUNNING"
-STATE_STOPPING = "STOPPING"
-STATE_STOPPED = "STOPPED"
-STATE_NOSLAVE = "NOSLAVE" # for master only
+from lunch.states import *
 
 def run_and_wait(executable, *arguments):
     """
