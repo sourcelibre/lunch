@@ -6,7 +6,7 @@ Also sets up the man pages and the icon.
 To update the version number : 
 vim -o lunch/runner.py scripts/lunch-slave setup.py lunch/gui.py
 """
-from distutils.core import setup
+from setuptools import setup
 import subprocess
 import sys
 
