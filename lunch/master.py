@@ -154,6 +154,7 @@ class Master(object):
         self.wants_to_live = False # The master is either trying to make every child live or die. 
         self.prepare_all_commands()
         self.start_all()
+        reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
 
     def start_all(self):
         """
@@ -409,31 +410,14 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False):
-    """
-    Runs the master that calls commands using ssh or so.
 
-    This happens only on the master computer.
-     * reads config file
-     * uses multiprocessing to create many workers. (calling start_worker)
-       Those worker launch the "lunch" program in a xterm terminal.
-       (maybe through ssh, if on a remote host)
-     * If ctrl-C is pressed from any worker, dies.
-    @rettype Master
-    
-    Might raise a RuntimeError or a FileNotFoundError
+def execute_config_file(config_file):
     """
-    identifier = gen_id_from_config_file_name(config_file)
-    # TODO: make this non-blocking. (return a Deferred)
-    pid_file = write_master_pid_file(identifier=identifier, directory=log_dir)
-    if log_to_file:
-        log_file = start_file_logging(identifier=identifier, directory=log_dir)
-    else:
-        start_stdout_logging()
-        log_file = None
-    log.msg("-------------------- Starting master -------------------")
-    log.msg("Using lunch master module %s" % (__file__))
-    global _commands
+    Reads the lunch file and execute it as Python code.
+    Also makes it non-writable by everyone else, just in case.
+    @param config_file: Path to the lunch file. (such as a .lunchrc)
+    """
+    global _commands # is this necessary?
     if os.path.exists(config_file):
         if chmod_config_file:
             mode = stat.S_IMODE(os.stat(config_file)[0])
@@ -452,8 +436,37 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     else:
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
+
+def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR):
+    
+    if log_to_file:
+        log_file = start_file_logging(identifier=identifier, directory=log_dir)
+    else:
+        start_stdout_logging()
+        log_file = None
+
+def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False):
+    """
+    Runs the master that calls commands using ssh or so.
+
+    This happens only on the master computer.
+     * reads config file
+     * uses multiprocessing to create many workers. (calling start_worker)
+       Those worker launch the "lunch" program in a xterm terminal.
+       (maybe through ssh, if on a remote host)
+     * If ctrl-C is pressed from any worker, dies.
+    @rettype Master
+    
+    Might raise a RuntimeError or a FileNotFoundError
+    """
+    identifier = gen_id_from_config_file_name(config_file)
+    # TODO: make this non-blocking. (return a Deferred)
+    pid_file = write_master_pid_file(identifier=identifier, directory=log_dir)
+    start_logging(log_to_file=log_to_file, log_dir=log_dir)
+    log.msg("-------------------- Starting master -------------------")
+    log.msg("Using lunch master module %s" % (__file__))
+    execute_config_file(config_file)
     m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
-    reactor.addSystemEventTrigger("before", "shutdown", m.before_shutdown)
     # TODO: return a Deferred
     return m 
 
