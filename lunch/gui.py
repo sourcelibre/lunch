@@ -418,24 +418,3 @@ def start_gui(lunch_master):
     #self.slave_state_changed_signal = sig.Signal()
     return app
 
-if __name__ == "__main__":
-    # FIXME: this is deprecated!!
-    class Command(object):
-        # A dummy command class
-        def __init__(self):
-            self.state = "RUNNING"
-            self.identifier = "/usr/bin/hello"
-            
-    class DummyMaster(object):
-        def get_all_commands(self):
-            """
-            @rettype: list
-            """
-            data = []
-            for i in range(10):
-                data.append(Command())
-            return data
-
-    dummy_master = DummyMaster()
-    start_gui(dummy_master)
-    reactor.run()
