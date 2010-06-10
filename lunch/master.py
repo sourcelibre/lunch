@@ -49,12 +49,6 @@ from lunch.states import *
 def start_stdout_logging():
     log.startLogging(sys.stdout)
 
-class MasterError(Exception):
-    """
-    Raised by the L{Master} when dealing with the L{SlaveProcessprotocol}
-    """
-    pass
-
 class FileNotFoundError(Exception):
     """
     Thrown when the given config file could not be found.
@@ -78,7 +72,7 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
         sleep_after = sleep
     if priority is not None:
         warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-    c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respaw=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends)
+    c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends)
     Master.add_command(c)    
 
 def add_local_address(address):
@@ -357,7 +351,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     if not os.path.exists(directory):
         os.makedirs(directory)
     if not os.path.isdir(directory):
-        raise MasterError("The path %s should be a directory, but is not." % (directory))
+        raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
     if os.path.exists(pid_file):
         f = open(pid_file, 'r')
@@ -377,7 +371,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
             # TODO: get rid of subprocess here.
             output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
             if "lunch" in output:
-                raise MasterError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
+                raise RuntimeError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
             else:
                 #print "found PID, but it's not lunch!"
                 os.remove(pid_file)
@@ -416,7 +410,7 @@ def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_c
      * If ctrl-C is pressed from any worker, dies.
     @rettype Master
     
-    Might raise a MasterError or a FileNotFoundError
+    Might raise a RuntimeError or a FileNotFoundError
     """
     identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)

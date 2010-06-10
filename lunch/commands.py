@@ -55,7 +55,7 @@ def run_and_wait(executable, *arguments):
         executable = procutils.which(executable)[0]
     except IndexError:
         msg = "Could not find executable %s" % (executable)
-        return failure.Failure(MasterError(msg))
+        return failure.Failure(RuntimeError(msg))
     d = utils.getProcessOutput(executable, arguments)
     def cb(result, executable, arguments):
         print 'Call to %s %s returned.\nResult: %s\n' % (executable, arguments, result)
@@ -188,7 +188,7 @@ class Command(object):
         self.slave_state_changed_signal = sig.Signal() # param: self, new_state
         self.child_state_changed_signal = sig.Signal() # param: self, new_state
         if command is None:
-            raise MasterError("You must provide a command to be run.")
+            raise RuntimeError("You must provide a command to be run.")
             #self.send_stop()
         self._process_protocol = None
         self._process_transport = None
@@ -204,7 +204,7 @@ class Command(object):
                 try:
                     os.makedirs(self.slave_log_dir)
                 except OSError, e:
-                    raise MasterError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
+                    raise RuntimeError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
             self.slave_logger = logfile.LogFile(slave_log_file, self.slave_log_dir)
     
     def start(self):
@@ -240,7 +240,7 @@ class Command(object):
                 try:
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
-                    raise MasterError("Could not find path of executable %s." % (_command[0]))
+                    raise RuntimeError("Could not find path of executable %s." % (_command[0]))
                 log.msg("Will run command: %s" % (" ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:

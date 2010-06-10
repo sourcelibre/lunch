@@ -76,7 +76,6 @@ def run():
     # --------- load the module and run
     from lunch.master import run_master
     from lunch.master import FileNotFoundError
-    from lunch.master import MasterError
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s." % (config_file)
@@ -90,7 +89,7 @@ def run():
             msg += str(e)
             error_message = msg
             #sys.exit(1)
-        except MasterError, e:
+        except RuntimeError, e:
             #print(str(e))
             error_message = str(e)
             #sys.exit(1)
@@ -102,6 +101,7 @@ def run():
         if GUI_ENABLED:
             from lunch import dialogs
             def _cb(result):
+                # stops reactor when the error dialog is closed
                 reactor.stop()
             d = defer.Deferred()
             d.addCallback(_cb)
