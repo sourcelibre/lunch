@@ -418,7 +418,7 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-def execute_config_file(config_file):
+def execute_config_file(config_file, chmod_config_file=True):
     """
     Reads the lunch file and execute it as Python code.
     Also makes it non-writable by everyone else, just in case.
@@ -454,6 +454,7 @@ def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR):
     else:
         start_stdout_logging()
         log_file = None
+    return log_file
 
 def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False):
     """
@@ -471,11 +472,11 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     """
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
-    start_logging(log_to_file=log_to_file, log_dir=log_dir)
+    log_file = start_logging(log_to_file=log_to_file, log_dir=log_dir)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
     log.msg("-------------------- Starting master -------------------")
     log.msg("Using lunch master module %s" % (__file__))
-    execute_config_file(config_file)
+    execute_config_file(config_file, chmod_config_file=chmod_config_file)
     m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
     # TODO: return a Deferred
     return m 
