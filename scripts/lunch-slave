@@ -28,6 +28,7 @@ import os
 import sys
 import time
 import logging
+import textwrap
 
 from twisted.internet import protocol
 from twisted.internet import error
@@ -411,7 +412,7 @@ class SlaveIO(basic.LineReceiver):
             key = line.split(" ")[0].lower()
             mess = line[len(key) + 1:]
         except IndexError, e:
-            self.send_log("Index error parsing command-line." % (e), logging.ERROR)
+            self.send_log("Index error parsing command-line. %s" % (e), logging.ERROR)
         
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another recv_* method.
@@ -427,12 +428,22 @@ class SlaveIO(basic.LineReceiver):
         help [command]: List commands, or show help on the given command.
         """
         args = line.split()
+        # If there is an argument, shows its method's __docstring__
         if len(args) == 1:
             command = args[0]
-            self.sendLine(getattr(self, self._COMMAND_PREFIX + "_" + command).__doc__)
+            method_name = self._COMMAND_PREFIX + "_" + command
+            if hasattr(self, method_name):
+                doc = getattr(self, method_name).__doc__.strip()
+                MAX_LINE_WIDTH = 70
+                for line in doc.splitlines():
+                    if line != "":
+                        for line2 in textwrap.wrap(line, MAX_LINE_WIDTH):
+                            self.send_message("(help) " + line.strip())
+            else:
+                self.send_log("(help) No such command: %s" % (command), logging.ERROR)
         else:
             commands = [cmd[len(self._COMMAND_PREFIX) + 1:] for cmd in dir(self) if cmd.startswith(self._COMMAND_PREFIX)]
-            self.send_message("Valid commands: %s" %  (" ".join(commands)))
+            self.send_message("(help) Valid commands: %s" %  (" ".join(commands)))
 
     def send_state(self, state, child_running_time=None):
         if child_running_time is not None:
@@ -441,7 +452,9 @@ class SlaveIO(basic.LineReceiver):
             self.sendLine("%s %s" % ("state", state))
     
     def recv_quit(self, line):
-        """quit: Quit this session"""
+        """
+        quit: Quit this session
+        """
         if self.slave.state == STATE_RUNNING:
             self.send_log("Slave is still running. Need to stop it.") # XXX
             self.slave.stop()
@@ -455,7 +468,9 @@ class SlaveIO(basic.LineReceiver):
         self.sendLine('%s Exiting slave.' % ("bye"))
 
     def recv_logdir(self, line):
-        """logdir: sets the log directory"""
+        """
+        logdir: sets the log directory
+        """
         words = line.split() # TODO: do not split it, use bash !
         if len(words) == 0:
             self.send_error("No log dir specified.")
@@ -480,7 +495,9 @@ class SlaveIO(basic.LineReceiver):
     #            self.send_error("Bad type for %s. \"%s\" is not a valid %s." % (name, value, _type.__name__))
     
     def recv_do(self, line):
-        """do: sets the shell command to be run."""
+        """
+        do: sets the shell command to be run.
+        """
         li = line.split() # TODO: do not split it, use bash !
         if len(li) == 0:
             self.send_error("Cannot use an empty command.")
@@ -490,7 +507,10 @@ class SlaveIO(basic.LineReceiver):
         self.send_ok()
 
     def recv_env(self, line):
-        """Sets the env vars for the process. Must be in a string of key=value separated by spaces."""
+        """
+        env: Sets the env vars for the process. 
+        Must be in a string of key=value separated by spaces.
+        """
         args = line.split()
         for key_val in args:
             try:
@@ -505,15 +525,23 @@ class SlaveIO(basic.LineReceiver):
         self.sendLine("ok")
 
     def recv_run(self, line):
-        """run: Starts the process."""
+        """
+        run: Starts the process.
+        """
         self.slave.start()
     
     def recv_stop(self, line):
-        """stop: Stops the process."""
+        """
+        stop: Stops the process.
+        """
         self.slave.stop()
     
     def recv_opt(self, line):
-        """opt: sets an option. Usage: opt <key> <value> Use 0 or 1 for boolean options."""
+        """
+        opt: sets an option. 
+        Usage: opt <key> <value> 
+        Use 0 or 1 for boolean options.
+        """
         words = line.split()
         try:
             k = words[0]
@@ -539,11 +567,15 @@ class SlaveIO(basic.LineReceiver):
         # else ok?
 
     def recv_opts(self, line):
-        """opt: lists options. """
+        """
+        opt: lists options. 
+        """
         self.send_message("Options: %s" % (self.slave.options))
 
     def recv_ping(self, line):
-        """ping: Answers with PONG"""
+        """
+        ping: Answers with "pong"
+        """
         #TODO : check if slave process is running
         self.send_pong()
 
@@ -561,7 +593,9 @@ class SlaveIO(basic.LineReceiver):
         self.sendLine("%s %s %s" % ("log", key, msg))
 
     def recv_status(self, line):
-        """status: prints the state of the slave."""
+        """
+        status: prints the state of the slave.
+        """
         self.send_status()
 
     def send_status(self):
