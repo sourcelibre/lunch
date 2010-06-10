@@ -46,6 +46,8 @@ from lunch import graph
 from lunch import commands
 from lunch.states import *
 
+DEFAULT_LOG_DIR = "/var/tmp/lunch"
+
 def start_stdout_logging():
     log.startLogging(sys.stdout)
 
@@ -130,7 +132,7 @@ class Master(object):
         Master.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
         Master.commands[command.identifier] = command
     
-    def __init__(self, log_dir=None, pid_file=None, log_file=None, config_file=None, verbose=False):
+    def __init__(self, log_dir=DEFAULT_LOG_DIR, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
         @param log_dir: str Path.
         @param pid_file: str Path.
@@ -346,6 +348,7 @@ def gen_id_from_config_file_name(config_file_name="lunchrc"):
 def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     """
     Writes master's PID in a file.
+    @return: pid file name.
     """
     file_name = "master-%s.pid" % (identifier)
     if not os.path.exists(directory):
@@ -398,7 +401,7 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-def run_master(config_file, log_to_file=False, log_dir="/var/tmp/lunch", chmod_config_file=True, verbose=False):
+def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False):
     """
     Runs the master that calls commands using ssh or so.
 
