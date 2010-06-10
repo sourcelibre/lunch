@@ -169,6 +169,7 @@ class Command(object):
         self.sleep_after = sleep_after
         self.respawn = respawn
         self.enabled = True 
+        self.to_be_deleted = False
         self.depends = depends
         self.how_many_times_run = 0
         self.verbose = verbose

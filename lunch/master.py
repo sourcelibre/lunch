@@ -103,7 +103,7 @@ class Master(object):
     There should be only one instance of this class in the application. (singleton)
     """
     # static class variables :
-    commands = {}
+    commands = {} # dict of str identifier: L{lunch.commands.Command}
     tree = graph.DirectedGraph()
     # For counting default names if they are none :
     i = 0
@@ -218,7 +218,7 @@ class Master(object):
                     command.stop()
         # If STOPPED, check if we should start it:
         elif command.child_state == STATE_STOPPED:
-            if self.wants_to_live and self.launch_next_time <= self._time_now:
+            if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled:
                 #
                 # Check if there are dependees missing so that we start this one
                 dependees_to_wait_for = False # to wait so that they quit
@@ -248,6 +248,10 @@ class Master(object):
                         self.launch_next_time = self._time_now + command.sleep_after
                         log.msg("Will start %s." % (command.identifier))
                         command.start()
+            elif command.to_be_deleted:
+                del self.commands[node]
+                self.tree.remove_node(node) # XXX ?
+                log.msg("Removed command %s from the graph" % (node))
 
     def _get_all(self):
         """
@@ -272,9 +276,13 @@ class Master(object):
         commands = self._get_all()
         self.wants_to_live = False
         for c in commands:
-            c.enabled = False
             c.stop()
         log.msg("Done stopping all commands.")
+
+    def remove_command(self, identifier):
+        if identifier in self.commands.keys():
+            self.commands[identifier].stop()
+            self.commands[identifier].to_be_deleted = True
 
     def restart_all(self):
         """
