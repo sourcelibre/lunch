@@ -12,9 +12,10 @@ has_them = True
 if __name__ == "__main__":
     unique_master_id = "example"
     log_dir = master.DEFAULT_LOG_DIR
+    
+    master.start_logging()
     pid_file = master.write_master_pid_file(identifier=unique_master_id, directory=log_dir)
-    # XXX add_command here
-    m = master.Master(log_dir=log_dir, pid_file=pid_file)
+    m = master.Master(log_dir=log_dir, pid_file=pid_file, verbose=True)
     m.add_command(commands.Command("xeyes", identifier="xeyes"))
     m.add_command(commands.Command("xlogo", identifier="xlogo"))
     m.add_command(commands.Command("xcalc", identifier="xcalc"))

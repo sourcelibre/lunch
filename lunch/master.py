@@ -318,6 +318,12 @@ class Master(object):
         """
         Called before Twisted's shutdown. (end of master process)
         """
+        if self.pid_file is not None:
+            print("Will now erase the %s PID file" % (self.pid_file))
+            os.remove(self.pid_file)
+            print("Erased %s" % (self.pid_file))
+            
+         
         now = time.time()
         _shutdown_data = {
                 "shutdown_started" : now,
@@ -366,6 +372,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
         raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
     if os.path.exists(pid_file):
+        log.msg("PID file for master %s found!" % (pid_file))
         f = open(pid_file, 'r')
         pid = f.read()
         f.close()
@@ -392,6 +399,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     f.write(str(os.getpid()))
     f.close()
     os.chmod(pid_file, 0600)
+    log.msg("Wrote PID %d to file %s." % (os.getpid(), pid_file))
     return pid_file
 
 def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
@@ -410,12 +418,12 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-
 def execute_config_file(config_file):
     """
     Reads the lunch file and execute it as Python code.
     Also makes it non-writable by everyone else, just in case.
     @param config_file: Path to the lunch file. (such as a .lunchrc)
+    Might raise a FileNotFoundError
     """
     global _commands # is this necessary?
     if os.path.exists(config_file):
@@ -438,7 +446,9 @@ def execute_config_file(config_file):
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
 
 def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR):
-    
+    """
+    Starts logging - either to a file or not.
+    """
     if log_to_file:
         log_file = start_file_logging(identifier=identifier, directory=log_dir)
     else:
@@ -459,10 +469,10 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     
     Might raise a RuntimeError or a FileNotFoundError
     """
-    identifier = gen_id_from_config_file_name(config_file)
+    master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
-    pid_file = write_master_pid_file(identifier=identifier, directory=log_dir)
     start_logging(log_to_file=log_to_file, log_dir=log_dir)
+    pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
     log.msg("-------------------- Starting master -------------------")
     log.msg("Using lunch master module %s" % (__file__))
     execute_config_file(config_file)
