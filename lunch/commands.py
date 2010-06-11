@@ -383,6 +383,12 @@ class Command(object):
             if child_running_time < self.minimum_lifetime_to_respawn:
                 self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
                 self.enabled = False # XXX
+                #TODO: double the time to wait before trying again.
+                # we should have two vars: one public, one private
+                # self.wait_before_trying_again -- this one never changes
+                # self._wait_before_trying_again_next_time -- this one is doubled each time.
+                # we should also add an other var:
+                # self.gave_up = False
             #else:
             #    self.send_all_startup_commands()
         elif new_state == STATE_RUNNING:

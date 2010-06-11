@@ -219,6 +219,8 @@ class Master(object):
                     command.stop()
         # If STOPPED, check if we should start it:
         elif command.child_state == STATE_STOPPED:
+            # self.launch_next_time is for launching the next process... so it must be updated as 
+            # soon as we start one.
             if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled:
                 #
                 # Check if there are dependees missing so that we start this one
@@ -232,7 +234,7 @@ class Master(object):
                 if not dependees_to_wait_for:
                     start_it = True
                     if not command.respawn and command.how_many_times_run >= 1:
-                        start_it = False
+                        start_it = False # already ran this once
                     #
                     # Do not start it if not enabled !
                     # (maybe lived for not long enough)
