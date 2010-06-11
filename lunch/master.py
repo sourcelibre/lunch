@@ -62,13 +62,13 @@ def add_command(command=None, title=None, env=None, user=None, host=None, group=
     This is the only function that users use from within the configuration file.
     It adds a Command instance to the list of commands to run. 
 
-    This function is actually an alias of the Master.add_command static method, plus a few variables changes.
+    This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
     """
     # TODO: remove priority and sleep kwargs in a future version
     log.msg("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
     # ------------- warnings ------------------
     if group is not None:
-        warnings.warn("Groups are deprecated. Use dependencies instead.")
+        raise RuntimeError("Groups are deprecated. Use dependencies instead.")
     if sleep is not None:
         warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
         sleep_after = sleep

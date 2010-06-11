@@ -152,11 +152,30 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
-        @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
+        @param depends: Commands to which this command depends on. List of strings.
         @param env: dict with environment variables to set for the process to run.
+        @param host: Host name or IP address, if spawned over SSH.
+        @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
+        @param log_dir: Full path to the directory to save log files in.
+        @param minimum_lifetime_to_respawn: Minimum time a process must have lasted to be respawned.
+        @param respawn: Set to False if this is a command that must be ran only once.
+        @param sleep_after: How long to wait before launching next command after this one.
+        @param user: User name, if spawned over SSH.
+        @param verbose: Prints more information if set to True.
+        @type command: str
+        @type depends: list
+        @type env: dict
+        @type host: str
+        @type identifier: str
+        @type log_dir: str
+        @type minimum_lifetime_to_respawn: float
+        @type respawn: bool
+        @type sleep_after: float
+        @type user: str
+        @type verbose: bool
         """
         self.command = command
         self.identifier = identifier
@@ -343,6 +362,15 @@ class Command(object):
         """
         pass
     
+    def recv_retval(self, mess):
+        """
+        Callback for the "retval" message from the slave.
+        """
+        self.log("%s->Master: retval %s" % (self.identifier, mess))
+        words = mess.split(" ")
+        retval = words[0]
+        self.log("Child's return value is %s" % (retval))
+    
     def recv_log(self, mess):
         """
         Callback for the "log" message from the slave.
@@ -495,7 +523,7 @@ class Command(object):
             prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             self.slave_logger.write("%s %s\n" % (prefix, msg))
             self.slave_logger.flush()
-        log.msg(msg, level)
+        log.msg(msg, logLevel=level)
 
     def set_slave_state(self, new_state):
         msg = "Slave %s is %s." % (self.identifier, new_state)

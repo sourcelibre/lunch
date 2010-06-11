@@ -350,6 +350,7 @@ class Slave(object):
                 self.log('Child process exited with error.')
         self._process_transport.loseConnection() # close file handles
         self.log("Child exitted with %s" % (exit_code), logging.INFO)
+        self.io_protocol.send_retval(exit_code)
         self.set_child_state(STATE_STOPPED)
         self.log("Closing slave's process stdout file.")
         self._stdout_file.close()
@@ -396,6 +397,9 @@ class SlaveIO(basic.LineReceiver):
     
     def send_ready(self):
         self.sendLine("ready")
+    
+    def send_retval(self, exit_code):
+        self.sendLine("retval %s" % (exit_code))
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)
