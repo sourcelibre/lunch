@@ -57,80 +57,28 @@ class FileNotFoundError(Exception):
     """
     pass
 
-def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None, depends=None):
-    """
-    This is the only function that users use from within the configuration file.
-    It adds a Command instance to the list of commands to run. 
-
-    This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
-    """
-    # TODO: remove priority and sleep kwargs in a future version
-    log.msg("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
-    # ------------- warnings ------------------
-    if group is not None:
-        raise RuntimeError("Groups are deprecated. Use dependencies instead.")
-    if sleep is not None:
-        warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
-        sleep_after = sleep
-    if priority is not None:
-        warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-    c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends)
-    Master.add_command(c)    
-
-def add_local_address(address):
-    """
-    Adds an IP to which not use SSH with.
-    :param address: str of list of str. IP address or host name
-    """
-    if type(address) is not list:
-        addresses = [address]
-    else:
-        addresses = address
-    for address in addresses:
-        if address not in Master.local_addresses:
-            log.msg("Adding %s in list of local addresses." % (address))
-            Master.local_addresses.append(address)
-
-def clear_local_addresses():
-    """
-    Deletes all local addresses.
-    """
-    Master.local_addresses = []
-
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
     There should be only one instance of this class in the application. (singleton)
     """
-    # static class variables :
-    commands = {} # dict of str identifier: L{lunch.commands.Command}
-    tree = graph.DirectedGraph()
-    # For counting default names if they are none :
-    i = 0
-    # IP to which not use SSH with :
-    local_addresses = [
-        "localhost",
-        "127.0.0.1"
-        ] # TODO: check IP of each network interface.
-    
-    @staticmethod
-    def add_command(command):
+    def add_command(self, command):
         """
         This static method is wrapped (called) by the add_command function.
         @param command: L{lunch.commands.Command} object.
         """    
         # check if addr is local, set it to none if so.
-        if command.host in Master.local_addresses:
+        if command.host in self.local_addresses:
             log.msg("Filtering out host %s since it is in list of local addresses." % (command.host))
             command.host = None    
         # set default names if they are none:
         if command.identifier is None:
-            command.identifier = "default_%d" % (Master.i)
-            Master.i += 1
-        while command.identifier in Master.commands: # making sure it is unique
+            command.identifier = "default_%d" % (self.i)
+            self.i += 1
+        while command.identifier in self.commands: # making sure it is unique
             command.identifier += "X"
-        Master.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
-        Master.commands[command.identifier] = command
+        self.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
+        self.commands[command.identifier] = command
     
     def __init__(self, log_dir=DEFAULT_LOG_DIR, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
@@ -139,6 +87,16 @@ class Master(object):
         @param log_file: str Path.
         @param config_file: str Path.
         """
+        # attributes:
+        self.commands = {} # dict of str identifier: L{lunch.commands.Command}
+        self.tree = graph.DirectedGraph()
+        # For counting default names if they are none :
+        self.i = 0
+        # IP to which not use SSH with :
+        self.local_addresses = [
+            "localhost",
+            "127.0.0.1"
+            ] # TODO: check IP of each network interface.
         # These are all useless within this class, but might be useful to be read from the GUI:
         self.log_dir = log_dir
         self.pid_file = pid_file
@@ -146,13 +104,15 @@ class Master(object):
         self.config_file = config_file
         self.verbose = verbose
         self.main_loop_every = 0.05 # checks process to start/stop 20 times a second.
-
         self._time_now = time.time()
         self.launch_next_time = time.time() # time in future
         self._looping_call = task.LoopingCall(self.main_loop)
         self._looping_call.start(self.main_loop_every, False) 
         self.wants_to_live = False # The master is either trying to make every child live or die. 
-        self.prepare_all_commands()
+        self.command_added_signal = sig.Signal() # param: Command object
+        self.command_removed_signal = sig.Signal() # param: command identifier
+        
+        # actions:
         self.start_all()
         reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
 
@@ -160,6 +120,7 @@ class Master(object):
         """
         Sets the master so that it starts all the slaves.
         """
+        self.prepare_all_commands()
         self.wants_to_live = True
     
     def prepare_all_commands(self):
@@ -187,23 +148,23 @@ class Master(object):
 
         """
         # Trying to make all child live. (False if in the process of quitting)
-        #orphans = Master.tree.get_supported_by(Master.tree.ROOT)
+        #orphans = self.tree.get_supported_by(self.tree.ROOT)
         #self._manage_siblings(orphans, should_run=self.wants_to_live)
         #log.msg("----- Managing slaves LOOP ----")
 
         self._time_now = time.time()
-        iterator = graph.iter_from_root_to_leaves(Master.tree)
+        iterator = graph.iter_from_root_to_leaves(self.tree)
         for current in iterator:
-            if current != Master.tree.ROOT:
+            if current != self.tree.ROOT:
                 self._treat_node(current)
 
     def _treat_node(self, node):
         """
         Called once for each command on each main loop iteration.
         """
-        command = Master.commands[node]
-        all_dependencies = Master.tree.get_all_dependencies(node)
-        all_dependees = Master.tree.get_all_dependees(node)
+        command = self.commands[node]
+        all_dependencies = self.tree.get_all_dependencies(node)
+        all_dependees = self.tree.get_all_dependees(node)
         # If RUNNING, check if we should stop it:
         if command.child_state == STATE_RUNNING:
             if self.wants_to_live is False:
@@ -211,7 +172,7 @@ class Master(object):
             else:
                 kill_it = False
                 for dependency in all_dependencies:
-                    dep_command = Master.commands[dependency]
+                    dep_command = self.commands[dependency]
                     if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
                         kill_it = True
                 if kill_it:
@@ -226,7 +187,7 @@ class Master(object):
                 # Check if there are dependees missing so that we start this one
                 dependees_to_wait_for = False # to wait so that they quit
                 for dependee_name in all_dependees:
-                    dependee = Master.commands[dependee_name]
+                    dependee = self.commands[dependee_name]
                     if dependee.child_state != STATE_STOPPED:
                         dependees_to_wait_for = True
                     if dependee.child_state == STATE_RUNNING:
@@ -241,7 +202,7 @@ class Master(object):
                     if not command.enabled:
                         start_it = False
                     for dependency in all_dependencies:
-                        dep_command = Master.commands[dependency]
+                        dep_command = self.commands[dependency]
                         if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
                             start_it = False
                         elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
@@ -276,16 +237,20 @@ class Master(object):
         """
         # TODO: use callLaters to check if stopped.
         #TODO: stop the looping call.
-        commands = self._get_all()
+        _commands = self._get_all()
         self.wants_to_live = False
-        for c in commands:
+        for c in _commands:
             c.stop()
         log.msg("Done stopping all commands.")
 
     def remove_command(self, identifier):
+        """
+        Removes a command
+        """
         if identifier in self.commands.keys():
             self.commands[identifier].stop()
             self.commands[identifier].to_be_deleted = True
+            self.command_removed_signal(identifier)
 
     def restart_all(self):
         """
@@ -299,9 +264,9 @@ class Master(object):
         """
         Checks in loop if all got stopped, if so, start them over.
         """
-        commands = self._get_all()
+        _commands = self._get_all()
         ready_to_restart = True
-        for c in commands:
+        for c in _commands:
             if c.child_state != STATE_STOPPED:
                 ready_to_restart = False
         if ready_to_restart:
@@ -324,7 +289,6 @@ class Master(object):
             print("Will now erase the %s PID file" % (self.pid_file))
             os.remove(self.pid_file)
             print("Erased %s" % (self.pid_file))
-            
          
         now = time.time()
         _shutdown_data = {
@@ -420,24 +384,69 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.startLogging(_log_file)
     return _log_file.path
 
-def execute_config_file(config_file, chmod_config_file=True):
+def chmod_file_not_world_writable(config_file):
+    """
+    Make a file not writable by other users.
+    """
+    mode = stat.S_IMODE(os.stat(config_file)[0])
+    new_mode = (mode & stat.S_IRUSR) + (mode & stat.S_IWUSR) + (mode & stat.S_IXUSR)
+    # user hase read/write/execute permissions
+    # 256, 128 and 64
+    try:
+        os.chmod(config_file, new_mode)
+    except OSError, e:
+        print("WARNING: Could not chmod configuration file. %s" % (e))
+
+def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     """
     Reads the lunch file and execute it as Python code.
     Also makes it non-writable by everyone else, just in case.
     @param config_file: Path to the lunch file. (such as a .lunchrc)
     Might raise a FileNotFoundError
     """
-    global _commands # is this necessary?
+    # variables/functions to which the user has access:
+    # lunch_master
+    # add_command
+    # add_local_address
+    
+    def add_local_address(address):
+        """
+        Adds an IP to which not use SSH with.
+        :param address: str of list of str. IP address or host name
+        """
+        if type(address) is not list:
+            addresses = [address]
+        else:
+            addresses = address
+        for address in addresses:
+            if address not in lunch_master.local_addresses:
+                log.msg("Adding %s in list of local addresses." % (address))
+                lunch_master.local_addresses.append(address)
+    # --------------------------------
+    def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None, depends=None):
+        """
+        This is the only function that users use from within the configuration file.
+        It adds a Command instance to the list of commands to run. 
+
+        This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
+        """
+        # TODO: remove priority and sleep kwargs in a future version
+        log.msg("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
+        # ------------- warnings ------------------
+        if group is not None:
+            raise RuntimeError("Groups are deprecated. Use dependencies instead.")
+        if sleep is not None:
+            warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
+            sleep_after = sleep
+        if priority is not None:
+            warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends)
+        lunch_master.add_command(c)
+    # -------------------------------------
+    #global _commands # is this necessary?
     if os.path.exists(config_file):
         if chmod_config_file:
-            mode = stat.S_IMODE(os.stat(config_file)[0])
-            new_mode = (mode & stat.S_IRUSR) + (mode & stat.S_IWUSR) + (mode & stat.S_IXUSR)
-            # user hase read/write/execute permissions
-            # 256, 128 and 64
-            try:
-                os.chmod(config_file, new_mode)
-            except OSError, e:
-                print("WARNING: Could not chmod configuration file. %s" % (e))
+            chmod_file_not_world_writable(config_file)
         try:
             execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
         except Exception, e:
@@ -478,8 +487,8 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
     log.msg("-------------------- Starting master -------------------")
     log.msg("Using lunch master module %s" % (__file__))
-    execute_config_file(config_file, chmod_config_file=chmod_config_file)
-    m = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
+    lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
+    execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
     # TODO: return a Deferred
-    return m 
+    return lunch_master
 
