@@ -337,6 +337,7 @@ class LunchApp(object):
             ( "/_Help/About", None, self.on_about, 0, None),
             )
         accel_group = gtk.AccelGroup()
+        #FIXME: the following line causes a exceptions.DeprecationWarning: use gtk.UIManager
         item_factory = gtk.ItemFactory(gtk.MenuBar, "<main>", accel_group)
         item_factory.create_items(menu_items)
         window.add_accel_group(accel_group)
