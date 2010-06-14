@@ -26,5 +26,6 @@ STATE_RUNNING = "RUNNING"
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED"
 STATE_NOSLAVE = "NOSLAVE" # for master only
-#TODO: STATE_DONE = "DONE"
-
+# these two are not states per se, but returned by the get_state_info() method
+INFO_DONE = "DONE"
+INFO_FAILED = "FAILED"

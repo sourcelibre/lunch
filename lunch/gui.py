@@ -342,7 +342,8 @@ class LunchApp(object):
         if command.host is not None:
             host = command.host
         executions = command.how_many_times_run
-        state = command.child_state
+        #state = command.child_state
+        state = command.get_state_info()
         return [
                 command.identifier, 
                 command.command,

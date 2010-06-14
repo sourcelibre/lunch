@@ -192,6 +192,7 @@ class Command(object):
         self.depends = depends
         self.how_many_times_run = 0
         self.verbose = verbose
+        self.retval = 0
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
@@ -371,8 +372,8 @@ class Command(object):
         """
         self.log("%s->Master: retval %s" % (self.identifier, mess))
         words = mess.split(" ")
-        retval = words[0]
-        self.log("Child's return value is %s" % (retval))
+        self.retval = int(words[0])
+        self.log("Child's return value is %s" % (self.retval))
     
     def recv_log(self, mess):
         """
@@ -397,6 +398,20 @@ class Command(object):
         Callback for the "bye" message from the slave.
         """
         self.log("%s->Master: %s" % (self.identifier, "BYE (slave quits)"), logging.ERROR)
+    
+    def get_state_info(self):
+        """
+        Returns a high-level comprehensive state for the user to see in the GUI.
+        """
+        if self.child_state == STATE_STOPPED:
+            if self.retval != 0:
+                return INFO_FAILED
+            elif not self.respawn:
+                return INFO_DONE
+            else:
+                return STATE_STOPPED # INFO_FAILED?
+        else:
+            return self.child_state
 
     def recv_state(self, mess):
         """
