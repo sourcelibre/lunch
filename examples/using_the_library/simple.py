@@ -15,10 +15,10 @@ if __name__ == "__main__":
     log_dir = master.DEFAULT_LOG_DIR
     pid_file = master.write_master_pid_file(identifier=unique_master_id, directory=log_dir)
     # XXX add_command here
-    master.add_command("xeyes", title="xeyes")
-    master.add_command("xlogo", title="xlogo")
-    master.add_command("xcalc", title="xcalc")
     m = master.Master(log_dir=log_dir, pid_file=pid_file)
+    m.add_command(commands.Command("xeyes", identifier="xeyes"))
+    m.add_command(commands.Command("xlogo", identifier="xlogo"))
+    m.add_command(commands.Command("xcalc", identifier="xcalc"))
     def _test():
         print("Adding one more!")
         m.add_command(commands.Command("xeyes"))

@@ -177,7 +177,7 @@ class LunchApp(object):
         #TODO: more robust icon handling.
         icon_file = "/usr/share/pixmaps/lunch.png"
         if not os.path.exists(icon_file):
-            print("Could not find icon file %s." % (icon_file))
+            print("Warning: Could not find icon file %s." % (icon_file))
         else:
             icon = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.window.set_icon_list(icon)
@@ -211,6 +211,9 @@ class LunchApp(object):
             if hasattr(command, "child_state_changed_signal"):
                 #print("Connecting state changed signal to GUI.")
                 command.child_state_changed_signal.connect(self.on_command_status_changed)
+
+        self.master.command_added_signal.connect(self.on_command_added)
+        self.master.command_removed_signal.connect(self.on_command_removed)
         
         # Box with buttons.
         hbox = gtk.HBox(homogeneous=True)
@@ -230,6 +233,12 @@ class LunchApp(object):
         #self.stopall_button.show()
 
     IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
+
+    def on_command_added(self, command):
+        print("on_command_added")
+        
+    def on_command_removed(self, command):
+        print("on_command_removed")
 
     def _setup_treeview(self):
         """
