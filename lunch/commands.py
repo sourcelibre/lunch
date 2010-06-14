@@ -404,7 +404,9 @@ class Command(object):
         Returns a high-level comprehensive state for the user to see in the GUI.
         """
         if self.child_state == STATE_STOPPED:
-            if self.retval != 0:
+            if self.how_many_times_run == 0:
+                return INFO_TODO
+            elif self.retval != 0:
                 return INFO_FAILED
             elif not self.respawn:
                 return INFO_DONE
