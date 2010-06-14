@@ -193,6 +193,7 @@ class Command(object):
         self.how_many_times_run = 0
         self.verbose = verbose
         self.retval = 0
+        self.gave_up = False
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
@@ -231,6 +232,7 @@ class Command(object):
         Starts the slave Lunch and its child if not started. If started, starts its child.
         """
         self.enabled = True
+        self.gave_up = False
         self._start_logger()
         if self.child_state == STATE_RUNNING:
             self.log("Child is already running.")
@@ -403,13 +405,18 @@ class Command(object):
         """
         Returns a high-level comprehensive state for the user to see in the GUI.
         """
+        print "gave up:", self.gave_up 
         if self.child_state == STATE_STOPPED:
             if self.how_many_times_run == 0:
                 return INFO_TODO
-            elif self.retval != 0:
-                return INFO_FAILED
+            elif self.gave_up:
+                return INFO_GAVEUP
             elif not self.respawn:
                 return INFO_DONE
+            elif not self.enabled:
+                return STATE_STOPPED
+            elif self.retval != 0:
+                return INFO_FAILED
             else:
                 return STATE_STOPPED # INFO_FAILED?
         else:
@@ -424,23 +431,22 @@ class Command(object):
         previous_state = self.child_state
         new_state = words[0]
         #print("%s's child state: %s" % (self.identifier, new_state))
-        self.set_child_state(new_state) # IMPORTANT !
         self.log("%s->Master: child STATE is %s" % (self.identifier, new_state))
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:
                 self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
+                self.gave_up = True
                 self.enabled = False # XXX
                 #TODO: double the time to wait before trying again.
                 # we should have two vars: one public, one private
                 # self.wait_before_trying_again -- this one never changes
                 # self._wait_before_trying_again_next_time -- this one is doubled each time.
-                # we should also add an other var:
-                # self.gave_up = False
             #else:
             #    self.send_all_startup_commands()
         elif new_state == STATE_RUNNING:
             self.log("Child %s is running." % (self.identifier))
+        self.set_child_state(new_state) # IMPORTANT !
 
     def recv_ready(self, mess):
         """
