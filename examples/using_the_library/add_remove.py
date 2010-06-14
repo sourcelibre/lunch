@@ -7,7 +7,8 @@ from twisted.internet import task
 from lunch import commands
 from lunch import master
 
-has_them = True
+has_them = False
+counter = 0
 
 if __name__ == "__main__":
     unique_master_id = "example"
@@ -16,24 +17,25 @@ if __name__ == "__main__":
     master.start_logging()
     pid_file = master.write_master_pid_file(identifier=unique_master_id, directory=log_dir)
     m = master.Master(log_dir=log_dir, pid_file=pid_file, verbose=True)
-    m.add_command(commands.Command("xeyes", identifier="xeyes"))
-    m.add_command(commands.Command("xlogo", identifier="xlogo"))
-    m.add_command(commands.Command("xcalc", identifier="xcalc"))
     def _test():
         global has_them
+        global counter
         if not has_them:
             print("Adding them again!")
             m.add_command(commands.Command("xeyes", identifier="xeyes"))
             m.add_command(commands.Command("xlogo", identifier="xlogo"))
             m.add_command(commands.Command("xcalc", identifier="xcalc"))
+            m.add_command(commands.Command("xterm -hold -e /bin/bash -c \"echo %d\"" % (counter), identifier="xterm"))
+            counter += 1
             has_them = True
         else:
             print("Removing them.")
             m.remove_command("xeyes")
             m.remove_command("xlogo")
             m.remove_command("xcalc")
+            m.remove_command("xterm")
             has_them = False
             
     looping_call = task.LoopingCall(_test)
-    looping_call.start(3.0, False) 
+    looping_call.start(3.0, True)
     reactor.run()
