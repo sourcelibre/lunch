@@ -163,7 +163,7 @@ class LunchApp(object):
     def __init__(self, master=None):
         self.master = master
         self.confirm_close = True # should we ask if the user is sure to close the app?
-        self.commands = master.get_all_commands()
+        _commands = master.get_all_commands()
 
         # Window and framework
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -206,11 +206,8 @@ class LunchApp(object):
         self.tree_view = gtk.TreeView(self.model_sort)
         self._setup_treeview()
         scroller.add(self.tree_view)
-        for command in self.commands:
+        for command in _commands:
             self._add_command_in_tree(command)
-            if hasattr(command, "child_state_changed_signal"):
-                #print("Connecting state changed signal to GUI.")
-                command.child_state_changed_signal.connect(self.on_command_status_changed)
 
         self.master.command_added_signal.connect(self.on_command_added)
         self.master.command_removed_signal.connect(self.on_command_removed)
@@ -236,9 +233,11 @@ class LunchApp(object):
 
     def on_command_added(self, command):
         print("on_command_added")
+        self._add_command_in_tree(command)
         
     def on_command_removed(self, command):
         print("on_command_removed")
+        self._remove_command_from_tree(command)
 
     def _setup_treeview(self):
         """
@@ -287,6 +286,28 @@ class LunchApp(object):
         list_store = self.model_sort.get_model()
         list_store.append(self._format_command(command))
         #self.commands[command.identifier] = command
+        #print("Connecting state changed signal to GUI.")
+        command.child_state_changed_signal.connect(self.on_command_status_changed)
+
+    def _remove_command_from_tree(self, command):
+        """
+        When a command is removed, removes it from the tree view.
+        """
+        list_store = self.model_sort.get_model()
+        looking_for = command.identifier
+        #list_store.append(self._format_command(command))
+        row_number = 0
+        for row in iter(list_store):
+            identifier = row[self.IDENTIFIER_COLUMN]
+            if identifier == looking_for:
+                # Delete it!
+                break
+            row_number += 1
+        
+        print("Removing a row from the list store.")
+        list_store.remove(list_store.get_iter(row_number))
+        #print("Removing GUI's slot for state changed signal.")
+        command.child_state_changed_signal.disconnect(self.on_command_status_changed)
 
     def _update_row(self, command):
         list_store = self.model_sort.get_model()

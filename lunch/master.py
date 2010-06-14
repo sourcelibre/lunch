@@ -117,7 +117,7 @@ class Master(object):
             command.host = None    
         # set default names if they are none:
         if command.identifier is None:
-            command.identifier = "default_%d" % (self.i)
+            command.identifier = "default_%d" % (self.i) #TODO: use the first word of the command
             self.i += 1
         while command.identifier in self.commands: # making sure it is unique
             command.identifier += "X"
@@ -218,6 +218,7 @@ class Master(object):
             elif command.to_be_deleted:
                 ref = self.commands[node]
                 del self.commands[node]
+                print self.commands
                 self.tree.remove_node(node) # XXX ?
                 log.msg("Removed command %s from the graph" % (node))
                 self.command_removed_signal(ref)
