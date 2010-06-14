@@ -231,6 +231,9 @@ class Command(object):
         """
         self.enabled = True
         self._start_logger()
+        if self.child_state == STATE_RUNNING:
+            self.log("Child is already running.")
+            return
         if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
             self.send_all_startup_commands()
         elif self.child_state in [STATE_STOPPING, STATE_STARTING]:

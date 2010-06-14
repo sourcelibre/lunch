@@ -215,10 +215,19 @@ class LunchApp(object):
         # Box with buttons.
         hbox = gtk.HBox(homogeneous=True)
         vbox.pack_start(hbox, expand=False)
-        openlog_button = gtk.Button("Open Child Process Log File")
+        
+        openlog_button = gtk.Button("Open child process log file")
         openlog_button.connect("clicked", self.on_openlog_clicked)
         hbox.pack_start(openlog_button)
+        
+        stop_command_button = gtk.Button("Stop child process")
+        stop_command_button.connect("clicked", self.on_stop_command_clicked)
+        hbox.pack_start(stop_command_button)
 
+        start_command_button = gtk.Button("Start child process")
+        start_command_button.connect("clicked", self.on_start_command_clicked)
+        hbox.pack_start(start_command_button)
+        
         self.window.show_all()
 
     #def _create_buttons(self): 
@@ -379,23 +388,41 @@ class LunchApp(object):
         #print "on about"
         About().show_about_dialog()
     
-    def on_openlog_clicked(self, widget):
-        #print "Button %s was pressed" % (info)
-        #print("Will open log %d" % (info))
+    def _get_currently_selected_command(self, show_error_if_none=True):
+        """
+        Returns a lunch.commands.Command object or None.
+        """
+        ret = None
         selection = self.tree_view.get_selection()
         model, rows = selection.get_selected()
         if rows is None:
-            msg = "To view a process log file, you must first select one in the list."
-            d = defer.Deferred()
-            dialog = dialogs.ErrorDialog(d, msg)
+            ret = None
+            if show_error_if_none:
+                msg = "Please select a process in the list."
+                d = defer.Deferred()
+                dialog = dialogs.ErrorDialog(d, msg)
         else:
             print 'getting the currently selected row in the tree view.'
             row = rows # only one row selected at a time in this version
             identifier = model.get_value(row, self.IDENTIFIER_COLUMN)
             print 'id', identifier
-            c = self.master.commands[identifier]
-            tail_child_log(c)
+            ret = self.master.commands[identifier]
+        return ret
+        
+    def on_openlog_clicked(self, widget):
+        command = self._get_currently_selected_command()
+        if command is not None:
+            tail_child_log(command)
 
+    def on_stop_command_clicked(self, widget):
+        command = self._get_currently_selected_command()
+        if command is not None:
+            command.stop()
+    
+    def on_start_command_clicked(self, widget):
+        command = self._get_currently_selected_command()
+        if command is not None:
+            command.start()
 
     #def on_stopall_clicked(self, widget): # index as info
     #    print("Stop All")
