@@ -62,23 +62,6 @@ class Master(object):
     The Lunch Master launches slaves, which in turn launch childs.
     There should be only one instance of this class in the application. (singleton)
     """
-    def add_command(self, command):
-        """
-        This static method is wrapped (called) by the add_command function.
-        @param command: L{lunch.commands.Command} object.
-        """    
-        # check if addr is local, set it to none if so.
-        if command.host in self.local_addresses:
-            log.msg("Filtering out host %s since it is in list of local addresses." % (command.host))
-            command.host = None    
-        # set default names if they are none:
-        if command.identifier is None:
-            command.identifier = "default_%d" % (self.i)
-            self.i += 1
-        while command.identifier in self.commands: # making sure it is unique
-            command.identifier += "X"
-        self.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
-        self.commands[command.identifier] = command
     
     def __init__(self, log_dir=DEFAULT_LOG_DIR, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
@@ -110,7 +93,7 @@ class Master(object):
         self._looping_call.start(self.main_loop_every, False) 
         self.wants_to_live = False # The master is either trying to make every child live or die. 
         self.command_added_signal = sig.Signal() # param: Command object
-        self.command_removed_signal = sig.Signal() # param: command identifier
+        self.command_removed_signal = sig.Signal() # param: command object -- Called when actually deleted from the graph
         
         # actions:
         self.start_all()
@@ -123,6 +106,26 @@ class Master(object):
         self.prepare_all_commands()
         self.wants_to_live = True
     
+    def add_command(self, command):
+        """
+        This method is wrapped (called) by the add_command function.
+        @param command: L{lunch.commands.Command} object.
+        """    
+        # check if addr is local, set it to none if so.
+        if command.host in self.local_addresses:
+            log.msg("Filtering out host %s since it is in list of local addresses." % (command.host))
+            command.host = None    
+        # set default names if they are none:
+        if command.identifier is None:
+            command.identifier = "default_%d" % (self.i)
+            self.i += 1
+        while command.identifier in self.commands: # making sure it is unique
+            command.identifier += "X"
+        self.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
+        self.commands[command.identifier] = command
+        # calls the signal
+        self.command_added_signal(command)
+
     def prepare_all_commands(self):
         """
         Called to change some attribute of all the commands before to start them for the first time. The config file is already loaded at this time.
@@ -213,9 +216,11 @@ class Master(object):
                         log.msg("Will start %s." % (command.identifier))
                         command.start()
             elif command.to_be_deleted:
+                ref = self.commands[node]
                 del self.commands[node]
                 self.tree.remove_node(node) # XXX ?
                 log.msg("Removed command %s from the graph" % (node))
+                self.command_removed_signal(ref)
 
     def _get_all(self):
         """
@@ -250,7 +255,6 @@ class Master(object):
         if identifier in self.commands.keys():
             self.commands[identifier].stop()
             self.commands[identifier].to_be_deleted = True
-            self.command_removed_signal(identifier)
 
     def restart_all(self):
         """
@@ -402,18 +406,20 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     Reads the lunch file and execute it as Python code.
     Also makes it non-writable by everyone else, just in case.
     @param config_file: Path to the lunch file. (such as a .lunchrc)
-    Might raise a FileNotFoundError
-    """
-    # variables/functions to which the user has access:
-    # lunch_master
-    # add_command
-    # add_local_address
+    Might raise a FileNotFoundError.
     
+    The functions to which the user can access in their lunch files are defined here.
+     * add_command
+     * add_local_address
+    
+    The user can also access the lunch_master variable, which is the Lunch Master.
+    """
     def add_local_address(address):
         """
         Adds an IP to which not use SSH with.
-        :param address: str of list of str. IP address or host name
+        :param address: str or list of str. IP address or host name
         """
+        # FIXME: what is that list thing? Why would we store lists of str?
         if type(address) is not list:
             addresses = [address]
         else:
