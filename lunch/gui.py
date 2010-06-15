@@ -112,6 +112,14 @@ def tail_master_log(master):
         cmd.extend(["tail", "-F", log_path])
         print("$ %s" % (" ".join(cmd)))
         run_once(*cmd)
+
+def man_lunch():
+    cmd = []
+    xterm_title = "man lunch"
+    cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
+    cmd.extend(["man", "lunch"])
+    print("$ %s" % (" ".join(cmd)))
+    run_once(*cmd)
     
 class About(object):
     """
@@ -187,7 +195,7 @@ class LunchApp(object):
         self.window.add(vbox)
         
         # Menu bar
-        self.menubar = self.create_main_menu(self.window)
+        self.menubar = self._create_main_menu(self.window)
         vbox.pack_start(self.menubar, expand=False, fill=False)
         self.menubar.show()
 
@@ -362,7 +370,7 @@ class LunchApp(object):
     def on_menu_view_master_log(self, widget, data):
         tail_master_log(self.master)
 
-    def create_main_menu(self, window):
+    def _create_main_menu(self, window):
         menu_items = (
             ( "/_File", None, None, 0, "<Branch>" ),
             #( "/File/_New", "<control>N", self.print_hello, 0, None),
@@ -375,6 +383,7 @@ class LunchApp(object):
             #( "/Options/Test",  None, None, 0, None),
             ( "/_Help", None, None, 0, "<LastBranch>"),
             ( "/_Help/About", None, self.on_about, 0, None),
+            ( "/_Help/Manual", None, self.on_man_page, 0, None),
             )
         accel_group = gtk.AccelGroup()
         #FIXME: the following line causes a exceptions.DeprecationWarning: use gtk.UIManager
@@ -388,6 +397,10 @@ class LunchApp(object):
     def on_about(self, widget, data):
         #print "on about"
         About().show_about_dialog()
+
+    def on_man_page(self, widget, data):
+        #print "on man page menu item chosen"
+        man_lunch()
     
     def _get_currently_selected_command(self, show_error_if_none=True):
         """
