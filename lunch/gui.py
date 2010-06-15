@@ -35,6 +35,7 @@ import os
 import webbrowser
 from lunch import __version__
 from lunch import dialogs
+from lunch.states import *
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
@@ -211,9 +212,11 @@ class LunchApp(object):
         # The TreeModelSort sorts the data
         self.model_sort = gtk.TreeModelSort(list_store)
         # The TreeView displays the sorted data in the GUI.
-        self.tree_view = gtk.TreeView(self.model_sort)
+        self.tree_view_widget = gtk.TreeView(self.model_sort)
         self._setup_treeview()
-        scroller.add(self.tree_view)
+        
+        self.tree_view_widget.get_selection().connect("changed", self.on_selected_command_changed)
+        scroller.add(self.tree_view_widget)
         for command in _commands:
             self._add_command_in_tree(command)
 
@@ -224,17 +227,17 @@ class LunchApp(object):
         hbox = gtk.HBox(homogeneous=True)
         vbox.pack_start(hbox, expand=False)
         
-        openlog_button = gtk.Button("Open child process log file")
-        openlog_button.connect("clicked", self.on_openlog_clicked)
-        hbox.pack_start(openlog_button)
+        self.openlog_button_widget = gtk.Button("Open child process log file")
+        self.openlog_button_widget.connect("clicked", self.on_openlog_clicked)
+        hbox.pack_start(self.openlog_button_widget)
         
-        stop_command_button = gtk.Button("Stop child process")
-        stop_command_button.connect("clicked", self.on_stop_command_clicked)
-        hbox.pack_start(stop_command_button)
+        self.stop_command_button_widget = gtk.Button("Stop child process")
+        self.stop_command_button_widget.connect("clicked", self.on_stop_command_clicked)
+        hbox.pack_start(self.stop_command_button_widget)
 
-        start_command_button = gtk.Button("Start child process")
-        start_command_button.connect("clicked", self.on_start_command_clicked)
-        hbox.pack_start(start_command_button)
+        self.start_command_button_widget = gtk.Button("Start child process")
+        self.start_command_button_widget.connect("clicked", self.on_start_command_clicked)
+        hbox.pack_start(self.start_command_button_widget)
         
         self.window.show_all()
 
@@ -256,10 +259,32 @@ class LunchApp(object):
         print("on_command_removed")
         self._remove_command_from_tree(command)
 
+    def on_selected_command_changed(self, *args):
+        print("on_selected_command_changed")
+        self._update_buttons_according_to_selected_contact()
+    
+    def _update_buttons_according_to_selected_contact(self):
+        command = self._get_currently_selected_command(False)
+        if command is None:
+            #TODO enable/disable buttons
+            self.stop_command_button_widget.set_sensitive(False)
+            self.start_command_button_widget.set_sensitive(False)
+            self.openlog_button_widget.set_sensitive(False)
+        else:
+            print("command: %s" % (command.identifier))
+            if command.get_state_info() in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
+                self.stop_command_button_widget.set_sensitive(True)
+                self.start_command_button_widget.set_sensitive(False)
+                self.openlog_button_widget.set_sensitive(True)
+            elif command.get_state_info() in [STATE_STOPPED, STATE_NOSLAVE, INFO_DONE, INFO_FAILED, INFO_TODO, INFO_GAVEUP]:
+                self.stop_command_button_widget.set_sensitive(False)
+                self.start_command_button_widget.set_sensitive(True)
+                self.openlog_button_widget.set_sensitive(True)
+
     def _setup_treeview(self):
         """
         Needs attributes;
-         * self.tree_view
+         * self.tree_view_widget
          * self.model_sort
         """
         # Set initial sorting column and order.
@@ -278,7 +303,7 @@ class LunchApp(object):
         # Set default properties for each column
         cells = [None] * NUM_COLUMNS
         for i in range(NUM_COLUMNS):
-            self.tree_view.append_column(columns[i])
+            self.tree_view_widget.append_column(columns[i])
             columns[i].set_expand(True)
             columns[i].set_max_width(400)
             columns[i].set_resizable(True)
@@ -407,7 +432,7 @@ class LunchApp(object):
         Returns a lunch.commands.Command object or None.
         """
         ret = None
-        selection = self.tree_view.get_selection()
+        selection = self.tree_view_widget.get_selection()
         model, rows = selection.get_selected()
         if rows is None:
             ret = None
@@ -452,6 +477,7 @@ class LunchApp(object):
         #self.state_labels[i].set_markup(txt)
         print("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
         self._update_row(command)
+        self._update_buttons_according_to_selected_contact()
 
     def destroy_app(self, widget, data=None):
         """
