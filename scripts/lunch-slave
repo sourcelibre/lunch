@@ -19,8 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
-Tools for process management.
+The lunch-slave command is a single file, to ease portability.
+
+It is an interactive process launcher that can only launch a single process.
 """
+#TODO: allow to launch more than one process.
 __version__ = "0.3.0"
 DESCRIPTION = "The lunch slave utility is an interactive process launcher. It is intended to be run by the lunch master process through an encrypted SSH connection. It launches a single process at a time and allows to specify its environment and to log its standard output and error to a file."
 
@@ -31,6 +34,7 @@ import logging
 import textwrap
 
 from twisted.internet import protocol
+from twisted.internet import task
 from twisted.internet import error
 from twisted.internet import reactor
 from twisted.internet import stdio
@@ -84,6 +88,7 @@ class ChildProcess(protocol.ProcessProtocol):
         for line in data.splitlines():
             if line != "":
                 self.slave._stdout_file.write(line + "\n")
+                self.slave.must_flush_stdout_file = True
 
     def errReceived(self, data):
         """
@@ -144,11 +149,13 @@ class Slave(object):
         @param command: Shell string. The first item is the name of the name of the executable.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
+        self.flush_log_file_every = 0.1
         self._process_transport = None
         self._child_process = None
         self._time_child_started = None
         self._child_running_time = None
         self._stdout_file = None
+        self.must_flush_stdout_file = False
         self.state = STATE_STOPPED
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
@@ -167,6 +174,8 @@ class Slave(object):
             self.identifier = "default"
         self.log_level = logging.DEBUG
         self._delayed_kill = None # DelayedCall instance
+        self._flush_task = task.LoopingCall(self._looping_call_flush_log_files)
+        self._flush_task.start(self.flush_log_file_every, now=False)
     
     def _before_shutdown(self):
         """
@@ -177,6 +186,12 @@ class Slave(object):
             msg = "Child still %s. Stopping it before shutdown." % (self.state)
             self.log(msg)
             self.stop()
+
+    def _looping_call_flush_log_files(self):
+        if self.must_flush_stdout_file:
+            if not self._stdout_file.closed:
+                self._stdout_file.flush()
+            self.must_flush_stdout_file = False
 
     def is_alive(self):
         """
