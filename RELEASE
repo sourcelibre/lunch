@@ -1,12 +1,4 @@
-Version 0.3.0 - 2010-06-16
+Version 0.3.1 - 2010-06-??
 
-    * add/remove commands live
-    * get the return value of the command once done
-    * Update GUI to allow it to detect if there are new processes added
-        * Do not copy commands in the GUI App class
-        * Use a command_added and command_removed signal
-        * Remove slot for state_change signal when a slave has been removed. 
-    * add the DONE, FAILED and GAVE UP states
-    * improve reports on the state of processes
-    * flush more often stdout/stderr to files 
+    * 
 
