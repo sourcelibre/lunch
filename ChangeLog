@@ -1,104 +1,2366 @@
-0.2.22 2010-06-01 Alexandre Quessy <alexandre@quessy.net>
-	* removed .1 files from the repository
-	* specifying encoding the .desktop file is deprecated
-	* fixed lintian complaint about unknown lunch interpreter
-	* added ChangeLog file
+changeset:   383:b969c8494f83
+branch:      0.3
+tag:         tip
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jun 16 10:34:57 2010 -0400
+summary:     added RELEASE, updated NEWS. Simplified version number in setup.py
 
-0.2.21 2010-05-27 Alexandre Quessy <alexandre@quessy.net>
-	* Working on the Debian packaging
-	* removed .png from ignored files, since it's versionned 
-	* removed debian dir from "trunk"!
+changeset:   382:9706f9391895
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 15 22:20:44 2010 -0400
+summary:     added the NEWS file
 
-0.2.20 2010-04-12 Alexandre Quessy <alexandre@quessy.net>
-	* Made a very nice 48x48 icon with inkscape
-	  inkscape -f lunch.svg -e lunch.png -w 48 -h 48 
-	* removed the command to convert the svg to png in setup.py 
-	* When a process with the PID of the master is found, we check if it 
-	  has the string "lunch" in its command. 
+changeset:   381:fc06fbe72309
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 15 22:02:19 2010 -0400
+summary:     Fixed a comment.
 
-0.2.19 Alexandre Quessy <alexandre@quessy.net>
-	* Working on the Debian packaging
+changeset:   380:76468dea5154
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 15 15:10:32 2010 -0400
+summary:     Changing buttons sensitivity according to slaves state.
 
-0.2.18 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
-	* Made the confirm close dialog modal. 
-	* fixed bug with dialogs when an error occurs in the lunch file. 
-	* Splitting dialogs from gui.py 
+changeset:   379:9fe2bd4268b8
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 15 14:40:35 2010 -0400
+summary:     Flushing child log file every 0.1 s
 
-0.2.17 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
-	* Working on the Debian packaging
+changeset:   378:e887d1eb04a4
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 15 14:13:35 2010 -0400
+summary:     added a manual menu item :)
 
-0.2.16 2010-01-25 Alexandre Quessy <alexandre@quessy.net>
-	* Misc fixes in .desktop file
-	* Fixed problem with command being respawn even if lifetime smaller
-	  than minimum.
-	* Splitted script/lunch to lunch/runner.py 
-	* Fixed remote log file not being tailed in gui 
+changeset:   377:bd93c2456d98
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 16:58:58 2010 -0400
+summary:     Added GAVEUP info state for when the child died too quickly.
 
-0.2.13 2010-01-21 Alexandre Quessy <alexandre@quessy.net>
-	* Added view child's log button
-	* Renamed examples
-	* Made the slave less verbose
-	* Using an iterator instead of copy-pasting the traversal algo
-	* Set minimum lifetime to respawn to 0.5 s
+changeset:   376:35f62e64fa44
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 16:17:48 2010 -0400
+summary:     added state TODO
 
-0.2.12 2010-01-20 Alexandre Quessy <alexandre@quessy.net>
-	* Not respawning if we not supposed to
-	* Decreased verbosity
+changeset:   375:e40e08eebb54
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 16:14:17 2010 -0400
+summary:     added a FAILED status and a DONE one.
 
-0.2.11 2010-01-20 Alexandre Quessy <alexandre@quessy.net>
-	* Check for dependency circularity
-	* Added run_and_wait()
-	* Deprecated groups in favour of dependencies tree 
+changeset:   374:7fc4c58bc6c1
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 16:01:41 2010 -0400
+summary:     Added a button to start and stop child processes
 
-0.2.10 2010-01-18 Alexandre Quessy <alexandre@quessy.net>
-	* Moved copyright file
-	* Remove glib dep
-	* Improved man page
+changeset:   373:a4b9ad8694d9
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 15:42:23 2010 -0400
+summary:     improved an example
 
-0.2.9 2010-01-17 Alexandre Quessy <alexandre@quessy.net>
-	* Using getProcessValue and not getProcessOutput
+changeset:   372:645185553dd8
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 15:39:24 2010 -0400
+summary:     Fixed the removal of commands in the GUI.
 
-0.2.8 2010-01-17 Alexandre Quessy <alexandre@quessy.net>
-	* GUI looks better in a table
-	* Counting how many times a child runs
-	* Implemented the "open log" menu item
+changeset:   371:4f40d9474eff
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 15:18:37 2010 -0400
+summary:     updated simple.py example + added signal handlers in GUI for add/rm command
 
-0.2.7 2010-01-16 Alexandre Quessy <alexandre@quessy.net>
-	* Changing permissions on the config file, for security
+changeset:   370:6a8f29bac6bc
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 15:12:09 2010 -0400
+summary:     reordered methods
 
-0.2.6 2010-01-15 Alexandre Quessy <alexandre@quessy.net>
-	* Added test_graph.py
+changeset:   369:8e4b527d1c81
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 14:51:21 2010 -0400
+summary:     got rid of the singleton in lunch master
 
-0.2.5 2010-01-15 Alexandre Quessy <alexandre@quessy.net>
-	* Progress in GUI
-	* Child state works
+changeset:   368:dc0068a17a58
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 14:27:58 2010 -0400
+summary:     examples use the GUI too
 
-0.2.4 2010-01-14 Alexandre Quessy <alexandre@quessy.net>
-	* Create log dir in slave if it doesn't exist
+changeset:   367:8255da97e11d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jun 14 13:54:18 2010 -0400
+summary:     added a counter in the add_remove example
 
-0.2.3 2010-01-14 Alexandre Quessy <alexandre@quessy.net>
-	* A man page for each executable
+changeset:   366:82dbab8e53fa
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 11 13:15:20 2010 -0400
+summary:     Added the retval message (not yet stored on the slave's side)
 
-0.1.8 2010-01-13 Alexandre Quessy <alexandre@quessy.net>
-	* More doc. 
-	* Work on the packaging
+changeset:   365:b1abe2d2c6b9
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 11 12:27:52 2010 -0400
+summary:     adding comment to prepare for not giving up when cannot launch a process
 
-0.2.2 2010-01-13 Alexandre Quessy <alexandre@quessy.net>
-	* Removed lunch-0.1 script
+changeset:   364:7fabd2c1180f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 16:00:17 2010 -0400
+summary:     fixed a critical error
 
-0.1.6 2010-01-12 Alexandre Quessy <alexandre@quessy.net>
-	* Still using the multiprocessing 0.1 branch in productions
-	* Added a PID file
+changeset:   363:268cfd61484a
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 15:53:20 2010 -0400
+summary:     Erasing the PID file at shutdown time.
 
-0.2.1 Alexandre Quessy <alexandre@quessy.net>
+changeset:   362:d4dff1e678df
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 15:38:30 2010 -0400
+summary:     Added execute_config_file and start_logging functions in master.py
 
-0.2.0 Alexandre Quessy <alexandre@quessy.net>
-	* Rewritten using Twisted instead of multiprocessing
+changeset:   361:c1a6992c1559
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 15:27:48 2010 -0400
+summary:     Able to add and remove commands using lunch library
 
-0.1.5 2010-01-06 Alexandre Quessy <alexandre@quessy.net>
-	* Switched from SVN to Mercurial
+changeset:   360:8548fce202da
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 14:57:59 2010 -0400
+summary:     The lunch master library example works
 
-0.1.4 Alexandre Quessy <alexandre@quessy.net>
+changeset:   359:8426e84e33eb
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 14:38:51 2010 -0400
+summary:     The example using lunch lib works!
 
-0.1.3 Alexandre Quessy <alexandre@quessy.net>
+changeset:   358:296706afab0a
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 13:34:37 2010 -0400
+summary:     Fixed method signatures.
+
+changeset:   357:78f059597aea
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 13:18:28 2010 -0400
+summary:     Fixed a critical mistake in master.py + removed MasterError.
+
+changeset:   356:1f7f146e894d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 13:08:04 2010 -0400
+summary:     Fixed errors found by pychecker in master.py
+
+changeset:   355:8c7443d5b96d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:35:08 2010 -0400
+summary:     added a simple example that is not working yet
+
+changeset:   354:522a5316ad6b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:34:33 2010 -0400
+summary:     added a todo note
+
+changeset:   353:f93781587006
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:31:08 2010 -0400
+summary:     moved the constants to states.py
+
+changeset:   352:880e6cb2a975
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:25:26 2010 -0400
+summary:     removed executable bit from more files.
+
+changeset:   351:d6a0e1711659
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:24:55 2010 -0400
+summary:     Importing __version__ from __init__ in gui.py
+
+changeset:   350:89e448fa9f0e
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:23:24 2010 -0400
+summary:     removed __main__ from gui.py
+
+changeset:   349:97a10bc1651b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 10:20:57 2010 -0400
+summary:     splitted the master.py by creating commands.py
+
+changeset:   348:442fc0e6eeab
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 09:57:19 2010 -0400
+summary:     Improved how help messages are displayed in lunch-slave
+
+changeset:   347:2f585b1a5836
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 09:40:19 2010 -0400
+summary:     Fixed the help command in lunch-slave
+
+changeset:   346:9b6913cf6d7f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 09:35:41 2010 -0400
+summary:     added utils/build-doc.sh, which builds the HTML doc
+
+changeset:   345:f571511c0bc3
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 10 09:27:24 2010 -0400
+summary:     changed distutils to setuptools in setup.py
+
+changeset:   344:de18bb23c8c6
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jun 09 17:33:53 2010 -0400
+summary:     Updating version number to 0.3.0 - but it's not yet released.
+
+changeset:   343:b32b1dd1281d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 09:37:00 2010 -0400
+summary:     Added tag 0.2.22 for changeset a899bcd4a269
+
+changeset:   342:a899bcd4a269
+branch:      0.2
+tag:         0.2.22
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 09:36:42 2010 -0400
+summary:     updating ChangeLog for release 0.2.22
+
+changeset:   341:8daedcf095c5
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 09:14:45 2010 -0400
+summary:     removed man pages from the repository. Added a HISTORY section in man page.
+
+changeset:   340:2d6b1616aefa
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 09:01:32 2010 -0400
+summary:     updated version to 0.2.22
+
+changeset:   339:990f30ac58cf
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 08:32:39 2010 -0400
+summary:     Specifying the encoding in the .desktop file is deprecated
+
+changeset:   338:14ff3d32d5ee
+branch:      0.2
+parent:      321:67521f514596
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jun 01 08:31:24 2010 -0400
+summary:     adding a very detailled ChangeLog
+
+changeset:   337:13d9a264fb31
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 17:38:38 2010 -0400
+summary:     closing this branch. The debian files are now in svn://svn.debian.org/python-apps/packages/lunch/trunk/
+
+changeset:   336:01b5fdd4df33
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 17:29:55 2010 -0400
+summary:     removed everything in the packaging branch. It's not in http://svn.debian.org/viewsvn/python-apps/packages/lunch/trunk/
+
+changeset:   335:82f797ee1f98
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 16:54:18 2010 -0400
+summary:     depend on python, not python-all
+
+changeset:   334:299dba47c93a
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 16:50:51 2010 -0400
+summary:     added python-all to deps
+
+changeset:   333:05e7ed1be637
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 13:21:33 2010 -0400
+summary:     updated the date in changelog
+
+changeset:   332:3dfe6d5d55c4
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 13:18:35 2010 -0400
+summary:     got rid of the unused substitution variable ${python:Versions}
+
+changeset:   331:0b482087a2b0
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun May 30 13:06:18 2010 -0400
+summary:     Should have fixed many errors and warnings:
+
+changeset:   330:531cc942b7e9
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat May 29 21:03:14 2010 -0400
+summary:     adding watch file. re-added cdbs as build-dep. Build-Depending on python-all
+
+changeset:   329:3f9fcafec80a
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat May 29 20:45:28 2010 -0400
+summary:     fixed build-depends
+
+changeset:   328:60f16bfd5d9b
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat May 29 18:38:07 2010 -0400
+summary:     progress... but it's not working.
+
+changeset:   327:1813d53aff5e
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat May 29 18:16:39 2010 -0400
+summary:     Updated copyright. Remove python-central from the rules.
+
+changeset:   326:7a61363b8d72
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri May 28 13:41:39 2010 -0400
+summary:     renamed changelog-sid for changelog
+
+changeset:   325:1c5674fc8994
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri May 28 04:50:11 2010 -0400
+summary:     fixed a mistake in ownership
+
+changeset:   324:649413dddafe
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri May 28 04:47:47 2010 -0400
+summary:     changed maintainer for the Python App Package Team
+
+changeset:   323:a3e28bf70f8f
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri May 28 03:27:23 2010 -0400
+summary:     now it's the correct message
+
+changeset:   322:95e1c964b45c
+branch:      packaging
+parent:      320:03f4178d2ba1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 21:02:09 2010 -0400
+summary:     a changelog for sid
+
+changeset:   321:67521f514596
+branch:      0.2
+parent:      318:717965e05673
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:58:34 2010 -0400
+summary:     Added tag 0.2.21 for changeset 717965e05673
+
+changeset:   320:03f4178d2ba1
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:51:22 2010 -0400
+summary:     trying to fix some lintian warnings
+
+changeset:   319:20cd6f66639e
+branch:      packaging
+parent:      315:28dfbe392e02
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:42:24 2010 -0400
+summary:     changed for the utils debian section
+
+changeset:   318:717965e05673
+branch:      0.2
+tag:         0.2.21
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:37:40 2010 -0400
+summary:     updated version to 0.2.21
+
+changeset:   317:2ecc9c01f731
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:33:00 2010 -0400
+summary:     removed .png from ignored files, since it's versionned
+
+changeset:   316:269a34008a73
+branch:      0.2
+parent:      313:e0c53d3f90e0
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:31:04 2010 -0400
+summary:     removed debian dir from "trunk"
+
+changeset:   315:28dfbe392e02
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:30:35 2010 -0400
+summary:     improved description. Removed imagemagick from build-deps. Put openssh-server in recommended packages.
+
+changeset:   314:8270707903e6
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:18:35 2010 -0400
+summary:     removed all files unrelated to packaging in the new "packaging" branch.
+
+changeset:   313:e0c53d3f90e0
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Apr 12 04:06:35 2010 -0400
+summary:     updated man pages when building.
+
+changeset:   312:5876cff998c7
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Apr 12 04:06:19 2010 -0400
+summary:     Added tag 0.2.20 for changeset 118bd854acff
+
+changeset:   311:118bd854acff
+branch:      0.2
+tag:         0.2.20
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Apr 12 04:03:11 2010 -0400
+summary:     updated version to 0.2.20
+
+changeset:   310:3a9febbc4c79
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Apr 12 04:01:06 2010 -0400
+summary:     When a process with the PID of the master is found, we check if it has the string "lunch" in its command.
+
+changeset:   309:fbee5bbfe582
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Apr 12 03:28:05 2010 -0400
+summary:     removed the command to convert the svg to png in setup.py
+
+changeset:   308:eb4894082b53
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Feb 17 22:51:46 2010 -0500
+summary:     Made a very nice 48x48 icon with inkscape
+
+changeset:   307:ea94e780a2f6
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Feb 05 08:59:17 2010 -0500
+summary:     Added tag 0.2.19 for changeset 1396694f1a3c
+
+changeset:   306:1396694f1a3c
+branch:      0.2
+tag:         0.2.19
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Feb 05 08:56:44 2010 -0500
+summary:     ready for packaging verion 0.2.19
+
+changeset:   305:56d11b3ffabc
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Feb 05 01:20:56 2010 -0500
+summary:     Added tag 0.2.18 for changeset 139a981064c4
+
+changeset:   304:139a981064c4
+branch:      0.2
+tag:         0.2.18
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Feb 05 01:19:46 2010 -0500
+summary:     updated version to 0.2.18. Adding icons and man page in repository.
+
+changeset:   303:45f60e3c5363
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Feb 02 17:00:00 2010 -0500
+summary:     fixed bug with dialogs when an error occurs in the lunch file.
+
+changeset:   302:ff1cb5d02f43
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Feb 02 11:19:53 2010 -0500
+summary:     Slitting dialogs from gui.py
+
+changeset:   301:54065499d345
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 27 21:20:17 2010 -0500
+summary:     added process tree in man page. Cleaned it up a bit.
+
+changeset:   300:0fe7324c6d4a
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 27 21:14:35 2010 -0500
+summary:     improved man page again a little
+
+changeset:   299:9569c1f47f8d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 27 21:13:06 2010 -0500
+summary:     improved man page a lot
+
+changeset:   298:c5fa9360998b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 11:32:09 2010 -0500
+summary:     version 0.2.17
+
+changeset:   297:4aa9790fa58b
+branch:      0.2
+parent:      296:73e39f42d2fe
+parent:      295:fed11e6ebd08
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 10:44:07 2010 -0500
+summary:     merged
+
+changeset:   296:73e39f42d2fe
+branch:      0.2
+parent:      294:27aa95291e12
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 10:43:43 2010 -0500
+summary:     trivial change.
+
+changeset:   295:fed11e6ebd08
+branch:      0.2
+parent:      292:7b8155afb8d8
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 10:41:45 2010 -0500
+summary:     Added tag 0.2.16 for changeset 7b8155afb8d8
+
+changeset:   294:27aa95291e12
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 10:40:59 2010 -0500
+summary:     Made the confirm close dialog modal. (blocks the rest of the app)
+
+changeset:   293:60b9693f765e
+branch:      0.2
+parent:      292:7b8155afb8d8
+parent:      285:a6f5aaccd37f
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 10:36:28 2010 -0500
+summary:     merged.
+
+changeset:   292:7b8155afb8d8
+branch:      0.2
+tag:         0.2.16
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 14:11:34 2010 -0500
+summary:     Version 0.2.16: Fixed remove child log file.
+
+changeset:   291:af5a14cc7c66
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 14:10:11 2010 -0500
+summary:     Fixed remote log file not being tailed in gui
+
+changeset:   290:e499d5d3e925
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 14:01:01 2010 -0500
+summary:     updated version again to 0.2.15
+
+changeset:   289:f67365e47c7c
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 13:59:42 2010 -0500
+summary:     added -q option to desktop file.
+
+changeset:   288:c23a06c60e79
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 13:57:13 2010 -0500
+summary:     Version number 0.2.14. Added menu item to view master log file.
+
+changeset:   287:1515d8da8138
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 13:42:20 2010 -0500
+summary:     Fixed problem with command being respawn even if lifetime smaller than minimum.
+
+changeset:   286:67f235d825b0
+branch:      0.2
+parent:      283:6d31e4b7c9f0
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 22 12:47:45 2010 -0500
+summary:     Trying to fix the bug with not-found commands being respawned.
+
+changeset:   285:a6f5aaccd37f
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 02:24:37 2010 -0500
+summary:     adding icon for window.
+
+changeset:   284:01fb0f7a374d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 25 00:26:07 2010 -0500
+summary:     Added a confirm close dialog.
+
+changeset:   283:6d31e4b7c9f0
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:54:09 2010 -0500
+summary:     removed -g option in examples.
+
+changeset:   282:e07cca0b12cc
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:17:10 2010 -0500
+summary:     Added tag 0.2.13 for changeset c6e2e39b2e74
+
+changeset:   281:c6e2e39b2e74
+branch:      0.2
+tag:         0.2.13
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:14:05 2010 -0500
+summary:     Updated version to 0.2.13
+
+changeset:   280:daec23442eea
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:09:55 2010 -0500
+summary:     updated man page a bit.
+
+changeset:   279:56c5a0835a31
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:04:51 2010 -0500
+summary:     set minimum lifetime to respawn back to 0.5 seconds.
+
+changeset:   278:fadc5135fe93
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:01:57 2010 -0500
+summary:     Renamed all examples.
+
+changeset:   277:0495c88c8e69
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 16:00:17 2010 -0500
+summary:     modified comments in examples. Installing examples in debian package.
+
+changeset:   276:9bc097acbfa8
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 15:50:28 2010 -0500
+summary:     removed tree view prototype
+
+changeset:   275:57dc59c45511
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 15:49:52 2010 -0500
+summary:     added a view log button that works.
+
+changeset:   274:12bc280dc34b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 14:37:43 2010 -0500
+summary:     GUI looks a lot better. Changed table of labels for a TreeView.
+
+changeset:   273:48c000efb541
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 13:56:31 2010 -0500
+summary:     able to modify cell in the treeview in prototype.
+
+changeset:   272:666da56e543f
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 12:56:14 2010 -0500
+summary:     adding dummy rows in tree proto
+
+changeset:   271:713045fb5fce
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 11:31:32 2010 -0500
+summary:     making the slave less verbose when a child dies.
+
+changeset:   270:4f5ac58a4ef2
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 11:23:45 2010 -0500
+summary:     Using an iterator instead of copy-pasting the pseudo-tree sorting algorithm.
+
+changeset:   269:062d9693ad09
+branch:      0.2
+parent:      268:698e5cf78445
+parent:      267:2c1801a318ec
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 04:15:36 2010 -0500
+summary:     getting rid of a useless head in hg history
+
+changeset:   268:698e5cf78445
+branch:      0.2
+parent:      266:e1a7ab99e442
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 04:12:18 2010 -0500
+summary:     Improved man page a little
+
+changeset:   267:2c1801a318ec
+branch:      0.2
+parent:      261:a2d1b13ce2d1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 04:09:56 2010 -0500
+summary:     Added tag 0.2.12 for changeset a2d1b13ce2d1
+
+changeset:   266:e1a7ab99e442
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 03:35:31 2010 -0500
+summary:     Added GTK error dialog if an error occurs at startup.
+
+changeset:   265:97a2694669b8
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 03:12:16 2010 -0500
+summary:     added error dialog
+
+changeset:   264:4df6d74e186c
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 03:07:03 2010 -0500
+summary:     added tail_log_file function
+
+changeset:   263:13032b7f09d7
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 02:43:03 2010 -0500
+summary:     Fixed a bad bug with GUI: some childs were not killed when quitting by closing the window.
+
+changeset:   262:e9995afaeea3
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 21 02:38:21 2010 -0500
+summary:     adding a nice dependency example
+
+changeset:   261:a2d1b13ce2d1
+branch:      0.2
+tag:         0.2.12
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 20:56:32 2010 -0500
+summary:     updated version to 0.2.12
+
+changeset:   260:a3a4e1fecef3
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 20:53:45 2010 -0500
+summary:     Not respawning those who are supposed to be ran only once.
+
+changeset:   259:b10836388009
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 18:11:03 2010 -0500
+summary:     added example with no respawn.
+
+changeset:   258:e76338d038c7
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 17:41:23 2010 -0500
+summary:     Added tag 0.2.11 for changeset e18146358b2b
+
+changeset:   257:e18146358b2b
+branch:      0.2
+tag:         0.2.11
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 17:39:43 2010 -0500
+summary:     Updated version number to 0.2.11
+
+changeset:   256:d41c7284c204
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 17:32:57 2010 -0500
+summary:     Decreased verbosity.
+
+changeset:   255:fc3cce7d432a
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 17:23:37 2010 -0500
+summary:     Fixed the sleep_after with the new depends option.
+
+changeset:   254:47914adfcda9
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 15:44:28 2010 -0500
+summary:     heu... progress in tree proto.
+
+changeset:   253:cbfce5d316d4
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 20 12:22:47 2010 -0500
+summary:     Displaying strings and such in the tree view.
+
+changeset:   252:69a914abf467
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 17:42:54 2010 -0500
+summary:     adding newtree.py proto
+
+changeset:   251:c2516eabf7d0
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 16:41:14 2010 -0500
+summary:     Dependendant childs are killed when their dependency dies.
+
+changeset:   250:51db0f4d7413
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 16:23:06 2010 -0500
+summary:     something is working with the tree sorting, but there is no delay between each launching, and the dependencies do not restart their dependees.
+
+changeset:   249:4f814a09de42
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 16:15:32 2010 -0500
+summary:     graph test works for get_all_dependencies
+
+changeset:   248:5e44bb8bdca6
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 15:43:36 2010 -0500
+summary:     Tree traversal without recursion test works.
+
+changeset:   247:0fb49f918f11
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 19 14:49:52 2010 -0500
+summary:     Close to some dependencies managing that works.
+
+changeset:   246:8d6ce06160c1
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 16:50:11 2010 -0500
+summary:     Gradually implementing dependency tree and a looping call to check ps state.
+
+changeset:   245:b48f1162a959
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 16:11:54 2010 -0500
+summary:     Deprecated groups.
+
+changeset:   244:7404c7d850c9
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 15:18:08 2010 -0500
+summary:     added comments and attributes to the master.
+
+changeset:   243:e1068666a252
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 15:05:42 2010 -0500
+summary:     Added run_and_wait in Master, which runs a command and triggers the deferred when done. Not used yet.
+
+changeset:   242:85b3ffcb7fcf
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 14:49:32 2010 -0500
+summary:     Separated the run_once() and open_path() functions in GUI.
+
+changeset:   241:911fe0774045
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 14:42:36 2010 -0500
+summary:     Checking dependency circularity.
+
+changeset:   240:a08b6cea06b5
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 14:06:24 2010 -0500
+summary:     Draft of depends_on function.
+
+changeset:   239:0b80a260ad69
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 13:49:25 2010 -0500
+summary:     Making sure reactor is running prior to stop it.
+
+changeset:   238:c823fa10462c
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 13:32:15 2010 -0500
+summary:     Added tag 0.2.10 for changeset 212bb875b3ee
+
+changeset:   237:212bb875b3ee
+branch:      0.2
+tag:         0.2.10
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 13:06:12 2010 -0500
+summary:     Fixed rules
+
+changeset:   236:07fd036630a8
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 13:00:09 2010 -0500
+summary:     Updating version to 0.2.10. Improved man page a bit.
+
+changeset:   235:ab9fb1fe9d4b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 18 12:54:11 2010 -0500
+summary:     Removed glib module dependency. It wasn't working on Hardy.
+
+changeset:   234:2bd00480d942
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 22:46:48 2010 -0500
+summary:     Moved copyright file to the right location.
+
+changeset:   233:4d84c1c9c80e
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 22:07:07 2010 -0500
+summary:     Added tag 0.2.9 for changeset e3527794078c
+
+changeset:   232:e3527794078c
+branch:      0.2
+tag:         0.2.9
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 22:01:19 2010 -0500
+summary:     version 0.2.9 : trying to fix ubuntu packaging issues
+
+changeset:   231:fbfce6e92fd5
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 17:10:13 2010 -0500
+summary:     Fixed date for last entry in changelog...
+
+changeset:   230:64809cad1897
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 17:05:12 2010 -0500
+summary:     Fixed the distro name.
+
+changeset:   229:5b93ac5c2bcb
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 10:42:22 2010 -0500
+summary:     Using getProcessValue instead of getProcessOutput
+
+changeset:   228:f065cc6ca016
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 00:43:49 2010 -0500
+summary:     Added tag 0.2.8 for changeset 2edce4f0b438
+
+changeset:   227:2edce4f0b438
+branch:      0.2
+tag:         0.2.8
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 00:40:56 2010 -0500
+summary:     Updated changelog with version 0.2.8
+
+changeset:   226:5e3124d65013
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 00:35:48 2010 -0500
+summary:     Added how many times each child ran in GUI.
+
+changeset:   225:945deb2be237
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 17 00:10:18 2010 -0500
+summary:     Added horizontal spacers. Looks ok by now.
+
+changeset:   224:70d9d4f88437
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 23:40:20 2010 -0500
+summary:     implemented the "Open log" menu item.
+
+changeset:   223:27e628f9c889
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 23:19:13 2010 -0500
+summary:     Catching error when logo not found in about dialog.
+
+changeset:   222:e514c46128d0
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 23:14:58 2010 -0500
+summary:     The Menu looks better if not in scrollable area.
+
+changeset:   221:3c17c1930e75
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 23:05:28 2010 -0500
+summary:     Added menu bar and about dialog.
+
+changeset:   220:aa35236c255d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 20:25:59 2010 -0500
+summary:     Gui looks better with a table.
+
+changeset:   219:0e27132bc55b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 17:52:37 2010 -0500
+summary:     0.2.7 : Ubuntu packaging and added command in GUI.
+
+changeset:   218:7d907b8da46b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 12:53:16 2010 -0500
+summary:     Ubuntu package name.
+
+changeset:   217:22bdd2132ccd
+branch:      0.2
+parent:      216:256c95a5d15a
+parent:      215:8d4726dd531b
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 02:42:15 2010 -0500
+summary:     merging with main head
+
+changeset:   216:256c95a5d15a
+branch:      0.2
+parent:      212:44621ec2339a
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 16 02:41:17 2010 -0500
+summary:     adding the newgui prototype.
+
+changeset:   215:8d4726dd531b
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 19:17:49 2010 -0500
+summary:     More doc in graph.py. More unit tests too.
+
+changeset:   214:23a63a0c8885
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 18:57:38 2010 -0500
+summary:     Changing permissions on log and config files.
+
+changeset:   213:418073a45f71
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 18:15:27 2010 -0500
+summary:     Added tag 0.2.6 for changeset 44621ec2339a
+
+changeset:   212:44621ec2339a
+branch:      0.2
+tag:         0.2.6
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 18:14:07 2010 -0500
+summary:     Updated version number to 0.2.6
+
+changeset:   211:b0148ec77792
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 18:09:19 2010 -0500
+summary:     Added a clear() to the graph.
+
+changeset:   210:3134906bbeeb
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 18:00:25 2010 -0500
+summary:     Adding test_graph. Changed the graph to a list of list of list instead of dict.
+
+changeset:   209:1e74f4cced45
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 16:45:17 2010 -0500
+summary:     adding graph.py
+
+changeset:   208:5ef6fbd14905
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 13:46:29 2010 -0500
+summary:     Added tag 0.2.5 for changeset 51f79f6fefbc
+
+changeset:   207:51f79f6fefbc
+branch:      0.2
+tag:         0.2.5
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 13:44:59 2010 -0500
+summary:     Updating version number to 0.2.5.
+
+changeset:   206:8d2785dd5bb2
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 13:40:25 2010 -0500
+summary:     Child state seem to work, even in GUI.
+
+changeset:   205:49dfb8974da2
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 13:14:22 2010 -0500
+summary:     Oops. Fixed an error with no -g opt.
+
+changeset:   204:520f2ce4e033
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 13:13:09 2010 -0500
+summary:     Added --graphical option to lunch.
+
+changeset:   203:c3849a241d55
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 15 09:56:24 2010 -0500
+summary:     updated state diagram
+
+changeset:   202:0eecf6e017ad
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 17:33:37 2010 -0500
+summary:     progress in gui
+
+changeset:   201:86388196031e
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 16:58:35 2010 -0500
+summary:     updated doc generator in Makefile
+
+changeset:   200:fbd2431a15fa
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:56:49 2010 -0500
+summary:     Making sure that there is not an other lunch master running with the same lunch config file.
+
+changeset:   199:234c41c38276
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:33:44 2010 -0500
+summary:     Added tag 0.2.4 for changeset af93ffb6802b
+
+changeset:   198:af93ffb6802b
+branch:      0.2
+tag:         0.2.4
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:27:03 2010 -0500
+summary:     updated changelog with bugfix in slave logging
+
+changeset:   197:0acb300f0b91
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:18:44 2010 -0500
+summary:     Fixed a very bad mistake since I've inspected visually the code.
+
+changeset:   196:4b1a83815383
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:16:56 2010 -0500
+summary:     Creating logdir in slave if it does not exist.
+
+changeset:   195:3c0703c221cb
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 15:07:31 2010 -0500
+summary:     Added tag 0.2.3 for changeset 2927d6ee0c76
+
+changeset:   194:2927d6ee0c76
+branch:      0.2
+tag:         0.2.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 14:52:25 2010 -0500
+summary:     added a little line...
+
+changeset:   193:9267c18cba0c
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 14:42:31 2010 -0500
+summary:     Improved doc again.
+
+changeset:   192:d937ec9723fe
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 14:39:30 2010 -0500
+summary:     added --logging-directory and --log-to-file options to master.
+
+changeset:   191:d2ecd1691a70
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 13:57:37 2010 -0500
+summary:     Lunch master PID is written to /var/tmp/lunch/master-*.pid
+
+changeset:   190:24beb061bd77
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 13:53:23 2010 -0500
+summary:     Able to specify log_dir using the log_dir kwargs of add_command.
+
+changeset:   189:9be1212dcf90
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 12:28:39 2010 -0500
+summary:     add_local_address can support a str or a list of str as arg.
+
+changeset:   188:1479432e47c2
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 12:25:02 2010 -0500
+summary:     updated version number and project description
+
+changeset:   187:cf181c1a4887
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 12:24:24 2010 -0500
+summary:     updated doc and version number
+
+changeset:   186:2b71e08d441c
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 12:16:32 2010 -0500
+summary:     fixed a debug message
+
+changeset:   185:105e38e5265f
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 12:14:48 2010 -0500
+summary:     made the master a bit less verbose
+
+changeset:   184:24c4d93e823a
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 11:55:24 2010 -0500
+summary:     added add_local_address(addr) and clear_local_addresses()
+
+changeset:   183:23ad391c178d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 11:44:57 2010 -0500
+summary:     Updated description
+
+changeset:   182:d19a1cc5a7de
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 14 11:43:50 2010 -0500
+summary:     Fixed a few errors that lintian told us about.
+
+changeset:   181:05498cde47a4
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 17:05:13 2010 -0500
+summary:     (Re-?)Added lunch-slave man page to the debian package.
+
+changeset:   180:ae0746784fdb
+branch:      0.2
+parent:      177:67eb5a282463
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:29:56 2010 -0500
+summary:     updated man page a bit
+
+changeset:   179:9ab3332eb020
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:26:56 2010 -0500
+summary:     Added tag 0.1.8 for changeset 48e89e673179
+
+changeset:   178:48e89e673179
+branch:      0.1
+tag:         0.1.8
+parent:      160:285a116b45d9
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:25:37 2010 -0500
+summary:     Update version number. Added to changelog
+
+changeset:   177:67eb5a282463
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:17:27 2010 -0500
+summary:     Added tag 0.2.2 for changeset cc801c512ee8
+
+changeset:   176:cc801c512ee8
+branch:      0.2
+tag:         0.2.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:15:58 2010 -0500
+summary:     getting rid of the dot in pid file name.
+
+changeset:   175:816b984fcf3a
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:12:52 2010 -0500
+summary:     Fixed minor errors in makefile.
+
+changeset:   174:c2c55772cca7
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:11:10 2010 -0500
+summary:     updated changelog
+
+changeset:   173:89620df143ea
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 16:07:49 2010 -0500
+summary:     Implemented a minimum life time to childs.
+
+changeset:   172:2fd08d329bbc
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:44:41 2010 -0500
+summary:     got rid of scripts/lunch-0.1 (again?)
+
+changeset:   171:c35e30515ae4
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:43:13 2010 -0500
+summary:     added copyright to debian rules
+
+changeset:   170:c06f13f56a25
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:42:19 2010 -0500
+summary:     added copyright, like in branch 0.1
+
+changeset:   169:ea190ea952b2
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:40:25 2010 -0500
+summary:     fixed kill -9 in slave.
+
+changeset:   168:6b8d0f306b5d
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:08:46 2010 -0500
+summary:     cleanup in examples
+
+changeset:   167:d4959c376931
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:05:07 2010 -0500
+summary:     updated version in more files.
+
+changeset:   166:a43f26aec5e3
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 15:03:57 2010 -0500
+summary:     updated version number to 2.2 in files.
+
+changeset:   165:43097e7b1e8e
+branch:      py
+parent:      164:2be953836bc5
+parent:      147:45ee2527bdee
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:58:09 2010 -0500
+summary:     Merging an other branch I resurrected by mistake.
+
+changeset:   164:2be953836bc5
+branch:      py
+parent:      163:f80879960141
+parent:      161:5550c6e7895a
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:52:09 2010 -0500
+summary:     Merging two branches spawned by error.
+
+changeset:   163:f80879960141
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:48:06 2010 -0500
+summary:     fixed errors again in master
+
+changeset:   162:19571f15a542
+branch:      py
+parent:      133:1fe89ed9da01
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:43:31 2010 -0500
+summary:     writing pid file in master, like in branch 0.1
+
+changeset:   161:5550c6e7895a
+branch:      py
+parent:      133:1fe89ed9da01
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:39:35 2010 -0500
+summary:     Passing the whole env from master to slaves. (needed by ssh-agent)
+
+changeset:   160:285a116b45d9
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 14:25:38 2010 -0500
+summary:     adding a whole bunch of kills wo try to make the slave die when killing programatically the master
+
+changeset:   159:416682d492a0
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 13:52:09 2010 -0500
+summary:     updated doc a bit.
+
+changeset:   158:c683909a8b44
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 12:05:01 2010 -0500
+summary:     updating doc to help killing the master.
+
+changeset:   157:50c1f335c572
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 11:48:21 2010 -0500
+summary:     Fixed an other mistake in writing pidfile.
+
+changeset:   156:22ce359e2a33
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 13 11:45:25 2010 -0500
+summary:     Fixed problem with pid file
+
+changeset:   155:ceeda7aa1b80
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 16:00:02 2010 -0500
+summary:     Fixing packaging error according to lintian.
+
+changeset:   154:24eb148acb33
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 15:45:48 2010 -0500
+summary:     Updating version number to 0.1.7 to check if build is ok.
+
+changeset:   153:8158986f95fb
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 15:44:00 2010 -0500
+summary:     Fixed error with name of executable.
+
+changeset:   152:9b0419754f81
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:55:41 2010 -0500
+summary:     Added tag 0.1.6 for changeset 7172681bcbb6
+
+changeset:   151:7172681bcbb6
+branch:      0.1
+tag:         0.1.6
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:52:32 2010 -0500
+summary:     updated debian package infos.
+
+changeset:   150:ac48cd216dbe
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:42:48 2010 -0500
+summary:     Moving examples to ./examples.
+
+changeset:   149:73a28eae2a00
+branch:      0.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:40:22 2010 -0500
+summary:     adding lunch.pid
+
+changeset:   148:8cc1caa99d69
+branch:      0.1
+parent:      84:903d08af2f1a
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:38:31 2010 -0500
+summary:     Creating branch 0.1
+
+changeset:   147:45ee2527bdee
+branch:      0.2
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:44:58 2010 -0500
+summary:     Creating branch 0.2
+
+changeset:   146:14726268075f
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 14:11:03 2010 -0500
+summary:     Added an error message when not able to connect using ssh
+
+changeset:   145:938bbd9fc58b
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 13:54:42 2010 -0500
+summary:     fixed a bug with ssh
+
+changeset:   144:077110a079c6
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 13:52:23 2010 -0500
+summary:     Changed child log data prefix.
+
+changeset:   143:55a8afd0d333
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 12:07:58 2010 -0500
+summary:     added slave logging
+
+changeset:   142:914730048d1d
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 09:17:26 2010 -0500
+summary:     Added tag 0.2.1 for changeset 1af7d071208d
+
+changeset:   141:1af7d071208d
+branch:      py
+tag:         0.2.1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 09:14:00 2010 -0500
+summary:     updated changelog
+
+changeset:   140:4524a8481976
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 09:12:30 2010 -0500
+summary:     improved backward-compatibility with scripts made with version 0.1
+
+changeset:   139:9f5c7b6bf32a
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 08:13:59 2010 -0500
+summary:     fixed formatting in pubkey
+
+changeset:   138:53e57b9ce668
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 08:11:30 2010 -0500
+summary:     fixed error with scripts dir name.
+
+changeset:   137:32cc57bc6651
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 08:10:05 2010 -0500
+summary:     changed twisted dep version
+
+changeset:   136:e5504b6ca4f8
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 08:07:20 2010 -0500
+summary:     updated versions to 0.2.0
+
+changeset:   135:dc1930aea90e
+branch:      py
+parent:      122:4a38c8bd1d45
+parent:      134:dffc48c94537
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 12 08:03:24 2010 -0500
+summary:     merging with remote changes
+
+changeset:   134:dffc48c94537
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 17:32:51 2010 -0500
+summary:     Added tag 0.2 for changeset 1fe89ed9da01
+
+changeset:   133:1fe89ed9da01
+branch:      py
+tag:         0.2.0
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 16:52:32 2010 -0500
+summary:     Huge progress in asynchronous iterating of groups at startup.
+
+changeset:   132:b197739bbfa0
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 15:18:17 2010 -0500
+summary:     mucho progress before i scrap this all for more improvements.
+
+changeset:   131:1b116e68924b
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 14:04:33 2010 -0500
+summary:     Major changes and fixes in master.
+
+changeset:   130:83ccf79774b7
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 13:09:11 2010 -0500
+summary:     removing lunch/constants.py
+
+changeset:   129:cda24db07b25
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 13:08:39 2010 -0500
+summary:     Constants cleanup in master.
+
+changeset:   128:ac77d866597b
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 13:00:13 2010 -0500
+summary:     changed callbacks from do_* to recv_* in slave.
+
+changeset:   127:98ce9c6d9f31
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 12:57:50 2010 -0500
+summary:     splitted callbacks in master. Messages to lowercase.
+
+changeset:   126:48dc2632a82f
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 11:10:36 2010 -0500
+summary:     making sure process is dead after 5.0 seconds.
+
+changeset:   125:653d3ac04943
+branch:      py
+parent:      124:55aff2084f26
+parent:      123:652cb86339b1
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 10:07:13 2010 -0500
+summary:     Merged recent changes together.
+
+changeset:   124:55aff2084f26
+branch:      py
+parent:      116:0d8e482610ae
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jan 11 10:06:42 2010 -0500
+summary:     Added small comments. Things todo in Command
+
+changeset:   123:652cb86339b1
+branch:      py
+parent:      121:4839dcddbd88
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sun Jan 10 10:18:49 2010 -0500
+summary:     lunch-master add lunch-slave in its $PATH when in devel mode.
+
+changeset:   122:4a38c8bd1d45
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 03:16:54 2010 -0500
+summary:     changed lunch executable to lunch-0.1 in lunch-0.1
+
+changeset:   121:4839dcddbd88
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 02:53:06 2010 -0500
+summary:     added one test. Disabled logging which would occur in tests.
+
+changeset:   120:c4e568898ad0
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 02:37:43 2010 -0500
+summary:     adding a nice groups example
+
+changeset:   119:956350ab6230
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 02:29:34 2010 -0500
+summary:     fixed an error in master.
+
+changeset:   118:a3355cba5b34
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 02:26:32 2010 -0500
+summary:     moved examples to root
+
+changeset:   117:f5527bb0318e
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 02:26:16 2010 -0500
+summary:     changed identifier for title in example
+
+changeset:   116:0d8e482610ae
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 17:42:46 2010 -0500
+summary:     removed a hack that doesnt work, to change the slave process name to lunch-slave in ps.
+
+changeset:   115:aa0e2aaa2cbb
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 17:41:18 2010 -0500
+summary:     Using bash or sh -c exec to run the child process.
+
+changeset:   114:5c455bd81fbc
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 17:08:39 2010 -0500
+summary:     Got rid of constants in slave. No more deps !
+
+changeset:   113:df11603cbbd9
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 16:36:07 2010 -0500
+summary:     Changed log dir to lunch_log
+
+changeset:   112:6c1c7c6287a8
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 16:29:57 2010 -0500
+summary:     Getting correctly the signal when child process is dead.
+
+changeset:   111:9cf5e9baad37
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 16:04:23 2010 -0500
+summary:     In slave, passing a line of text to do_* methods, instead of a list of words.
+
+changeset:   110:1822cf82fcd6
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 15:42:39 2010 -0500
+summary:     Progress in how the slave behaves. Removed STATE_ERROR in it.
+
+changeset:   109:3dc89db74ca6
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 15:21:42 2010 -0500
+summary:     Trying to send SIGINT and SIGKILL to processes to stop them.
+
+changeset:   108:18b0cb5f9be3
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 13:42:09 2010 -0500
+summary:     added a lot of send_* methods in slave. Renamed classes in slave.
+
+changeset:   107:6af31007d57d
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 11:37:04 2010 -0500
+summary:     Dropped the need for sig.py in lunch-slave
+
+changeset:   106:c21427768849
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 10:47:34 2010 -0500
+summary:     Dropped JSON dependency
+
+changeset:   105:10c0eb4f9636
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jan 08 10:34:14 2010 -0500
+summary:     added license in gui file
+
+changeset:   104:f32ccd6fd6f5
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 18:11:18 2010 -0500
+summary:     added state diagram to doc
+
+changeset:   103:715513211fa4
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 18:08:41 2010 -0500
+summary:     added gui... Not connected to main app yet, though.
+
+changeset:   102:bd886332f44b
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 14:03:35 2010 -0500
+summary:     Few fixes in the master to make it use a config file.
+
+changeset:   101:90385b6305b7
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 13:42:43 2010 -0500
+summary:     Updating script to find file given as arg.
+
+changeset:   100:dbf02a2f34bf
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:47:10 2010 -0500
+summary:     Splitted executable and a module. That's to avoid starting logs and stuff in the beginning of the file.
+
+changeset:   99:49866990a327
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:39:24 2010 -0500
+summary:     Removed mplayer from the example.
+
+changeset:   98:fa97cfe83bb3
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:38:51 2010 -0500
+summary:     Fixed the make file. Added an example.
+
+changeset:   97:da9240d2fbed
+branch:      py
+parent:      96:b026a91530d8
+parent:      86:31c196fc5eef
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:35:10 2010 -0500
+summary:     Merging with dead branch, which contains fixes on debian/changelog
+
+changeset:   96:b026a91530d8
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:33:39 2010 -0500
+summary:     Updated makefile and setup.py to match new version.
+
+changeset:   95:3c3ee7bf9ee3
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:31:10 2010 -0500
+summary:     Moved lunch-master to lunch
+
+changeset:   94:28108b6cd929
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:30:40 2010 -0500
+summary:     Removed old files from lunch 0.1
+
+changeset:   93:f7852756e1df
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:28:44 2010 -0500
+summary:     Put back lunch-0.1 in script. (from r72)
+
+changeset:   92:77a40237a878
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 11:26:18 2010 -0500
+summary:     Trying to make sure all slave are dead before to stop reactor.
+
+changeset:   91:b8926dfaf18a
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 10:26:26 2010 -0500
+summary:     The master seems to work every time we try it. When the command dies quickly, it is not relaunched, though.
+
+changeset:   90:d2440d6ce91a
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 08:51:09 2010 -0500
+summary:     More changes in new slave and master. Merging with changes in debian/changelog.
+
+changeset:   89:7324582e1fd0
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 21:01:41 2010 -0500
+summary:     added lunch-master which can launch slaves !
+
+changeset:   88:bd8a0aa22927
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 18:41:04 2010 -0500
+summary:     Now making sure the process is stopped before quitting
+
+changeset:   87:3a1a6588d528
+branch:      py
+parent:      85:b18db3c12cb0
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 16:09:07 2010 -0500
+summary:     Added command-line options to launch-slave.
+
+changeset:   86:31c196fc5eef
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jan 07 06:00:02 2010 -0500
+summary:     Fixed badly formatted trailing lines in debian/changelog.
+
+changeset:   85:b18db3c12cb0
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 15:45:24 2010 -0500
+summary:     Adding lunch-slave. A Twisted-driven interactive single process launcher.
+
+changeset:   84:903d08af2f1a
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 12:01:58 2010 -0500
+summary:     Added tag 0.1.5 for changeset 4a8a4a9ed24c
+
+changeset:   83:4a8a4a9ed24c
+branch:      py
+tag:         0.1.5
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 11:18:10 2010 -0500
+summary:     Changed executable to check if the directory it is in is "scripts" instead of looking for Mercurial files.
+
+changeset:   82:bc4dba201761
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 11:12:30 2010 -0500
+summary:     Added unit tests
+
+changeset:   81:6af627065d59
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 10:32:58 2010 -0500
+summary:     Added tag 0.1.4 for changeset 30c2df205258
+
+changeset:   80:30c2df205258
+branch:      py
+tag:         0.1.4
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 10:29:45 2010 -0500
+summary:     Updated project URL. Preparing tag 0.1.4
+
+changeset:   79:37e5302ca192
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 10:21:37 2010 -0500
+summary:     Had forgotten to had the package name to setup.py
+
+changeset:   78:775ab82f251b
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jan 06 10:09:43 2010 -0500
+summary:     Removed useless english translation.
+
+changeset:   77:98b25a40a407
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jan 05 16:25:53 2010 -0500
+summary:     Updated README.txt to match no-so-recent changes.
+
+changeset:   76:dfbf9f4244b9
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 16:07:18 2010 -0500
+summary:     Added tag 0.1.3 for changeset 1d9498d5f77b
+
+changeset:   75:1d9498d5f77b
+branch:      py
+tag:         0.1.3
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 16:07:08 2010 -0500
+summary:     updated classes again. fixed typo.
+
+changeset:   74:b97fd19441a7
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 16:02:12 2010 -0500
+summary:     updated class diagram
+
+changeset:   73:b2193749f792
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 15:58:11 2010 -0500
+summary:     Splitting lunch into 4 main files.
+
+changeset:   72:14234029c4b3
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 15:02:26 2010 -0500
+summary:     Fix in the version number.
+
+changeset:   71:5454791b9486
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 14:40:20 2010 -0500
+summary:     Moved lunch to bin/lunch. Updated version to 0.1.3. Generating PNG on the fly with imagemagick
+
+changeset:   70:384fc6e6510d
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 14:23:41 2010 -0500
+summary:     rm ssh-keyinstall
+
+changeset:   69:faa9172e3758
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 14:22:58 2010 -0500
+summary:     added *ps to ignores
+
+changeset:   68:9e2639d1c285
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 14:22:33 2010 -0500
+summary:     added classes.dia
+
+changeset:   67:b751f981c4ac
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 10:51:40 2010 -0500
+summary:     added .hgignore
+
+changeset:   66:49f892257010
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net> on bzzz
+date:        Tue Jan 05 10:48:05 2010 -0500
+summary:     Fixed typo in setup.py. Added ssh-keyinstall bash script from http://svn.sat.qc.ca/trac/postures/browser/trunk/scripts/ssh-keyinstall at r31.
+
+changeset:   65:2627a2103adb
+branch:      py
+user:        alexandre
+date:        Fri Dec 18 14:15:31 2009 -0500
+summary:     [svn] Added log-file option to slave. The add_command function has a log_file keyword argument.
+
+changeset:   64:5754679c7c7e
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 16:09:29 2009 -0500
+summary:     [svn] added deb target in makefile
+
+changeset:   63:317fe8ad3a16
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 16:04:34 2009 -0500
+summary:     [svn] added setup for deb packaging
+
+changeset:   62:1a6753ea5c74
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:51:38 2009 -0500
+summary:     [svn] fixing stuff so that we can create a deb file
+
+changeset:   61:b6c197a7bf58
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:46:24 2009 -0500
+summary:     [svn] added something to prevent error when upgrading
+
+changeset:   60:14f328ebbc0f
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:44:56 2009 -0500
+summary:     [svn] fixed error in .desktop
+
+changeset:   59:7ff98a7f6412
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:43:13 2009 -0500
+summary:     [svn] renamed icon adn desktop file to lowercase. Added debian files.
+
+changeset:   58:c08649026b00
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:27:52 2009 -0500
+summary:     [svn] changed default lunch config file to ~/.lunchrc
+
+changeset:   57:8f3b785d6c94
+branch:      py
+user:        alexandre
+date:        Thu Nov 26 15:17:24 2009 -0500
+summary:     [svn] Re-added the possibility to provide config file as arg without -f option.
+
+changeset:   56:54bd33545ae3
+branch:      py
+user:        mikewoz
+date:        Thu Nov 26 14:10:16 2009 -0500
+summary:     [svn] moved lunch config scripts out of py folder, and cleaned up a bit
+
+changeset:   55:d07aa32e1112
+branch:      py
+user:        mikewoz
+date:        Thu Nov 26 14:03:13 2009 -0500
+summary:     [svn] fixed no_resurrect bug (to no_respawn)
+
+changeset:   54:5fdfd68218b6
+branch:      py
+user:        simonp
+date:        Thu Nov 26 12:56:55 2009 -0500
+summary:     [svn] Added a respawn option for add_command
+
+changeset:   53:9dc35d400651
+branch:      py
+user:        simonp
+date:        Wed Nov 25 18:11:44 2009 -0500
+summary:     [svn] Now lunch use xterm
+
+changeset:   52:123e1fd35d1b
+branch:      py
+user:        simonp
+date:        Tue Nov 24 18:33:05 2009 -0500
+summary:     [svn] Simplified config-file option handling (and made it to work)
+
+changeset:   51:06343de33533
+branch:      py
+user:        mikewoz
+date:        Tue Nov 17 20:24:58 2009 -0500
+summary:     [svn] changes to configs
+
+changeset:   50:096a0bbf7a37
+branch:      py
+user:        mikewoz
+date:        Fri Nov 06 14:21:06 2009 -0500
+summary:     [svn]
+
+changeset:   49:971515181d9b
+branch:      py
+user:        alexandre
+date:        Fri Oct 30 15:54:21 2009 -0400
+summary:     [svn] had forgotten an import
+
+changeset:   48:7ac87a1aecd1
+branch:      py
+user:        alexandre
+date:        Fri Oct 30 15:53:49 2009 -0400
+summary:     [svn] bigger default sleep between each launching.
+
+changeset:   47:0b6926e86046
+branch:      py
+user:        alexandre
+date:        Mon Oct 26 17:05:09 2009 -0400
+summary:     [svn] clean up man page in make file
+
+changeset:   46:e4f8f279cec3
+branch:      py
+user:        alexandre
+date:        Mon Oct 26 17:03:04 2009 -0400
+summary:     [svn] Removing the slave's logfile.  Added makefile for lunch.
+
+changeset:   45:92a30e10e4ca
+branch:      py
+user:        alexandre
+date:        Mon Oct 26 16:44:52 2009 -0400
+summary:     [svn] fixed fatal error in lunch. Was trying to close never opened file.
+
+changeset:   44:bd076faaa5d5
+branch:      py
+user:        alexandre
+date:        Mon Oct 26 16:32:35 2009 -0400
+summary:     [svn] added log files in lunch slaves
+
+changeset:   43:f039bd1ba09f
+branch:      py
+user:        mikewoz
+date:        Fri Oct 23 21:01:46 2009 -0400
+summary:     [svn]
+
+changeset:   42:926fbc971c87
+branch:      py
+user:        mikewoz
+date:        Thu Oct 22 19:45:27 2009 -0400
+summary:     [svn] added config-audiotest
+
+changeset:   41:ec6e0a8715c6
+branch:      py
+user:        mikewoz
+date:        Wed Oct 14 16:24:56 2009 -0400
+summary:     [svn] removed LD_LIBRARY_PATH
+
+changeset:   40:35944bbfca25
+branch:      py
+user:        alexandre
+date:        Wed Oct 07 10:21:37 2009 -0400
+summary:     [svn] lunch is now much more verbose. Possible to provide config file as an arg.
+
+changeset:   39:55e6533212f3
+branch:      py
+user:        mikewoz
+date:        Tue Oct 06 21:32:56 2009 -0400
+summary:     [svn] updates to lunch config files
+
+changeset:   38:2127ec23c9ee
+branch:      py
+user:        mikewoz
+date:        Tue Oct 06 15:54:19 2009 -0400
+summary:     [svn] hint as to how lunch should stop milhouses
+
+changeset:   37:bf633863c1b7
+branch:      py
+user:        mikewoz
+date:        Thu Oct 01 18:53:30 2009 -0400
+summary:     [svn] added some new lunch configs for testing spin
+
+changeset:   36:2bda51920536
+branch:      py
+user:        mikewoz
+date:        Thu Oct 01 17:41:55 2009 -0400
+summary:     [svn] removed spin program aliases
+
+changeset:   35:7138f0c60424
+branch:      py
+user:        alexandre
+date:        Tue Sep 01 16:39:55 2009 -0400
+summary:     [svn] updated lunch make install
+
+changeset:   34:7e2a4bc8e404
+branch:      py
+user:        alexandre
+date:        Tue Sep 01 10:20:48 2009 -0400
+summary:     [svn] updated lunch so that it doesnt crash due to multiprocessing version issues (?)
+
+changeset:   33:8b10bf14e022
+branch:      py
+user:        alexandre
+date:        Mon Aug 10 02:44:12 2009 -0400
+summary:     [svn] adding comment to config-postures
+
+changeset:   32:94f260eed125
+branch:      py
+user:        mikewoz
+date:        Fri Aug 07 17:32:38 2009 -0400
+summary:     [svn] mike's config for lunch
+
+changeset:   31:5f04392a3db9
+branch:      py
+user:        mikewoz
+date:        Fri Aug 07 14:48:13 2009 -0400
+summary:     [svn] changed name of vessServer to just vess
+
+changeset:   30:0805e6b3d180
+branch:      py
+user:        alexandre
+date:        Mon Jul 27 13:28:56 2009 -0400
+summary:     [svn] corrected svg icon path
+
+changeset:   29:c3f34905874e
+branch:      py
+user:        alexandre
+date:        Fri Jul 24 21:48:55 2009 -0400
+summary:     [svn] cleaner make file.
+
+changeset:   28:373aa3e2d9fa
+branch:      py
+user:        alexandre
+date:        Fri Jul 24 21:10:25 2009 -0400
+summary:     [svn] Fixed a sprintf parsing. Improved doc. Type make doc.
+
+changeset:   27:3485d126ac29
+branch:      py
+user:        mikewoz
+date:        Fri Jul 24 16:41:15 2009 -0400
+summary:     [svn] added an icon for Lunch
+
+changeset:   26:dc1cf939cadd
+branch:      py
+user:        mikewoz
+date:        Fri Jul 24 16:28:51 2009 -0400
+summary:     [svn] updated doc
+
+changeset:   25:9e2e9695ff82
+branch:      py
+user:        mikewoz
+date:        Fri Jul 24 16:27:55 2009 -0400
+summary:     [svn] adding Lunch.desktop
+
+changeset:   24:7fd30b4c777c
+branch:      py
+user:        alexandre
+date:        Fri Jul 24 14:42:29 2009 -0400
+summary:     [svn] updated lunch with trivial stuff.
+
+changeset:   23:7f4f048ba671
+branch:      py
+user:        alexandre
+date:        Thu Jul 23 17:21:02 2009 -0400
+summary:     [svn] Sorting as been sorted out.
+
+changeset:   22:133727df91b1
+branch:      py
+user:        mikewoz
+date:        Thu Jul 23 16:28:22 2009 -0400
+summary:     [svn] upodated lunch
+
+changeset:   21:b07972f065d7
+branch:      py
+user:        mikewoz
+date:        Thu Jul 23 15:36:20 2009 -0400
+summary:     [svn] postures lunch config draft. todos in lunch
+
+changeset:   20:9004b7bbd790
+branch:      py
+user:        alexandre
+date:        Thu Jul 23 14:08:30 2009 -0400
+summary:     [svn] doc update
+
+changeset:   19:4d4721c167ff
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 15:45:16 2009 -0400
+summary:     [svn] updated sample conf
+
+changeset:   18:cb18f48c0dc8
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 15:39:31 2009 -0400
+summary:     [svn] moved old launcher stuff to prototypes
+
+changeset:   17:de4074e1400a
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 14:28:54 2009 -0400
+summary:     [svn] finally fixed more bugs. more docs. Still need to use argv for the command line instead of quotes, i guess.
+
+changeset:   16:4b09804c32ba
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 12:35:40 2009 -0400
+summary:     [svn] improved doc
+
+changeset:   15:bb9784f8ef3f
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 12:24:22 2009 -0400
+summary:     [svn] lunch works like a charm. No more traceback on ctrl-C. Updated config-sample
+
+changeset:   14:2b4e17397209
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 11:04:36 2009 -0400
+summary:     [svn] merged new_lunch to lunch
+
+changeset:   13:209d0aa716eb
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 11:03:07 2009 -0400
+summary:     [svn] fixed quote but in the command arg we passed to new_lunch
+
+changeset:   12:14c01fee8418
+branch:      py
+user:        alexandre
+date:        Wed Jul 22 08:37:54 2009 -0400
+summary:     [svn] new_Lunch now works. needs more testing. will be merged to lunch
+
+changeset:   11:9beb52494fab
+branch:      py
+user:        alexandre
+date:        Tue Jul 21 23:15:21 2009 -0400
+summary:     [svn] adding new_lunch as a test.
+
+changeset:   10:91627edd96cd
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 21:10:14 2009 -0400
+summary:     [svn] few comments. some light modifs
+
+changeset:   9:f17bcee33033
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 20:48:50 2009 -0400
+summary:     [svn] lunch has few fixes that might help some day to prevent from traceback to be printed when ctrl-c is hit
+
+changeset:   8:e1da073e5bfc
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 20:38:40 2009 -0400
+summary:     [svn] fixed forever-resurrect bug that i added in rev **45
+
+changeset:   7:f86a8a2e010b
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 20:26:44 2009 -0400
+summary:     [svn] addinf config sample
+
+changeset:   6:faacb86be35b
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 20:23:04 2009 -0400
+summary:     [svn] lunch works but we still have crappy output when ctrl-c is pressed
+
+changeset:   5:4df960bdcf19
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 18:15:13 2009 -0400
+summary:     [svn] moved new script
+
+changeset:   4:07c54aa015e5
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 18:14:59 2009 -0400
+summary:     [svn] moved old script
+
+changeset:   3:0a949aff9696
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 17:39:57 2009 -0400
+summary:     [svn] small mods
+
+changeset:   2:17f87f5a1b9a
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 17:33:02 2009 -0400
+summary:     [svn] some changes on the launcher thingy
+
+changeset:   1:3c1c27dd3316
+branch:      py
+user:        alexandre
+date:        Mon Jul 20 16:06:27 2009 -0400
+summary:     [svn] not working but in progress
+
+changeset:   0:c42d76a459f5
+branch:      py
+user:        alexandre
+date:        Fri Jul 17 17:35:04 2009 -0400
+summary:     [svn] adding a non-working work version of py/*
 
