@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 setup.py for Lunch
-Also sets up the man pages and the icon.
+Also sets up the man pages.
 
 To update the version number : 
 vim -o lunch/runner.py scripts/lunch-slave setup.py lunch/gui.py
@@ -30,7 +30,7 @@ if sys.argv[1] == "build":
         'help2man --no-info --name="Lunch Slave" ./scripts/lunch-slave --output=lunch-slave.1'
         ]
     for c in commands:
-        print(c)
+        print("$ %s" % (c))
         retcode = subprocess.call(c, shell=True)
-        print("Command returned %s" % (retcode))
+        print("The help2man command returned %s" % (retcode))
 
