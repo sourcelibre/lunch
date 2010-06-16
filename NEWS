@@ -1,0 +1,49 @@
+Version 0.3.0
+
+    * add/remove commands live
+    * get the return value of the command once done
+    * Update GUI to allow it to detect if there are new processes added
+        * Do not copy commands in the GUI App class
+        * Use a command_added and command_removed signal
+        * Remove slot for state_change signal when a slave has been removed. 
+    * add the DONE, FAILED and GAVE UP states
+    * improve reports on the state of processes
+    * flush more often stdout/stderr to files 
+
+
+Version 0.2.22 - 2010-06-01
+    
+    * Lunch is now part of Debian
+
+
+Version 0.2.17 - 2010-01-25
+
+    * Use Trac with Mercurial
+    * Split lunch in 4 files.
+    * Port to Twisted. Drop multiprocessing. See http://twistedmatrix.com/trac/browser/tags/releases/twisted-9.0.0/twisted/runner/procmon.py
+    * Get rid of the former lunch 0.1. Split the Master. Keep the slave in one file, for easier installation.
+    * Use key=value pairs for env, drop JSON.
+    * Drop sig.Signal in slave.
+    * Split messages, use the first word as key, and the leftover as a line to pass to the right on_* method.
+    * Use bash -c exec to run commands.
+    * Remove a need for the lunch/constants file.
+    * Re-implement starting order, with weight filtering from lowest to highest.
+    * master: Make that master does not kill Slave when its child is dead. (configurable)
+    * master: Simplify master states to 4: STOPPED, STARTING, RUNNING, STOPPING.
+    * master: Use on_* callbacks style for the Slave Process Manager as well.
+    * master: Use send_* methods style for the senders on both side.
+    * master: The order of commands should be automatically ordered with calling order.
+   * master: Dependencies: when one slave dies, kill all slaves who depend on it, restart them all again - if needed.
+    * master: Wait for the greetings message, not the connection to the process stdin.
+    * slave: Make sure each process is dead. Poll with a timer and use signals if needed.
+    * slave: use a kill_delay option, with a default of 1.0 second.
+    * master: Separate log for each slave on the master's side.
+    * GTK+ GUI for the Master Lunch. 
+
+
+Version 0.1.10 - 2010-01-13
+    
+    * Using the multiprocessing Python module
+    * Set up the basics of the lunch file
+    * PID file for the master
+
