@@ -9,12 +9,12 @@ vim -o lunch/runner.py scripts/lunch-slave setup.py lunch/gui.py
 from setuptools import setup
 import subprocess
 import sys
+import lunch
 
-__version__ = "0.3.0"
 
 setup(
     name="lunch",
-    version=__version__,
+    version=lunch.__version__,
     description="The Lunch Distributed Process Launcher",
     author="SAT",
     author_email="alexandre@quessy.net",
