@@ -481,23 +481,34 @@ class LunchApp(object):
 
     def destroy_app(self, widget, data=None):
         """
-        Destroy method causes appliaction to exit
+        Destroy method causes application to exit
         when main window closed
+        
+        If you return FALSE in the "delete_event" signal handler,
+        GTK will emit the "destroy" signal. Returning TRUE means
+        you don't want the window to be destroyed.
+        This is useful for popping up 'are you sure you want to quit?'
+        type dialogs. 
+        """
+        return self.confirm_and_quit()
+    
+    def confirm_and_quit(self):
+        """
+        If needed, ask the user if he really wants to quit, and then quit if
+        the answer is yes.
+        
+        @rettype: bool
         """
         def _cb(result):
             if result:
-                print("Destroying the window.")
+                print("Destroying the Lunch window.")
                 if reactor.running:
                     print("reactor.stop()")
                     reactor.stop()
             else:
                 print("Not quitting.")
-        # If you return FALSE in the "delete_event" signal handler,
-        # GTK will emit the "destroy" signal. Returning TRUE means
-        # you don't want the window to be destroyed.
-        # This is useful for popping up 'are you sure you want to quit?'
-        # type dialogs. 
         if self.confirm_close:
+            #TODO: Do not ask if there are no more processes running.
             d = dialogs.YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
             d.addCallback(_cb)
             return True
