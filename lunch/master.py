@@ -53,8 +53,7 @@ LOG_NAME = 'lunch-master'
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
     global log
-    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True)
-    
+    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=False)
 
 class FileNotFoundError(Exception):
     """
@@ -394,7 +393,7 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_lev
     f = open(full_path, 'w')
     f.close()
     os.chmod(full_path, 0600)
-    _log_file = logfile.DailyLogFile(file_name, directory)
+    _log_file = logfile.DailyLogFile(file_name, directory) #FIXME: do not use that DailyLogFile ! 
     #log.startLogging(_log_file)
     log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=True, log_file_name=_log_file)
     return _log_file.path
@@ -449,7 +448,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
         """
         # TODO: remove priority and sleep kwargs in a future version
-        log.info("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
+        log.debug("Adding %s (%s) %s@%s" % (title, command, user, host))
         # ------------- warnings ------------------
         if group is not None:
             raise RuntimeError("Groups are deprecated. Use dependencies instead.")
@@ -483,6 +482,7 @@ def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR, log_level='info'):
     else:
         start_stdout_logging(log_level=log_level)
         log_file = None
+    log.info("Started logging.")
     return log_file
 
 def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False, log_level='info'):

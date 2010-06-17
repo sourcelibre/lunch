@@ -68,11 +68,15 @@ def start(level=None, name="twisted", to_stdout=None, to_file=None, log_file_nam
         SYSTEMWIDE_LEVEL = level
     logger = logging.getLogger(name)
     formatter = logging.Formatter('%(asctime)s %(name)-13s %(levelname)-8s %(message)s')
+    if SYSTEMWIDE_LEVEL is None:
+        raise RuntimeError("You must specify a logging level. It's a string.")
     set_level(SYSTEMWIDE_LEVEL, name)
     if to_stdout is True or to_stdout is False:
         SYSTEMWIDE_TO_STDOUT = to_stdout
     if to_file is True or to_file is False:
         SYSTEMWIDE_TO_FILE = to_file
+        #if log_file_name is None:
+        #    raise RuntimeError("You want to log to a file but the log file name is not set.")
     
     if SYSTEMWIDE_TO_STDOUT:
         so_handler = logging.StreamHandler(sys.stdout)

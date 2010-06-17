@@ -212,6 +212,7 @@ class Command(object):
         self.child_state_changed_signal = sig.Signal() # param: self, new_state
         if command is None:
             raise RuntimeError("You must provide a command to be run.")
+        log.info("Creating command %s ($ %s) on %s@%s" % (self.identifier, self.command, self.user, self.host))
             #self.send_stop()
         self._process_protocol = None
         self._process_transport = None
