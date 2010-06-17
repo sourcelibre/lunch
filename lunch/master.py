@@ -292,9 +292,12 @@ class Master(object):
         """
         if self.pid_file is not None:
             print("Will now erase the %s PID file" % (self.pid_file))
-            os.remove(self.pid_file)
-            print("Erased %s" % (self.pid_file))
-         
+            try:
+                os.remove(self.pid_file)
+            except OSError, e:
+                print("Error removing lunch master PID file: " + str(e))
+            else:
+                print("Erased %s" % (self.pid_file))
         now = time.time()
         _shutdown_data = {
                 "shutdown_started" : now,
@@ -360,7 +363,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
             # blocking... it's easier to debug for now
             # TODO: get rid of subprocess here.
             output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
-            if "lunch" in output:
+            if "python" in output:# used to be "lunch", but changed it to "python", since lunch.master is now a livrary as well.
                 raise RuntimeError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
             else:
                 #print "found PID, but it's not lunch!"
