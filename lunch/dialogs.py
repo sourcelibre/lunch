@@ -63,16 +63,16 @@ class ErrorDialog(object):
         return d
 
     def on_close(self, dialog, *params):
-        print("on_close %s %s" % (dialog, params))
+        pass #print("on_close %s %s" % (dialog, params))
 
     def on_response(self, dialog, response_id, *params):
         #print("on_response %s %s %s" % (dialog, response_id, params))
         if response_id == gtk.RESPONSE_DELETE_EVENT:
-            print("Deleted")
+            pass #print("Deleted")
         elif response_id == gtk.RESPONSE_CANCEL:
-            print("Cancelled")
+            pass #print("Cancelled")
         elif response_id == gtk.RESPONSE_OK:
-            print("Accepted")
+            pass # print("Accepted")
         self.terminate(dialog)
 
     def terminate(self, dialog):
@@ -110,18 +110,18 @@ class YesNoDialog(object):
         return d
 
     def on_close(self, dialog, *params):
-        print("on_close %s %s" % (dialog, params))
+        pass # print("on_close %s %s" % (dialog, params))
 
     def on_response(self, dialog, response_id, *params):
-        print("on_response %s %s %s" % (dialog, response_id, params))
+        pass # print("on_response %s %s %s" % (dialog, response_id, params))
         if response_id == gtk.RESPONSE_DELETE_EVENT:
-            print("Deleted")
+            pass # print("Deleted")
             self.terminate(dialog, False)
         elif response_id == gtk.RESPONSE_NO:
-            print("Cancelled")
+            pass # print("Cancelled")
             self.terminate(dialog, False)
         elif response_id == gtk.RESPONSE_YES:
-            print("Accepted")
+            pass # print("Accepted")
             self.terminate(dialog, True)
 
     def terminate(self, dialog, answer):
