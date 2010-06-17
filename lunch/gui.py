@@ -424,6 +424,9 @@ class LunchApp(object):
 
     def on_about(self, widget, data):
         #print "on about"
+        self.show_about_dialog()
+    
+    def show_about_dialog(self):
         About().show_about_dialog()
 
     def on_man_page(self, widget, data):
