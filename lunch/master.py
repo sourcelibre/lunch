@@ -37,19 +37,24 @@ from twisted.internet import reactor
 from twisted.internet import task
 from twisted.internet import utils
 from twisted.python import failure
-from twisted.python import log
+#from twisted.python import log
 from twisted.python import logfile
 from twisted.python import procutils
 
 from lunch import sig
 from lunch import graph
-from lunch import commands
 from lunch.states import *
+from lunch import logger
 
 DEFAULT_LOG_DIR = "/var/tmp/lunch"
+log = None
+LOG_NAME = 'lunch-master'
 
-def start_stdout_logging():
-    log.startLogging(sys.stdout)
+def start_stdout_logging(log_level='info'):
+    #log.startLogging(sys.stdout)
+    global log
+    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True)
+    
 
 class FileNotFoundError(Exception):
     """
@@ -113,7 +118,7 @@ class Master(object):
         """    
         # check if addr is local, set it to none if so.
         if command.host in self.local_addresses:
-            log.msg("Filtering out host %s since it is in list of local addresses." % (command.host))
+            log.info("Filtering out host %s since it is in list of local addresses." % (command.host))
             command.host = None    
         # set default names if they are none:
         if command.identifier is None:
@@ -153,7 +158,7 @@ class Master(object):
         # Trying to make all child live. (False if in the process of quitting)
         #orphans = self.tree.get_supported_by(self.tree.ROOT)
         #self._manage_siblings(orphans, should_run=self.wants_to_live)
-        #log.msg("----- Managing slaves LOOP ----")
+        #log.info("----- Managing slaves LOOP ----")
 
         self._time_now = time.time()
         iterator = graph.iter_from_root_to_leaves(self.tree)
@@ -179,7 +184,7 @@ class Master(object):
                     if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
                         kill_it = True
                 if kill_it:
-                    log.msg("Will kill %s" % (command.identifier))
+                    log.info("Will kill %s" % (command.identifier))
                     command.stop()
         # If STOPPED, check if we should start it:
         elif command.child_state == STATE_STOPPED:
@@ -213,14 +218,14 @@ class Master(object):
                     # Finally, start it if we are ready to.
                     if start_it:
                         self.launch_next_time = self._time_now + command.sleep_after
-                        log.msg("Will start %s." % (command.identifier))
+                        log.info("Will start %s." % (command.identifier))
                         command.start()
             elif command.to_be_deleted:
                 ref = self.commands[node]
                 del self.commands[node]
                 print self.commands
                 self.tree.remove_node(node) # XXX ?
-                log.msg("Removed command %s from the graph" % (node))
+                log.info("Removed command %s from the graph" % (node))
                 self.command_removed_signal(ref)
 
     def _get_all(self):
@@ -247,7 +252,7 @@ class Master(object):
         self.wants_to_live = False
         for c in _commands:
             c.stop()
-        log.msg("Done stopping all commands.")
+        log.info("Done stopping all commands.")
 
     def remove_command(self, identifier):
         """
@@ -308,17 +313,17 @@ class Master(object):
             again = False
             for c in self._get_all():
                 if c.child_state == STATE_RUNNING:
-                    log.msg("Slave %s is still running. Stopping it." % (c.identifier))
+                    log.info("Slave %s is still running. Stopping it." % (c.identifier))
                     again = True
                     c.enabled = False
                     c.quit_slave()
             if time.time() >= (data["shutdown_time"]):
-                log.msg("Max shutdown time expired.", logging.ERROR)
+                log.info("Max shutdown time expired.", logging.ERROR)
                 again = False
             if again:
                 reactor.callLater(0.1, _later, self, data)
             else:
-                log.msg("Stopping the Lunch Master.")
+                log.info("Stopping the Lunch Master.")
                 deferred.callback(True) # stops reactor
         
         _later(self, _shutdown_data)
@@ -346,7 +351,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
         raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
     if os.path.exists(pid_file):
-        log.msg("PID file for master %s found!" % (pid_file))
+        log.warning("PID file for master %s found!" % (pid_file))
         f = open(pid_file, 'r')
         pid = f.read()
         f.close()
@@ -373,14 +378,15 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     f.write(str(os.getpid()))
     f.close()
     os.chmod(pid_file, 0600)
-    log.msg("Wrote PID %d to file %s." % (os.getpid(), pid_file))
+    log.info("Wrote PID %d to file %s." % (os.getpid(), pid_file))
     return pid_file
 
-def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
+def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_level='info'):
     """
     Starts logging the Master infos to a file.
     @rettype: str
     """
+    global log
     file_name = "master-%s.log" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -389,7 +395,8 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch"):
     f.close()
     os.chmod(full_path, 0600)
     _log_file = logfile.DailyLogFile(file_name, directory)
-    log.startLogging(_log_file)
+    #log.startLogging(_log_file)
+    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=True, log_file_name=_log_file)
     return _log_file.path
 
 def chmod_file_not_world_writable(config_file):
@@ -418,6 +425,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     
     The user can also access the lunch_master variable, which is the Lunch Master.
     """
+    from lunch import commands
     def add_local_address(address):
         """
         Adds an IP to which not use SSH with.
@@ -430,7 +438,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
             addresses = address
         for address in addresses:
             if address not in lunch_master.local_addresses:
-                log.msg("Adding %s in list of local addresses." % (address))
+                log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
     def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None, depends=None):
@@ -441,7 +449,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
         """
         # TODO: remove priority and sleep kwargs in a future version
-        log.msg("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
+        log.info("Adding %s (%s) %s@%s" % (title, command, user, host), logging.INFO)
         # ------------- warnings ------------------
         if group is not None:
             raise RuntimeError("Groups are deprecated. Use dependencies instead.")
@@ -466,18 +474,18 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
 
-def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR):
+def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR, log_level='info'):
     """
     Starts logging - either to a file or not.
     """
     if log_to_file:
-        log_file = start_file_logging(identifier=identifier, directory=log_dir)
+        log_file = start_file_logging(identifier=identifier, directory=log_dir, log_level=log_level)
     else:
-        start_stdout_logging()
+        start_stdout_logging(log_level=log_level)
         log_file = None
     return log_file
 
-def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False):
+def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False, log_level='info'):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -493,10 +501,10 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     """
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
-    log_file = start_logging(log_to_file=log_to_file, log_dir=log_dir)
+    log_file = start_logging(log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
-    log.msg("-------------------- Starting master -------------------")
-    log.msg("Using lunch master module %s" % (__file__))
+    log.debug("-------------------- Starting master -------------------")
+    log.info("Using lunch master module %s" % (__file__))
     lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
     execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
     # TODO: return a Deferred

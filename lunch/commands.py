@@ -35,13 +35,16 @@ from twisted.internet import reactor
 from twisted.internet import task
 from twisted.internet import utils
 from twisted.python import failure
-from twisted.python import log
+#from twisted.python import log
 from twisted.python import logfile
 from twisted.python import procutils
 
 from lunch import sig
 from lunch import graph
 from lunch.states import *
+from lunch import logger
+
+log = logger.start(name='commands')
 
 def run_and_wait(executable, *arguments):
     """
@@ -100,7 +103,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         """
         for line in data.splitlines().strip():
             if line != "":
-                log.msg("stderr: " + line + "\n")
+                log.debug("stderr: " + line + "\n")
 
     def processEnded(self, reason):
         """
@@ -114,7 +117,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         The status parameter has the same meaning as it does for processExited.
         """
         exit_code = reason.value.exitCode
-        log.msg("Slave %s process ended with %s." % (self.command.identifier, exit_code))
+        log.info("Slave %s process ended with %s." % (self.command.identifier, exit_code))
         self.command._on_process_ended(reason.value.exitCode)
     
     def inConnectionLost(self):
@@ -136,7 +139,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         object (with an .exitCode attribute) if something went wrong.
         """
         exit_code = reason.value.exitCode
-        log.msg("process has exited : %s." % (str(exit_code)))
+        log.info("process has exited : %s." % (str(exit_code)))
     
 class Command(object):
     """
@@ -217,6 +220,9 @@ class Command(object):
         self.slave_logger = None
     
     def _start_logger(self):
+        """
+        Creates a log file for the slave's stdout.
+        """
         if self.slave_logger is None:
             # the slave log file
             slave_log_file = "slave-%s.log" % (self.identifier)
@@ -265,7 +271,7 @@ class Command(object):
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
                     raise RuntimeError("Could not find path of executable %s." % (_command[0]))
-                log.msg("Will run command: %s" % (" ".join(_command)))
+                log.info("Will run command: %s" % (" ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:
                 proc_path = _command[0]
@@ -405,7 +411,7 @@ class Command(object):
         """
         Returns a high-level comprehensive state for the user to see in the GUI.
         """
-        print "gave up:", self.gave_up 
+        log.debug("gave up: %s" % (self.gave_up))
         if self.child_state == STATE_STOPPED:
             if self.how_many_times_run == 0:
                 return INFO_TODO
@@ -549,7 +555,25 @@ class Command(object):
             prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             self.slave_logger.write("%s %s\n" % (prefix, msg))
             self.slave_logger.flush()
-        log.msg(msg, logLevel=level)
+        log_number_to_name = {
+            logging.DEBUG: 'debug',
+            logging.INFO: 'info',
+            logging.WARNING: 'warning',
+            logging.ERROR: 'error',
+            logging.CRITICAL: 'critical',
+            }
+        if level == logging.DEBUG:
+            log.debug(msg)
+        elif level == logging.INFO:
+            log.info(msg)
+        elif level == logging.WARNING:
+            log.warning(msg)
+        elif level == logging.ERROR:
+            log.error(msg)
+        elif level == logging.CRITICAL:
+            log.critical(msg)
+
+        #log.msg(msg, logLevel=level)
 
     def set_slave_state(self, new_state):
         msg = "Slave %s is %s." % (self.identifier, new_state)

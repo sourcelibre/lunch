@@ -36,6 +36,9 @@ import webbrowser
 from lunch import __version__
 from lunch import dialogs
 from lunch.states import *
+from lunch import logger
+
+log = logger.start(name="lunch-gui")
 
 __license__ = """Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
@@ -66,10 +69,10 @@ def run_once(executable, *args):
     try:
         executable = procutils.which(executable)[0]
     except IndexError:
-        print("Could not find executable %s" % (executable))
+        log.error("Could not find executable %s" % (executable))
         return None
     else:
-        print("Calling %s %s" % (executable, list(args)))
+        log.info("Calling %s %s" % (executable, list(args)))
         d = utils.getProcessValue(executable, args, os.environ, '.', reactor)
         d.addCallback(_cb)
         return d
@@ -99,19 +102,19 @@ def tail_child_log(command):
         cmd.extend([command.host])
         xterm_title += " on " + command.host
     cmd.extend(["tail", "-F", child_log_path])
-    print("$ %s" % (" ".join(cmd)))
+    log.info("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
 
 def tail_master_log(master):
     log_path = master.log_file
     if log_path is None:
-        print("No master log file to tail -F") # TODO: error dialog.
+        log.warning("No master log file to tail -F") # TODO: error dialog.
     else:
         cmd = []
         xterm_title = "tail -F Lunch Master Log File"
         cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
         cmd.extend(["tail", "-F", log_path])
-        print("$ %s" % (" ".join(cmd)))
+        log.info("$ %s" % (" ".join(cmd)))
         run_once(*cmd)
 
 def man_lunch():
@@ -119,7 +122,7 @@ def man_lunch():
     xterm_title = "man lunch"
     cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])
     cmd.extend(["man", "lunch"])
-    print("$ %s" % (" ".join(cmd)))
+    log.info("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
     
 class About(object):
@@ -147,7 +150,7 @@ class About(object):
         gtk.about_dialog_set_url_hook(self.show_website)
         self.about_dialog.set_website("http://svn.sat.qc.ca/trac/lunch")
         if not os.path.exists(self.icon_file):
-            print("Could not find icon file %s." % (self.icon_file))
+            log.warning("Could not find icon file %s." % (self.icon_file))
         else:
             large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
             self.about_dialog.set_logo(large_icon)
@@ -186,7 +189,7 @@ class LunchApp(object):
         #TODO: more robust icon handling.
         icon_file = "/usr/share/pixmaps/lunch.png"
         if not os.path.exists(icon_file):
-            print("Warning: Could not find icon file %s." % (icon_file))
+            log.warning("Warning: Could not find icon file %s." % (icon_file))
         else:
             icon = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.window.set_icon_list(icon)
@@ -252,15 +255,15 @@ class LunchApp(object):
     IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
 
     def on_command_added(self, command):
-        print("on_command_added")
+        log.debug("on_command_added")
         self._add_command_in_tree(command)
         
     def on_command_removed(self, command):
-        print("on_command_removed")
+        log.debug("on_command_removed")
         self._remove_command_from_tree(command)
 
     def on_selected_command_changed(self, *args):
-        print("on_selected_command_changed")
+        log.debug("on_selected_command_changed")
         self._update_buttons_according_to_selected_contact()
     
     def _update_buttons_according_to_selected_contact(self):
@@ -271,7 +274,7 @@ class LunchApp(object):
             self.start_command_button_widget.set_sensitive(False)
             self.openlog_button_widget.set_sensitive(False)
         else:
-            print("command: %s" % (command.identifier))
+            log.debug("command: %s" % (command.identifier))
             if command.get_state_info() in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
                 self.stop_command_button_widget.set_sensitive(True)
                 self.start_command_button_widget.set_sensitive(False)
@@ -346,26 +349,26 @@ class LunchApp(object):
                 break
             row_number += 1
         
-        print("Removing a row from the list store.")
+        log.debug("Removing a row from the list store.")
         list_store.remove(list_store.get_iter(row_number))
-        #print("Removing GUI's slot for state changed signal.")
+        #log.debug("Removing GUI's slot for state changed signal.")
         command.child_state_changed_signal.disconnect(self.on_command_status_changed)
 
     def _update_row(self, command):
         list_store = self.model_sort.get_model()
         looking_for = command.identifier
-        #print "look for:", looking_for
+        #log.debug "look for:", looking_for
         for row in iter(list_store):
             identifier = row[self.IDENTIFIER_COLUMN]
             if identifier == looking_for:
-                #print identifier, "MATCHES!!!!!!!!!"
+                #log.debug identifier, "MATCHES!!!!!!!!!"
                 #TODO: update only columns how_many_times_run and child_state
                 cells = self._format_command(command)
                 for i in range(len(cells)):
                     row[i] = cells[i]
                 break
-            for v in row:
-                print v
+            #for v in row:
+            #    log.debug("updating row : %s" % (v))
 
     def _format_command(self, command):
         """
@@ -390,7 +393,7 @@ class LunchApp(object):
         #TODO:
         if hasattr(self.master, "log_dir"):
             open_path(self.master.log_dir)
-        #print "open logs"
+        #log.debug("open logs")
 
     def on_menu_view_master_log(self, widget, data):
         tail_master_log(self.master)
@@ -441,10 +444,10 @@ class LunchApp(object):
                 d = defer.Deferred()
                 dialog = dialogs.ErrorDialog(d, msg)
         else:
-            print 'getting the currently selected row in the tree view.'
+            log.debug('getting the currently selected row in the tree view.')
             row = rows # only one row selected at a time in this version
             identifier = model.get_value(row, self.IDENTIFIER_COLUMN)
-            print 'id', identifier
+            log.debug('id %s' % (identifier))
             ret = self.master.commands[identifier]
         return ret
         
@@ -475,7 +478,7 @@ class LunchApp(object):
         #txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
         #i = self.commands.index(command)
         #self.state_labels[i].set_markup(txt)
-        print("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
+        log.debug("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
         self._update_row(command)
         self._update_buttons_according_to_selected_contact()
 
@@ -501,12 +504,12 @@ class LunchApp(object):
         """
         def _cb(result):
             if result:
-                print("Destroying the Lunch window.")
+                log.info("Destroying the Lunch window.")
                 if reactor.running:
-                    print("reactor.stop()")
+                    log.info("reactor.stop()")
                     reactor.stop()
             else:
-                print("Not quitting.")
+                log.info("Not quitting.")
         if self.confirm_close:
             #TODO: Do not ask if there are no more processes running.
             d = dialogs.YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
@@ -521,7 +524,7 @@ def start_gui(lunch_master):
     Starts the GTK GUI
     :rettype: L{LunchApp}
     """
-    print("Starting the GUI.")
+    log.info("Starting the GUI.")
     app = LunchApp(lunch_master)
     #self.slave_state_changed_signal = sig.Signal()
     return app

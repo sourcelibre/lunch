@@ -41,6 +41,7 @@ def run():
     parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/tmp/lunch")
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
+    parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output very verbose.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -62,7 +63,7 @@ def run():
         try:
             from twisted.internet import gtk2reactor
             gtk2reactor.install() # has to be done before importing reactor
-            from lunch import gui
+            import gtk # just for a test
             GUI_ENABLED = True
             print("Successfully loaded the GTK+ graphical user interface.")
         except ImportError, e:
@@ -82,7 +83,10 @@ def run():
     else:
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir)
+            log_level = 'info'
+            if options.verbose:
+                log_level = 'debug'
+            master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
         except FileNotFoundError, e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "
@@ -111,6 +115,7 @@ def run():
             print("Reactor stopped. Exiting.")
         sys.exit(1)
     if GUI_ENABLED:
+        from lunch import gui
         app = gui.start_gui(master)
         print("Done starting the app.")
     try:
