@@ -354,7 +354,7 @@ class Command(object):
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
             if key in ["do", "env", "run", "logdir"]: # FIXME: receiving in stdin what we send to stdin slave !!!
-                warnings.warn("We receive from the slave's stdout what we send to its stdin !")
+                pass #warnings.warn("We receive from the slave's stdout what we send to its stdin !")
             else:
                 try:
                     method = getattr(self, 'recv_' + key)
@@ -445,6 +445,7 @@ class Command(object):
             if child_running_time < self.minimum_lifetime_to_respawn:
                 self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
                 self.gave_up = True
+                log.warning("Giving up restarting command %s" % (self.identifier))
                 self.enabled = False # XXX
                 #TODO: double the time to wait before trying again.
                 # we should have two vars: one public, one private

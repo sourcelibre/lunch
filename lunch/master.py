@@ -48,7 +48,7 @@ from lunch import logger
 
 DEFAULT_LOG_DIR = "/var/tmp/lunch"
 log = None
-LOG_NAME = 'lunch-master'
+LOG_NAME = 'master'
 
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
