@@ -271,7 +271,7 @@ class Command(object):
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
                     raise RuntimeError("Could not find path of executable %s." % (_command[0]))
-                log.info("Will run command: %s" % (" ".join(_command)))
+                log.info("$ %s" % (" ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:
                 proc_path = _command[0]
@@ -279,7 +279,7 @@ class Command(object):
                 environ = {}
                 environ.update(os.environ) # passing the whole env (for SSH keys and more)
                 self.set_slave_state(STATE_STARTING)
-                self.log("Starting: %s" % (self.identifier))
+                self.log("Starting slave: %s" % (self.identifier))
                 self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
@@ -306,6 +306,7 @@ class Command(object):
 
     def send_run(self):
         self.send_message("run")
+        self.log("$ %s" % (self.command), logging.INFO)
         
     def send_env(self):
         self.send_message("env", self._format_env())
@@ -344,8 +345,8 @@ class Command(object):
         else:
             try:
                 if words[1] == "password:":
-                    self.log(line)
-                    self.log("SSH ERROR: Trying to connect using SSH, but the SSH server is asking for a password.")
+                    self.log(line, logging.ERROR)
+                    self.log("SSH ERROR: Trying to connect using SSH, but the SSH server is asking for a password.", logging.ERROR)
                     return
             except IndexError:
                 pass
@@ -381,7 +382,7 @@ class Command(object):
         self.log("%s->Master: retval %s" % (self.identifier, mess))
         words = mess.split(" ")
         self.retval = int(words[0])
-        self.log("Child's return value is %s" % (self.retval))
+        self.log("Child's return value is %s" % (self.retval), logging.INFO)
     
     def recv_log(self, mess):
         """
@@ -492,7 +493,7 @@ class Command(object):
         """
         self.enabled = False
         if self.child_state in [STATE_RUNNING, STATE_STARTING]:
-            self.log('Will stop process %s.' % (self.identifier))
+            self.log('Will stop process %s.' % (self.identifier), logging.INFO)
             self.send_stop()
         else:
             msg = "Cannot stop child %s that is %s." % (self.identifier, self.child_state)

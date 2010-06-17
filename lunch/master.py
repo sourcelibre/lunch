@@ -218,7 +218,7 @@ class Master(object):
                     # Finally, start it if we are ready to.
                     if start_it:
                         self.launch_next_time = self._time_now + command.sleep_after
-                        log.info("Will start %s." % (command.identifier))
+                        log.debug("Will start %s." % (command.identifier))
                         command.start()
             elif command.to_be_deleted:
                 ref = self.commands[node]
