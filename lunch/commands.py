@@ -155,7 +155,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=1.0, give_up_after=0):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param depends: Commands to which this command depends on. List of strings.
@@ -180,6 +180,11 @@ class Command(object):
         @type user: str
         @type verbose: bool
         """
+        #TODO:
+        #@param try_again_delay: Time to wait before trying again if it crashes at startup.
+        #@type try_again_delay: C{float}
+        #@param give_up_after: How many times to try again before giving up.
+        #@type give_up_after: C{int}
         self.command = command
         self.identifier = identifier
         self.env = {}
@@ -197,6 +202,9 @@ class Command(object):
         self.verbose = verbose
         self.retval = 0
         self.gave_up = False
+        self.try_again_delay = try_again_delay
+        self._current_try_again_delay = try_again_delay # doubles up each time we try
+        self.give_up_after = give_up_after # 0 means infinity of times
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.

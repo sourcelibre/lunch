@@ -64,9 +64,7 @@ class FileNotFoundError(Exception):
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
-    There should be only one instance of this class in the application. (singleton)
     """
-    
     def __init__(self, log_dir=DEFAULT_LOG_DIR, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
         @param log_dir: str Path.
