@@ -222,7 +222,7 @@ class Master(object):
             elif command.to_be_deleted:
                 ref = self.commands[node]
                 del self.commands[node]
-                print self.commands
+                #log.debug(self.commands)
                 self.tree.remove_node(node) # XXX ?
                 log.info("Removed command %s from the graph" % (node))
                 self.command_removed_signal(ref)
@@ -295,13 +295,13 @@ class Master(object):
         Called before Twisted's shutdown. (end of master process)
         """
         if self.pid_file is not None:
-            print("Will now erase the %s PID file" % (self.pid_file))
+            log.info("Will now erase the %s PID file" % (self.pid_file))
             try:
                 os.remove(self.pid_file)
             except OSError, e:
-                print("Error removing lunch master PID file: " + str(e))
+                log.error("Error removing lunch master PID file: " + str(e))
             else:
-                print("Erased %s" % (self.pid_file))
+                log.info("Erased %s" % (self.pid_file))
         now = time.time()
         _shutdown_data = {
                 "shutdown_started" : now,
@@ -409,7 +409,7 @@ def chmod_file_not_world_writable(config_file):
     try:
         os.chmod(config_file, new_mode)
     except OSError, e:
-        print("WARNING: Could not chmod configuration file. %s" % (e))
+        log.warning("WARNING: Could not chmod configuration file. %s" % (e))
 
 def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     """
@@ -467,7 +467,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         try:
             execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
         except Exception, e:
-            print("ERROR: Error in user configuration file.")
+            log.error("ERROR: Error in user configuration file.")
             raise
     else:
         # create the directory ?
