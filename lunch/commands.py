@@ -457,7 +457,7 @@ class Command(object):
         # double the time to wait before trying again.
         # self.wait_before_trying_again -- this one never changes
         # self._wait_before_trying_again_next_time -- this one is doubled each time.
-        if self.give_up_after != 0 and self.how_many_times_tried >= self.give_up_after:
+        if self.give_up_after != 0 and self.how_many_times_tried > self.give_up_after:
             self.gave_up = True
             self.enabled = False
             log.info("Gave up restarting command %s" % (self.identifier))
