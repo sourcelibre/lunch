@@ -1,6 +1,13 @@
-Version 0.3.1 - 2010-06-??
+Version 0.3.1 - 2010-06-18
 
-    * 
+    * Modernized logging system
+    * Checking for a lunch master that's a Python, not "lunch"
+    * Created the confirm_and_quit method in the gui.
+    * More logging for when we start processes
+    * Fixed a traceback that was there since we updated the logging.
+    * Added the show_about_dialog method
+    * Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
+
 
 Version 0.3.0 - 2010-06-16
 
@@ -37,7 +44,7 @@ Version 0.2.17 - 2010-01-25
     * master: Use on_* callbacks style for the Slave Process Manager as well.
     * master: Use send_* methods style for the senders on both side.
     * master: The order of commands should be automatically ordered with calling order.
-   * master: Dependencies: when one slave dies, kill all slaves who depend on it, restart them all again - if needed.
+    * master: Dependencies: when one slave dies, kill all slaves who depend on it, restart them all again - if needed.
     * master: Wait for the greetings message, not the connection to the process stdin.
     * slave: Make sure each process is dead. Poll with a timer and use signals if needed.
     * slave: use a kill_delay option, with a default of 1.0 second.

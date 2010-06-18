@@ -1,4 +1,9 @@
-Version 0.3.1 - 2010-06-??
+Version 0.3.1 - 2010-06-18
 
-    * 
-
+    * Modernized logging system
+    * Checking for a lunch master that's a Python, not "lunch"
+    * Created the confirm_and_quit method in the gui.
+    * More logging for when we start processes
+    * Fixed a traceback that was there since we updated the logging.
+    * Added the show_about_dialog method
+    * Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
