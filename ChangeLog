@@ -1,6 +1,97 @@
-changeset:   383:b969c8494f83
+changeset:   398:7c49e6ead91c
 branch:      0.3
 tag:         tip
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:19:57 2010 -0400
+summary:     Updated NEWS and RELEASE. Decreased again default verbosity.
+
+changeset:   397:9bebbcb58b1f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:09:03 2010 -0400
+summary:     Improved logging once again
+
+changeset:   396:1b0b66b76367
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:00:01 2010 -0400
+summary:     decreased log level for when we give up
+
+changeset:   395:60cbcf5307c6
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 05:47:44 2010 -0400
+summary:     removed more prints
+
+changeset:   394:8a3185bca03d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 17:33:54 2010 -0400
+summary:     Added the show_about_dialog method
+
+changeset:   393:679154d2edce
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 17:26:34 2010 -0400
+summary:     less verbosity in dialogs
+
+changeset:   392:03862df29041
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 16:37:33 2010 -0400
+summary:     changes in logging verbosity
+
+changeset:   391:86f5e57a5172
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 16:00:14 2010 -0400
+summary:     Fixed the traceback that was there since we updated the logging.
+
+changeset:   390:e0a94fbd707b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 15:10:55 2010 -0400
+summary:     More logging for when we start processes
+
+changeset:   389:b773b60be23d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 15:03:44 2010 -0400
+summary:     Modernized logging.
+
+changeset:   388:c2f5c30a9954
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 13:16:20 2010 -0400
+summary:     Created the confirm_and_quit method in the gui.
+
+changeset:   387:ba9718a1bdb7
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jun 17 13:06:28 2010 -0400
+summary:     Checking for a lunch master that's a Python, not "lunch"
+
+changeset:   386:bd1d454b3c4b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jun 16 10:54:27 2010 -0400
+summary:     updated version number to 0.3.1 - not yet released
+
+changeset:   385:ea10f0c116d4
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jun 16 10:52:31 2010 -0400
+summary:     Added tag 0.3.0 for changeset 330a4bf7f0ec
+
+changeset:   384:330a4bf7f0ec
+branch:      0.3
+tag:         0.3.0
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jun 16 10:38:56 2010 -0400
+summary:     updated ChangeLog
+
+changeset:   383:b969c8494f83
+branch:      0.3
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Wed Jun 16 10:34:57 2010 -0400
 summary:     added RELEASE, updated NEWS. Simplified version number in setup.py
@@ -272,7 +363,7 @@ summary:     Specifying the encoding in the .desktop file is deprecated
 
 changeset:   338:14ff3d32d5ee
 branch:      0.2
-parent:      321:67521f514596
+parent:      322:67521f514596
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Tue Jun 01 08:31:24 2010 -0400
 summary:     adding a very detailled ChangeLog
@@ -363,43 +454,43 @@ summary:     changed maintainer for the Python App Package Team
 
 changeset:   323:a3e28bf70f8f
 branch:      packaging
+parent:      320:95e1c964b45c
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Fri May 28 03:27:23 2010 -0400
 summary:     now it's the correct message
 
-changeset:   322:95e1c964b45c
-branch:      packaging
-parent:      320:03f4178d2ba1
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Thu May 27 21:02:09 2010 -0400
-summary:     a changelog for sid
-
-changeset:   321:67521f514596
+changeset:   322:67521f514596
 branch:      0.2
-parent:      318:717965e05673
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 20:58:34 2010 -0400
 summary:     Added tag 0.2.21 for changeset 717965e05673
 
-changeset:   320:03f4178d2ba1
+changeset:   321:717965e05673
+branch:      0.2
+tag:         0.2.21
+parent:      317:2ecc9c01f731
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:37:40 2010 -0400
+summary:     updated version to 0.2.21
+
+changeset:   320:95e1c964b45c
+branch:      packaging
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 21:02:09 2010 -0400
+summary:     a changelog for sid
+
+changeset:   319:03f4178d2ba1
 branch:      packaging
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 20:51:22 2010 -0400
 summary:     trying to fix some lintian warnings
 
-changeset:   319:20cd6f66639e
+changeset:   318:20cd6f66639e
 branch:      packaging
 parent:      315:28dfbe392e02
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 20:42:24 2010 -0400
 summary:     changed for the utils debian section
-
-changeset:   318:717965e05673
-branch:      0.2
-tag:         0.2.21
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Thu May 27 20:37:40 2010 -0400
-summary:     updated version to 0.2.21
 
 changeset:   317:2ecc9c01f731
 branch:      0.2
@@ -1370,14 +1461,14 @@ summary:     fixed errors again in master
 
 changeset:   162:19571f15a542
 branch:      py
-parent:      133:1fe89ed9da01
+parent:      132:1fe89ed9da01
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Wed Jan 13 14:43:31 2010 -0500
 summary:     writing pid file in master, like in branch 0.1
 
 changeset:   161:5550c6e7895a
 branch:      py
-parent:      133:1fe89ed9da01
+parent:      132:1fe89ed9da01
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Wed Jan 13 14:39:35 2010 -0500
 summary:     Passing the whole env from master to slaves. (needed by ssh-agent)
@@ -1537,94 +1628,94 @@ summary:     updated versions to 0.2.0
 
 changeset:   135:dc1930aea90e
 branch:      py
-parent:      122:4a38c8bd1d45
-parent:      134:dffc48c94537
+parent:      134:4a38c8bd1d45
+parent:      133:dffc48c94537
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Tue Jan 12 08:03:24 2010 -0500
 summary:     merging with remote changes
 
-changeset:   134:dffc48c94537
+changeset:   134:4a38c8bd1d45
+branch:      py
+parent:      121:4839dcddbd88
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 03:16:54 2010 -0500
+summary:     changed lunch executable to lunch-0.1 in lunch-0.1
+
+changeset:   133:dffc48c94537
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 17:32:51 2010 -0500
 summary:     Added tag 0.2 for changeset 1fe89ed9da01
 
-changeset:   133:1fe89ed9da01
+changeset:   132:1fe89ed9da01
 branch:      py
 tag:         0.2.0
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 16:52:32 2010 -0500
 summary:     Huge progress in asynchronous iterating of groups at startup.
 
-changeset:   132:b197739bbfa0
+changeset:   131:b197739bbfa0
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 15:18:17 2010 -0500
 summary:     mucho progress before i scrap this all for more improvements.
 
-changeset:   131:1b116e68924b
+changeset:   130:1b116e68924b
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 14:04:33 2010 -0500
 summary:     Major changes and fixes in master.
 
-changeset:   130:83ccf79774b7
+changeset:   129:83ccf79774b7
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:09:11 2010 -0500
 summary:     removing lunch/constants.py
 
-changeset:   129:cda24db07b25
+changeset:   128:cda24db07b25
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:08:39 2010 -0500
 summary:     Constants cleanup in master.
 
-changeset:   128:ac77d866597b
+changeset:   127:ac77d866597b
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:00:13 2010 -0500
 summary:     changed callbacks from do_* to recv_* in slave.
 
-changeset:   127:98ce9c6d9f31
+changeset:   126:98ce9c6d9f31
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 12:57:50 2010 -0500
 summary:     splitted callbacks in master. Messages to lowercase.
 
-changeset:   126:48dc2632a82f
+changeset:   125:48dc2632a82f
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 11:10:36 2010 -0500
 summary:     making sure process is dead after 5.0 seconds.
 
-changeset:   125:653d3ac04943
+changeset:   124:653d3ac04943
 branch:      py
-parent:      124:55aff2084f26
-parent:      123:652cb86339b1
+parent:      123:55aff2084f26
+parent:      122:652cb86339b1
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 10:07:13 2010 -0500
 summary:     Merged recent changes together.
 
-changeset:   124:55aff2084f26
+changeset:   123:55aff2084f26
 branch:      py
 parent:      116:0d8e482610ae
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 10:06:42 2010 -0500
 summary:     Added small comments. Things todo in Command
 
-changeset:   123:652cb86339b1
+changeset:   122:652cb86339b1
 branch:      py
-parent:      121:4839dcddbd88
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Sun Jan 10 10:18:49 2010 -0500
 summary:     lunch-master add lunch-slave in its $PATH when in devel mode.
-
-changeset:   122:4a38c8bd1d45
-branch:      py
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Sat Jan 09 03:16:54 2010 -0500
-summary:     changed lunch executable to lunch-0.1 in lunch-0.1
 
 changeset:   121:4839dcddbd88
 branch:      py
