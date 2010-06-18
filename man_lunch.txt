@@ -3,7 +3,7 @@ The lunch executable is called the lunch master. The lunch-slave executable is c
 
 The Lunch configuration file can be provided as a first argument to the lunch executable. If not given, the Lunch master will look for the ~/.lunchrc file. If not found, lunch will print an error and exit. The lunch config file is written in the Python programming language, and must call the add_command function. 
 
-The pid of the master is written to a file located in /var/tmp/lunch/master*.pid, where * varies depending on the lunch config file used to configure the master.
+The process ID of the master is written to a file located in /var/tmp/lunch/master*.pid, where * varies depending on the lunch config file used to configure the master.
 Here is how to kill every lunch master on your system :
 
   for f in /var/tmp/lunch/master-*.pid; do kill -15 $(cat $f); done
