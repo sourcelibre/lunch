@@ -65,7 +65,7 @@ def run():
             gtk2reactor.install() # has to be done before importing reactor
             import gtk # just for a test
             GUI_ENABLED = True
-            print("Successfully loaded the GTK+ graphical user interface.")
+            #print("Successfully loaded the GTK+ graphical user interface.")
         except ImportError, e:
             print("Could not load the GTK+ graphical user interface. " + str(e))
             GUI_ENABLED = False
@@ -117,7 +117,7 @@ def run():
     if GUI_ENABLED:
         from lunch import gui
         app = gui.start_gui(master)
-        print("Done starting the app.")
+        #print("Done starting the app.")
     try:
         reactor.run()
     except KeyboardInterrupt:

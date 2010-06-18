@@ -242,7 +242,7 @@ class Command(object):
         self.gave_up = False
         self._start_logger()
         if self.child_state == STATE_RUNNING:
-            self.log("Child is already running.")
+            self.log("%s: Child is already running." % (self.identifier))
             return
         if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
             self.send_all_startup_commands()
@@ -272,7 +272,7 @@ class Command(object):
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
                     raise RuntimeError("Could not find path of executable %s." % (_command[0]))
-                log.info("$ %s" % (" ".join(_command)))
+                log.info("%s: $ %s" % (self.identifier, " ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:
                 proc_path = _command[0]
@@ -307,7 +307,7 @@ class Command(object):
 
     def send_run(self):
         self.send_message("run")
-        self.log("$ %s" % (self.command), logging.INFO)
+        self.log("%s: $ %s" % (self.identifier, self.command), logging.INFO)
         
     def send_env(self):
         self.send_message("env", self._format_env())
@@ -342,7 +342,7 @@ class Command(object):
             mess = line[len(key) + 1:]
         except IndexError, e:
             #self.log("Index error parsing message from slave. %s" % (e), logging.ERROR)
-            self.log('From slave %s: %s' % (self.identifier, line), logging.ERROR)
+            self.log('IndexError From slave %s: %s' % (self.identifier, line), logging.ERROR)
         else:
             try:
                 if words[1] == "password:":
@@ -353,14 +353,14 @@ class Command(object):
                 pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
-            if key in ["do", "env", "run", "logdir"]: # FIXME: receiving in stdin what we send to stdin slave !!!
+            if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin slave !!!
                 pass #warnings.warn("We receive from the slave's stdout what we send to its stdin !")
             else:
                 try:
                     method = getattr(self, 'recv_' + key)
                 except AttributeError, e:
-                    self.log('From slave %s: %s' % (self.identifier, line), logging.ERROR)
-                    self.log(line)
+                    self.log('AtributeError: From slave %s: %s' % (self.identifier, line), logging.ERROR)
+                    #self.log(line)
                 else:
                     method(mess)
 
@@ -383,7 +383,7 @@ class Command(object):
         self.log("%s->Master: retval %s" % (self.identifier, mess))
         words = mess.split(" ")
         self.retval = int(words[0])
-        self.log("Child's return value is %s" % (self.retval), logging.INFO)
+        self.log("%s: Return value of child is %s" % (self.identifier, self.retval), logging.INFO)
     
     def recv_log(self, mess):
         """
@@ -395,7 +395,7 @@ class Command(object):
         """
         Callback for the "error" message from the slave.
         """
-        self.log("%8s->Master: %s" % (self.identifier, mess), logging.ERROR)
+        self.log("%s->Master: %s" % (self.identifier, mess), logging.ERROR)
     
     def recv_pong(self, mess):
         """
@@ -495,7 +495,7 @@ class Command(object):
         """
         self.enabled = False
         if self.child_state in [STATE_RUNNING, STATE_STARTING]:
-            self.log('Will stop process %s.' % (self.identifier), logging.INFO)
+            self.log('%s: stop' % (self.identifier), logging.INFO)
             self.send_stop()
         else:
             msg = "Cannot stop child %s that is %s." % (self.identifier, self.child_state)
