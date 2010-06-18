@@ -505,6 +505,11 @@ class LunchApp(object):
         
         @rettype: bool
         """
+        still_some_running = False
+        for c in self.master._get_all():
+            if c.child_state == STATE_RUNNING:
+                still_some_running = True
+        
         def _cb(result):
             if result:
                 log.info("Destroying the Lunch window.")
@@ -513,7 +518,7 @@ class LunchApp(object):
                     reactor.stop()
             else:
                 log.info("Not quitting.")
-        if self.confirm_close:
+        if self.confirm_close and still_some_running:
             #TODO: Do not ask if there are no more processes running.
             d = dialogs.YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
             d.addCallback(_cb)
