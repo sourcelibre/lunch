@@ -7,6 +7,7 @@ Version 0.3.1 - 2010-06-18
     * Fixed a traceback that was there since we updated the logging.
     * Added the show_about_dialog method
     * Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
+    * Fixed a crash when trying to log to a file.
 
 
 Version 0.3.0 - 2010-06-16
