@@ -22,13 +22,11 @@
 """
 Main entry point of the lunch master application.
 """
-
-__version__ = "0.3.0"
-
 import os
 import sys
 import traceback
 from optparse import OptionParser
+from lunch import __version__
 
 DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch master launches lunch-slave processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
 
