@@ -8,3 +8,4 @@ Version 0.3.1 - 2010-06-18
     * Added the show_about_dialog method
     * Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
     * Fixed a crash when trying to log to a file.
+    * Not using rotating log files anymore for the master
