@@ -199,11 +199,14 @@ class Command(object):
         self.to_be_deleted = False
         self.depends = depends
         self.how_many_times_run = 0
+        self.how_many_times_tried = 0
         self.verbose = verbose
         self.retval = 0
         self.gave_up = False
         self.try_again_delay = try_again_delay
         self._current_try_again_delay = try_again_delay # doubles up each time we try
+        self._next_try_time = 0
+        self._previous_launching_time = 0
         self.give_up_after = give_up_after # 0 means infinity of times
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         if log_dir is None:
@@ -227,6 +230,11 @@ class Command(object):
         # Some attributes might be changed by the master, namely identifier and host.
         # That's why we sait until start() is called to initiate the slave_logger.
         self.slave_logger = None
+
+    def is_ready_to_be_started(self):
+        # self.enabled
+        ret = self._next_try_time <= time.time()
+        return ret
     
     def _start_logger(self):
         """
@@ -248,6 +256,9 @@ class Command(object):
         """
         self.enabled = True
         self.gave_up = False
+        if self.how_many_times_tried == 0:
+            self._current_try_again_delay = self.try_again_delay
+        self.how_many_times_tried += 1
         self._start_logger()
         if self.child_state == STATE_RUNNING:
             self.log("%s: Child is already running." % (self.identifier))
@@ -289,6 +300,7 @@ class Command(object):
                 environ.update(os.environ) # passing the whole env (for SSH keys and more)
                 self.set_slave_state(STATE_STARTING)
                 self.log("Starting slave: %s" % (self.identifier))
+                self._previous_launching_time = time.time()
                 self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
@@ -421,7 +433,7 @@ class Command(object):
         """
         Returns a high-level comprehensive state for the user to see in the GUI.
         """
-        log.debug("gave up: %s" % (self.gave_up))
+        #log.debug("gave up: %s" % (self.gave_up))
         if self.child_state == STATE_STOPPED:
             if self.how_many_times_run == 0:
                 return INFO_TODO
@@ -437,6 +449,23 @@ class Command(object):
                 return STATE_STOPPED # INFO_FAILED?
         else:
             return self.child_state
+    
+    def _give_up_if_we_should(self):
+        """
+        Check if we should give up and give up if so.
+        """
+        # double the time to wait before trying again.
+        # self.wait_before_trying_again -- this one never changes
+        # self._wait_before_trying_again_next_time -- this one is doubled each time.
+        if self.give_up_after != 0 and self.how_many_times_tried >= self.give_up_after:
+            self.gave_up = True
+            self.enabled = False
+            log.info("Gave up restarting command %s" % (self.identifier))
+        else:
+            self._next_try_time = time.time() + self._current_try_again_delay
+            log.info("%s: Will wait %f seconds before trying again." % (self.identifier, self._current_try_again_delay))
+            self._current_try_again_delay *= 2
+            self.how_many_times_tried += 1
 
     def recv_state(self, mess):
         """
@@ -451,14 +480,8 @@ class Command(object):
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:
-                self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
-                self.gave_up = True
-                log.info("Giving up restarting command %s" % (self.identifier))
-                self.enabled = False # XXX
-                #TODO: double the time to wait before trying again.
-                # we should have two vars: one public, one private
-                # self.wait_before_trying_again -- this one never changes
-                # self._wait_before_trying_again_next_time -- this one is doubled each time.
+                self.log("Child running time of %s has been shorter than its minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
+                self._give_up_if_we_should()
             #else:
             #    self.send_all_startup_commands()
         elif new_state == STATE_RUNNING:
@@ -497,10 +520,20 @@ class Command(object):
         #    log.msg(" --------------- XXX Trigerring signal %s" % (self.child_state))
             self.child_state_changed_signal(self, self.child_state)
 
+    def reset(self):
+        """
+        Do not give up anymore and reset the trials thing.
+        """
+        self.how_many_times_tried += 1
+        self.gave_up = False
+        self._next_try_time = 0
+        self._current_try_again_delay = self.try_again_delay
+    
     def stop(self):
         """
         Tells the slave to stop its child.
         """
+        self.reset()
         self.enabled = False
         if self.child_state in [STATE_RUNNING, STATE_STARTING]:
             self.log('%s: stop' % (self.identifier), logging.INFO)

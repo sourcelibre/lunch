@@ -187,8 +187,7 @@ class Master(object):
         elif command.child_state == STATE_STOPPED:
             # self.launch_next_time is for launching the next process... so it must be updated as 
             # soon as we start one.
-            if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled:
-                #
+            if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled and command.is_ready_to_be_started():
                 # Check if there are dependees missing so that we start this one
                 dependees_to_wait_for = False # to wait so that they quit
                 for dependee_name in all_dependees:
@@ -204,8 +203,8 @@ class Master(object):
                     #
                     # Do not start it if not enabled !
                     # (maybe lived for not long enough)
-                    if not command.enabled:
-                        start_it = False
+                    #if not command.enabled:
+                    #    start_it = False
                     for dependency in all_dependencies:
                         dep_command = self.commands[dependency]
                         if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
@@ -215,7 +214,7 @@ class Master(object):
                     # Finally, start it if we are ready to.
                     if start_it:
                         self.launch_next_time = self._time_now + command.sleep_after
-                        log.debug("Will start %s." % (command.identifier))
+                        log.info("Will start %s." % (command.identifier))
                         command.start()
             elif command.to_be_deleted:
                 ref = self.commands[node]
