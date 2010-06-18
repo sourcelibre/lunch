@@ -1,6 +1,48 @@
-changeset:   398:7c49e6ead91c
+changeset:   405:7fa935a62372
 branch:      0.3
 tag:         tip
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:34:52 2010 -0400
+summary:     updated NEWS and RELEASE again
+
+changeset:   404:6479240e3c5c
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:33:45 2010 -0400
+summary:     updated docstring for the whole package
+
+changeset:   403:857298873e12
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:32:20 2010 -0400
+summary:     Fixed bad version in runner.py
+
+changeset:   402:c897c5ac5b51
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:31:19 2010 -0400
+summary:     minor improvement in the man page
+
+changeset:   401:75641ce37a81
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:30:09 2010 -0400
+summary:     updated NEWS and RELEASE again
+
+changeset:   400:c9dd854005c4
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:29:24 2010 -0400
+summary:     Fixed a crash when trying to log to a file.
+
+changeset:   399:02cf0fbf6001
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jun 18 10:21:04 2010 -0400
+summary:     updated ChangeLog
+
+changeset:   398:7c49e6ead91c
+branch:      0.3
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Fri Jun 18 10:19:57 2010 -0400
 summary:     Updated NEWS and RELEASE. Decreased again default verbosity.
