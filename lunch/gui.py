@@ -72,7 +72,7 @@ def run_once(executable, *args):
         log.error("Could not find executable %s" % (executable))
         return None
     else:
-        log.info("Calling %s %s" % (executable, list(args)))
+        log.info("$ %s %s" % (executable, " ".join(list(args))))
         d = utils.getProcessValue(executable, args, os.environ, '.', reactor)
         d.addCallback(_cb)
         return d

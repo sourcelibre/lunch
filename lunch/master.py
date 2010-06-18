@@ -393,10 +393,12 @@ def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_lev
     f = open(full_path, 'w')
     f.close()
     os.chmod(full_path, 0600)
-    _log_file = logfile.DailyLogFile(file_name, directory) #FIXME: do not use that DailyLogFile ! 
+    #_log_file = logfile.BaseLogFile(file_name, directory)
+    #_log_file = logfile.DailyLogFile(file_name, directory) #FIXME: do not use that DailyLogFile ! 
     #log.startLogging(_log_file)
-    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=True, log_file_name=_log_file)
-    return _log_file.path
+    full_path = os.path.join(directory, file_name)
+    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=True, log_file_name=full_path)
+    return full_path #_log_file.path
 
 def chmod_file_not_world_writable(config_file):
     """
@@ -473,7 +475,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
 
-def start_logging(log_to_file=False, log_dir=DEFAULT_LOG_DIR, log_level='info'):
+def start_logging(identifier='lunchrc', log_to_file=False, log_dir=DEFAULT_LOG_DIR, log_level='info'):
     """
     Starts logging - either to a file or not.
     """
@@ -501,7 +503,7 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     """
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
-    log_file = start_logging(log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
+    log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
