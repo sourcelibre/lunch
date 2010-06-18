@@ -445,7 +445,7 @@ class Command(object):
             if child_running_time < self.minimum_lifetime_to_respawn:
                 self.log("Not respawning child since its running time of %s has been shorter than the minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
                 self.gave_up = True
-                log.warning("Giving up restarting command %s" % (self.identifier))
+                log.info("Giving up restarting command %s" % (self.identifier))
                 self.enabled = False # XXX
                 #TODO: double the time to wait before trying again.
                 # we should have two vars: one public, one private
