@@ -1,6 +1,4 @@
-Version 0.3.2 - 2010-06-23
+Version 0.3.3 - 2010-0?-??
 
-    * Respawn after a little while instead of giving up
-    * Do not ask confirmation to exit when no process is running.
-    * Double the time to wait before trying again each time.
+    * 
 
