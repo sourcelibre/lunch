@@ -6,6 +6,7 @@ You will need a few software. On Ubuntu or Debian GNU/Linux, install them using 
 
 Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
+ make
  sudo make install
 
 There should be a Lunch icon in the Application/Other Gnome menu.
