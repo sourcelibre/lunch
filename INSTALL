@@ -1,9 +1,8 @@
 INSTALLATION
 ============
-You will need a few software. On Ubuntu, install them using the following command ::
+You will need a few software. On Ubuntu or Debian GNU/Linux, install them using the following command ::
 
-  sudo apt-get install openssh-client openssh-server python-setuptools help2man
-  sudo easy_install multiprocessing
+  sudo apt-get install openssh-client openssh-server python-setuptools help2man python-twisted-core
 
 Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
@@ -16,9 +15,9 @@ Read the README file or read the lunch (1) man page to know how to use it.
 
 DOCUMENTATION
 =============
-You can generate HTML out of this README.txt file using rst2html::
+You can generate HTML out of the README file using rst2html::
 
- rst2html README.txt readme.html
+ rst2html README readme.html
 
 Pydoc can generate HTML documentation out of the Python script::
 
