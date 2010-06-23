@@ -1,0 +1,30 @@
+INSTALLATION
+============
+You will need a few software. On Ubuntu, install them using the following command ::
+
+  sudo apt-get install openssh-client openssh-server python-setuptools help2man
+  sudo easy_install multiprocessing
+
+Install lunch to /usr/local/bin/lunch on both local and remote hosts::
+
+ sudo make install
+
+There should be a Lunch icon in the Application/Other Gnome menu.
+
+Read the README file or read the lunch (1) man page to know how to use it. 
+
+
+DOCUMENTATION
+=============
+You can generate HTML out of this README.txt file using rst2html::
+
+ rst2html README.txt readme.html
+
+Pydoc can generate HTML documentation out of the Python script::
+
+ pydoc -w ./lunch
+
+See the Makefile for more installation options::
+
+ make doc
+
