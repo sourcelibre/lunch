@@ -1,0 +1,8 @@
+[INTERACTIVE USAGE]
+Start lunch-slave. Type "help" and press enter to learn what other commands one can type.
+
+[REPORTING BUGS]
+See http://svn.sat.qc.ca/trac/lunch for help and documentation.
+
+[SEE ALSO]
+lunch (1)

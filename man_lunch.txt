@@ -83,5 +83,8 @@ The latter command should display "Hello" when issued.
 2009 - Written by Alexandre Quessy <alexandre@quessy.net> with contributions 
 from Simon Piette <simonp@sat.qc.ca>
 
+[REPORTING BUGS]
+See http://svn.sat.qc.ca/trac/lunch for help and documentation.
+
 [SEE ALSO]
-See http://svn.sat.qc.ca/lunch for help and documentation.
+lunch-slave (1)
