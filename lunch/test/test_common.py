@@ -19,6 +19,8 @@ class Test_Master(unittest.TestCase):
     test_read_config.skip = "TODO."
 
     def test_add_remove_command(self):
+        COMMAND_IDENTIFER = "test"
+        COMMAND_LINE = "man man"
         _deferred = defer.Deferred()
         _master = master.Master()
         self.the_command = None
@@ -26,9 +28,9 @@ class Test_Master(unittest.TestCase):
         def _later1():
             # checks the the command has been added
             # removes the command
-            self.the_command = _master.get_command("xeyes")
+            self.the_command = _master.get_command(COMMAND_IDENTIFER)
             print("Set self.the_command to %s" % (self.the_command))
-            _master.remove_command("xeyes")
+            _master.remove_command(COMMAND_IDENTIFER)
             print("remove_command")
             reactor.callLater(0.1, _later2)
         
@@ -61,8 +63,8 @@ class Test_Master(unittest.TestCase):
             _deferred.callback(None)
             
         
-        _master.add_command(commands.Command("xeyes -geometry 100x100", identifier="xeyes"))
-        print("added command")
+        _master.add_command(commands.Command(COMMAND_LINE, identifier=COMMAND_IDENTIFER))
+        print("added command $ %s" % (COMMAND_LINE))
         reactor.callLater(0.1, _later1)
         return _deferred
 
