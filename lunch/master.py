@@ -226,6 +226,7 @@ class Master(object):
                 self.tree.remove_node(node) # XXX ?
                 log.info("Removed command %s from the graph" % (node))
                 self.command_removed_signal(ref)
+                ref.quit_slave()
 
     def _get_all(self):
         """
@@ -328,7 +329,8 @@ class Master(object):
                     log.info("Slave %s is still running. Stopping it." % (c.identifier))
                     again = True
                     c.enabled = False
-                    c.quit_slave()
+                    if c.slave_state == STATE_RUNNING:
+                        c.quit_slave()
             if time.time() >= (data["shutdown_time"]):
                 log.info("Max shutdown time expired.", logging.ERROR)
                 again = False

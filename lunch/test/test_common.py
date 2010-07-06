@@ -7,8 +7,11 @@ from twisted.python import failure
 from twisted.internet import reactor
 from lunch import master
 from lunch import commands
+from lunch.states import *
 
-master.start_stdout_logging("warning") # "debug"
+LOG_LEVEL = "warning"
+
+master.start_stdout_logging(LOG_LEVEL)
 from lunch import logger
 log = logger.start(name="test")
 
@@ -58,7 +61,8 @@ class Test_Master(unittest.TestCase):
             log.info("quit all slaves")
             for command in _master.get_all_commands():
                 command.quit_slave()
-            self.the_command.quit_slave()
+            if self.the_command.slave_state == STATE_RUNNING:
+                self.the_command.quit_slave()
             reactor.callLater(0.1, _later4)
         
         def _later4():
