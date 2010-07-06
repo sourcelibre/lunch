@@ -99,7 +99,7 @@ class Master(object):
         
         # actions:
         self.start_all()
-        reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
+        self._shutdown_event_id = reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
 
     #def __del__(self):
     #    self._looping_call.stop()
@@ -342,6 +342,26 @@ class Master(object):
         
         _later(self, _shutdown_data)
         return deferred
+
+    def cleanup(self):
+        """
+        Cleans up the reactor stuff.
+        @rtype: L{twisted.defer.DeferredList}
+        """
+        log.info("_cleanup the Master")
+        deferreds = []
+        reactor.removeSystemEventTrigger(self._shutdown_event_id)
+        # quit all slaves
+        for command in self.get_all_commands():
+            if command.slave_state == STATE_RUNNING:
+                deferreds.append(command.quit_slave())
+        # stop the master's loop
+        if self._looping_call.running:
+            d = self._looping_call.deferred
+            self._looping_call.stop() # FIXME
+            deferreds.append(d)
+        return defer.DeferredList(deferreds)
+        
 
 def gen_id_from_config_file_name(config_file_name="lunchrc"):
     """

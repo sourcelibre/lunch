@@ -584,7 +584,7 @@ class Command(object):
         
         self._quit_slave_deferred.addCallback(_on_ended)
         if self.slave_state == STATE_STOPPED:
-            self.log("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.slave_state), logging.ERROR)
+            self.log("The slave process %s is already in \"%s\" state." % (self.identifier, self.slave_state), logging.WARNING)
             self._quit_slave_deferred.callback(None)
         else:
             if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
