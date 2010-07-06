@@ -574,6 +574,7 @@ class Command(object):
         """
         The slave died ! Its child is probably dead too.
         """
+        #TODO: add a signal slot for this event?
         #self.log("Exit code: " % (exit_code))
         former_slave_state = self.slave_state
         if former_slave_state == STATE_STARTING:

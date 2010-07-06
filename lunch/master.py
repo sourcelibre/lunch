@@ -101,6 +101,9 @@ class Master(object):
         self.start_all()
         reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
 
+    #def __del__(self):
+    #    self._looping_call.stop()
+
     def start_all(self):
         """
         Sets the master so that it starts all the slaves.
@@ -255,8 +258,10 @@ class Master(object):
         Removes a command
         """
         if identifier in self.commands.keys():
-            self.commands[identifier].stop()
-            self.commands[identifier].to_be_deleted = True
+            command = self.commands[identifier]
+            if command.get_state_info() == STATE_RUNNING: #FIXME
+                command.stop()
+            command.to_be_deleted = True
 
     def restart_all(self):
         """
