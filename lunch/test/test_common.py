@@ -8,11 +8,12 @@ from twisted.internet import reactor
 from lunch import master
 from lunch import commands
 
-master.start_stdout_logging()
+master.start_stdout_logging("debug")
 
 #TODO: add the path to lunch-slave to $PATH
 
 class Test_Master(unittest.TestCase):
+    timeout = 4.0 # so that we don't wait in case of a problem
     def test_read_config(self):
         pass
     test_read_config.skip = "TODO."
@@ -20,17 +21,16 @@ class Test_Master(unittest.TestCase):
     def test_add_remove_command(self):
         _deferred = defer.Deferred()
         _master = master.Master()
+        self.the_command = None
         
         def _later1():
             # checks the the command has been added
             # removes the command
-            if len(_master.get_all_commands()) != 1:
-                self.fail("The command did not get added.")
-                _deferred.callback(None)
-            else:
-                _master.remove_command("xeyes")
-                print("remove_command")
-                reactor.callLater(0.1, _later2)
+            self.the_command = _master.get_command("xeyes")
+            print("Set self.the_command to %s" % (self.the_command))
+            _master.remove_command("xeyes")
+            print("remove_command")
+            reactor.callLater(0.1, _later2)
         
         def _later2():
             print("_later2")
@@ -54,6 +54,7 @@ class Test_Master(unittest.TestCase):
             print("quit all slaves")
             for command in _master.get_all_commands():
                 command.quit_slave()
+            self.the_command.quit_slave()
             reactor.callLater(0.1, _later4)
         
         def _later4():
@@ -65,7 +66,7 @@ class Test_Master(unittest.TestCase):
         reactor.callLater(0.1, _later1)
         return _deferred
 
-    test_add_remove_command.skip = "This test is still not working."
+    #test_add_remove_command.skip = "This test is still not working."
         
 class Test_Command(unittest.TestCase):
     def test_configure(self):

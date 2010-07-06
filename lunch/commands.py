@@ -209,6 +209,7 @@ class Command(object):
         self._previous_launching_time = 0
         self.give_up_after = give_up_after # 0 means infinity of times
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
+        self._quit_slave_deferred = None
         if log_dir is None:
             log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
             # XXX: used to be something like:
@@ -549,26 +550,54 @@ class Command(object):
         """
         Stops the slave Lunch
         If called for a second time, send kill -9 to slave.
+        @rtype: L{twisted.internet.defer.Deferred}
         """
-        def _cl_sigint(self):
-            def _cl_sigkill(self):
-                if self.slave_state == STATE_STOPPING:
-                    self._process_transport.signalProcess(9) # signal.SIGKILL
+        DELAY_BETWEEN_EACH_SIGNAL = 0.1
+        if self._quit_slave_deferred is not None:
+            raise RuntimeError("Slave seems to be already quitting.")
+        self._quit_slave_deferred = defer.Deferred()
+        _sigkill_delayed_call = None
         
+        def _on_ended(result):
+            # cancels the call fo _cl_sigkill if the slave died.
+            if _sigkill_delayed_call is not None:
+                if _sigkill_delayed_call.active():
+                    _sigkill_delayed_call.cancel()
+            if not self._quit_slave_deferred.called:
+                self._quit_slave_deferred.callback(None)
+            return result
+        
+        def _cl_sigint():
+            # sends a sigterm
+            # and later a sigkill
+            self._process_transport.signalProcess(15) # signal.SIGTERM
+            self.set_slave_state(STATE_STOPPING)
+            self.log('Master will stop slave %s.' % (self.identifier))
+            _sigkill_delayed_call = reactor.callLater(DELAY_BETWEEN_EACH_SIGNAL, _cl_sigkill)
+            # ---------------------------------------
+        def _cl_sigkill():
+            # sends sigkill if the slave is still running
+            if self.slave_state == STATE_STOPPING:
+                self.log("kill -9 Slave %s" % (self.identifier))
+                self._process_transport.signalProcess(9) # signal.SIGKILL
+            # ---------------------------------------
+        
+        self._quit_slave_deferred.addCallback(_on_ended)
         if self.slave_state == STATE_STOPPED:
             self.log("Cannot stop the slave process %s that is in \"%s\" state." % (self.identifier, self.slave_state), logging.ERROR)
+            self._quit_slave_deferred.callback(None)
         else:
             if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
                 if self.child_state in [STATE_RUNNING, STATE_STARTING]:
                     self.stop() # self.send_stop()
+                    reactor.callLater(DELAY_BETWEEN_EACH_SIGNAL, _cl_sigint)
                 elif self.child_state == STATE_STOPPED:
-                    self._process_transport.signalProcess(15) # signal.SIGTERM
-                self.set_slave_state(STATE_STOPPING)
-                self.log('Master will stop slave %s.' % (self.identifier))
+                    _cl_sigint()
             elif self.slave_state == STATE_STOPPING:
                 # second time this is called, force-quitting:
-                self.log("kill -9 Slave %s" % (self.identifier))
                 self._process_transport.signalProcess(9) # signal.SIGKILL
+                _cl_sigkill()
+        return self._quit_slave_deferred
 
     def _on_process_ended(self, exit_code):
         """
@@ -591,6 +620,8 @@ class Command(object):
         #if self.respawn and self.enabled:
         #    self.log("Restarting the slave %s." % (self.identifier), logging.INFO)
         #    self.start()
+        if self._quit_slave_deferred is not None:
+            self._quit_slave_deferred.callback(None)
         
     def log(self, msg, level=logging.DEBUG):
         """

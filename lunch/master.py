@@ -232,6 +232,17 @@ class Master(object):
         Returns all commands.
         """
         return self.commands.values()
+    
+    def get_command(self, identifier):
+        """
+        Returns a command identified by its identifier.
+        Might raise a KeyError if it does not exist.
+        
+        @rtype: L{lunch.commands.Command}
+        @param identifier: The identifier of the command to get.
+        @type identifier: str
+        """
+        return self.commands[identifier]
 
     def get_all_commands(self):
         """
