@@ -108,6 +108,8 @@ class Master(object):
         """
         Sets the master so that it starts all the slaves.
         """
+        for c in self.commands.values():
+            c.enabled = True
         self.prepare_all_commands()
         self.wants_to_live = True
     
@@ -292,8 +294,10 @@ class Master(object):
         for c in _commands:
             if c.child_state != STATE_STOPPED:
                 ready_to_restart = False
+                log.debug("Not yet ready to restart all since %s is still %s." % (c, c.child_state))
         if ready_to_restart:
             self.start_all()
+            log.info("Restarting all.")
         else:
             reactor.callLater(0.1, self._start_if_all_stopped)
 
