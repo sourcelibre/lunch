@@ -175,60 +175,119 @@ class Master(object):
         command = self.commands[node]
         all_dependencies = self.tree.get_all_dependencies(node)
         all_dependees = self.tree.get_all_dependees(node)
+
+        has_dependees_to_wait_for = False # to wait so that they quit
+        for dependee_name in all_dependees:
+            dependee = self.commands[dependee_name]
+            if dependee.child_state != STATE_STOPPED:
+                has_dependees_to_wait_for = True
+        
         # If RUNNING, check if we should stop it:
         if command.child_state == STATE_RUNNING:
-            if self.wants_to_live is False:
+            self._stop_node_if_needed(node)
+        elif command.child_state == STATE_STOPPED:
+            self._start_node_if_needed(node)
+            self._stop_nodes_that_depend_on_this_one(node)
+        if command.to_be_deleted:
+            self._delete_command(node)
+
+    def _node_has_dependees_that_are_stopped(self, node):
+        """
+        Checks if this node has nodes which depend on it which are running.
+        @rtype: C{bool}
+        """
+        command = self.commands[node]
+        all_dependees = self.tree.get_all_dependees(node)
+
+        ret = False 
+        for dependee_name in all_dependees:
+            dependee = self.commands[dependee_name]
+            if dependee.child_state != STATE_STOPPED:
+                ret = True
+        return ret
+
+    def _stop_nodes_that_depend_on_this_one(self, current_node):
+        """
+        Pre-condition: Node is not running. (might have changed a second ago)
+        """
+        all_dependees = self.tree.get_all_dependees(current_node)
+        command = self.commands[current_node]
+        if command.child_state == STATE_STOPPED:
+            for dependee in all_dependees:
+                other = self.commands[dependee]
+                if other.child_state == STATE_RUNNING:
+                    other.stop()
+                    other.enabled = True # FIXME: that's very important
+    
+    def _stop_node_if_needed(self, node):
+        """
+        Pre-condition: Node is running.
+        """
+        command = self.commands[node]
+        all_dependencies = self.tree.get_all_dependencies(node)
+        all_dependees = self.tree.get_all_dependees(node)
+        has_dependees_to_wait_for = self._node_has_dependees_that_are_stopped(node)
+        
+        if self.wants_to_live is False:
+            command.stop()
+        else:
+            # check all node on which this node depends
+            has_unsatisfied_dependency = False
+            for dependency in all_dependencies:
+                dep_command = self.commands[dependency]
+                if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
+                    has_unsatisfied_dependency = True
+                    break
+            if has_unsatisfied_dependency:
+                log.info("Got to stop %s since it has unsatisfied dependencies." % (command.identifier)) 
                 command.stop()
+                        
+    def _start_node_if_needed(self, node):
+        """
+        Pre-condition: Node is not running.
+        """
+        command = self.commands[node]
+        all_dependencies = self.tree.get_all_dependencies(node)
+        all_dependees = self.tree.get_all_dependees(node)
+        has_dependees_to_wait_for = self._node_has_dependees_that_are_stopped(node)
+        
+        # self.launch_next_time is for launching the next process... so it must be updated as 
+        # soon as we start one.
+        if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled and command.is_ready_to_be_started():
+            if has_dependees_to_wait_for: # We cannot start this node if there are nodes that depend on this one to be running.
+                pass #command.stop()
             else:
-                kill_it = False
+                start_it = True
+                if not command.respawn and command.how_many_times_run >= 1:
+                    start_it = False # already ran this once
+                #
+                # Do not start it if not enabled !
+                # (maybe lived for not long enough)
+                #if not command.enabled:
+                #    start_it = False
                 for dependency in all_dependencies:
                     dep_command = self.commands[dependency]
-                    if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
-                        kill_it = True
-                if kill_it:
-                    log.info("Will kill %s" % (command.identifier))
-                    command.stop()
-        # If STOPPED, check if we should start it:
-        elif command.child_state == STATE_STOPPED:
-            # self.launch_next_time is for launching the next process... so it must be updated as 
-            # soon as we start one.
-            if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled and command.is_ready_to_be_started():
-                # Check if there are dependees missing so that we start this one
-                dependees_to_wait_for = False # to wait so that they quit
-                for dependee_name in all_dependees:
-                    dependee = self.commands[dependee_name]
-                    if dependee.child_state != STATE_STOPPED:
-                        dependees_to_wait_for = True
-                    if dependee.child_state == STATE_RUNNING:
-                        dependee.stop()
-                if not dependees_to_wait_for:
-                    start_it = True
-                    if not command.respawn and command.how_many_times_run >= 1:
-                        start_it = False # already ran this once
-                    #
-                    # Do not start it if not enabled !
-                    # (maybe lived for not long enough)
-                    #if not command.enabled:
-                    #    start_it = False
-                    for dependency in all_dependencies:
-                        dep_command = self.commands[dependency]
-                        if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
-                            start_it = False
-                        elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
-                            start_it = False
-                    # Finally, start it if we are ready to.
-                    if start_it:
-                        self.launch_next_time = self._time_now + command.sleep_after
-                        log.info("Will start %s." % (command.identifier))
-                        command.start()
-            elif command.to_be_deleted:
-                ref = self.commands[node]
-                del self.commands[node]
-                #log.debug(self.commands)
-                self.tree.remove_node(node) # XXX ?
-                log.info("Removed command %s from the graph" % (node))
-                self.command_removed_signal(ref)
-                ref.quit_slave()
+                    if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
+                        start_it = False
+                    elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
+                        start_it = False
+                # Finally, start it if we are ready to.
+                if start_it:
+                    self.launch_next_time = self._time_now + command.sleep_after
+                    log.info("Will start %s." % (command.identifier))
+                    command.start()
+    
+    def _delete_command(self, node):
+        """
+        Actually deletes it.
+        """
+        ref = self.commands[node]
+        del self.commands[node]
+        #log.debug(self.commands)
+        self.tree.remove_node(node) # XXX ?
+        log.info("Removed command %s from the graph" % (node))
+        self.command_removed_signal(ref)
+        ref.quit_slave()
 
     def _get_all(self):
         """
