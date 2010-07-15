@@ -143,7 +143,9 @@ class About(object):
         self.about_dialog.set_copyright("Copyright 2009 Society for Arts and Technology")
         self.about_dialog.set_license(__license__)
         self.about_dialog.set_authors([
-            'Alexandre Quessy <alexandre@quessy.net>', 
+            'Alexandre Quessy <alexandre@quessy.net>'
+            ])
+        self.about_dialog.set_documenters([
             'Simon Piette <simonp@sat.qc.ca>'
             ])
         self.about_dialog.set_artists(['Rocket000'])

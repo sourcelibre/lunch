@@ -1,7 +1,9 @@
 Version 0.3.3 - 2010-07-15
+    
+    New features: 
+        * #76: Added the enabled keyword in the Command class.
+        * Validating identifiers
+        * Changed the title keyword for identifier
 
-    * Changed the title keyword for identifier
-    * Validating identifiers
-    * Fixed #34: Make sure the log dir is a directory, not a file
-    * Added the enabled keyword in the Command class.
-
+    Bug fixes: 
+        * Fixed #34: Make sure the log dir is a directory, not a file
