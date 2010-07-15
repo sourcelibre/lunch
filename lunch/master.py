@@ -394,13 +394,16 @@ class Master(object):
                     c.enabled = False
                     if c.slave_state == STATE_RUNNING:
                         c.quit_slave()
+            if not again:
+                log.info("All child processes are successfully stopped.")
             if time.time() >= (data["shutdown_time"]):
                 log.info("Max shutdown time expired.", logging.ERROR)
                 again = False
+            # -------------------- Finally:
             if again:
                 reactor.callLater(0.1, _later, self, data)
             else:
-                log.info("Stopping the Lunch Master.")
+                log.info("Done stopping the Lunch Master.")
                 deferred.callback(True) # stops reactor
         
         _later(self, _shutdown_data)
@@ -425,6 +428,19 @@ class Master(object):
             deferreds.append(d)
         return defer.DeferredList(deferreds)
         
+def _validate_identifier(identifier):
+    """
+    Raises a RuntimeError if the identifier is not valid.
+    
+    Identifiers must not contain spaces or invalid characters for a file name.
+    """
+    if " " in identifier:
+        raise RuntimeError("Identifier must not contain spaces: %s" % (identifier))
+    if ":" in identifier:
+        raise RuntimeError("Identifier must not contain colons: %s" % (identifier))
+    if "/" in identifier:
+        raise RuntimeError("Identifier must not contain slashes: %s" % (identifier))
+
 
 def gen_id_from_config_file_name(config_file_name="lunchrc"):
     """
@@ -540,8 +556,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
                 log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
-    def add_command(command=None, title=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, priority=None, depends=None, try_again_delay=0.25, give_up_after=0):
-        #Command __init__ args: (self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, ):
+    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0):
         """
         This is the only function that users use from within the configuration file.
         It adds a Command instance to the list of commands to run. 
@@ -549,20 +564,24 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
         """
         # TODO: remove priority and sleep kwargs in a future version
-        log.debug("Adding %s (%s) %s@%s" % (title, command, user, host))
+        log.debug("Adding %s (%s) %s@%s" % (identifier, command, user, host))
         # ------------- warnings ------------------
         if group is not None:
             raise RuntimeError("Groups are deprecated. Use dependencies instead.")
+        if identifier is not None:
+            _validate_identifier(identifier)
         if sleep is not None:
-            warnings.warn("The sleep keyword argument has been renamed to sleep_after.", DeprecationWarning)
+            raise RuntimeError("The sleep keyword argument has been renamed to sleep_after.")
             sleep_after = sleep
-        if priority is not None:
-            warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=title, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after)
+        #if priority is not None:
+        #    warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after)
         lunch_master.add_command(c)
     # -------------------------------------
     #global _commands # is this necessary?
     if os.path.exists(config_file):
+        if os.path.isdir(config_file):
+            raise RuntimeError("The config file %s is a directory." % (config_file))
         if chmod_config_file:
             chmod_file_not_world_writable(config_file)
         try:

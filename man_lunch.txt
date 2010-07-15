@@ -24,11 +24,11 @@ If you add more calls to add_command in this file, it will add more processes to
 
 Here is a more complex example of a configuration file. It creates three processes, with dependencies between processes.
 
-  add_command("xeyes", title="xeyes")
+  add_command("xeyes", identifier="xeyes")
   add_command("xlogo", depends=["xeyes"])
   add_command("xclock", depends=["xeyes", "xlogo"])
 
-The configuration file above will first start xeyes, and next xlogo, and finally xclock. If xeyes quits, all three processes will be stopped and restarted. If the xlogo process quits, the xclock will be stopped and restarted again when the xlogo is running. The "depends" keyword argument of the "add_command" function needs a list of strings as argument. Those string must match the "title" keyword argument of an already added command. 
+The configuration file above will first start xeyes, and next xlogo, and finally xclock. If xeyes quits, all three processes will be stopped and restarted. If the xlogo process quits, the xclock will be stopped and restarted again when the xlogo is running. The "depends" keyword argument of the "add_command" function needs a list of strings as argument. Those string must match the "identifier" keyword argument of an already added command. 
  
 In the next example, we use SSH to launch processes on a remote host.
 
@@ -42,7 +42,7 @@ lunch_______________lunch-slave____xeyes
 
 The next one is a command that is run only once.
 
-  add_command("ls -l", title="listing...", respawn=False)
+  add_command("ls -l", identifier="listing...", respawn=False)
 
 If, for some reason, it is easier for you to specify the host name for every command you add, even for the local host, you can call "add_local_address" with the master's IP as an argument.
 
@@ -51,12 +51,12 @@ If, for some reason, it is easier for you to specify the host name for every com
   # since we just added its host using the 
   # "add_local_address" function.
   add_command("xeyes", 
-    title="local_xeyes", 
+    identifier="local_xeyes", 
     user="johndoe", host="192.168.0.2")
   # We will use SSH for the next one, 
   # since its host is not set as being the local host.
   add_command("xeyes -geometry 300x400", 
-    title="remote_xeyes", 
+    identifier="remote_xeyes", 
     user="johndoe", host="example.org")
 
 [SSH KEYS MANAGEMENT]

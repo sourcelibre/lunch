@@ -2,16 +2,16 @@
 # This example demonstrates dependencies.
 
 # A bunch of processes depending on the xeyes:
-add_command("xeyes", title="xeyes")
-add_command("xcalc", title="xcalc", depends="xeyes")
-add_command("xclock", title="xclock", depends="xeyes")
-add_command("xlogo", title="xlogo", depends="xeyes")
+add_command("xeyes", identifier="xeyes")
+add_command("xcalc", identifier="xcalc", depends="xeyes")
+add_command("xclock", identifier="xclock", depends="xeyes")
+add_command("xlogo", identifier="xlogo", depends="xeyes")
 
 
 # A chain of dependencies:
-add_command("xconsole", title="xconsole", sleep_after=1.0)
-add_command("xman", title="xman", depends="xconsole")
-add_command("xman", title="xman2", depends="xman")
+add_command("xconsole", identifier="xconsole", sleep_after=1.0)
+add_command("xman", identifier="xman", depends="xconsole")
+add_command("xman", identifier="xman2", depends="xman")
 
 # A process that depends on two:
 add_command("glxgears", depends=["xlogo", "xconsole"])

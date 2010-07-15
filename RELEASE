@@ -1,4 +1,6 @@
-Version 0.3.3 - 2010-0?-??
+Version 0.3.3 - 2010-07-15
 
-    * 
+    * Changed the title keyword for identifier
+    * Validating identifiers
+    * Fixed #34: Make sure the log dir is a directory, not a file
 

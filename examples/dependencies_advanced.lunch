@@ -4,8 +4,8 @@
 command = """xterm -geometry 30x4 -hold -title %s -e echo '%s'"""
 
 add_command(command % ('once', "ran only once"), respawn=False)
-add_command(command % ('a', "a"), title="a")
-add_command(command % ('b', "b depends on a"), title="b", depends="a")
-add_command(command % ('c', "c depends on a"), title="c", depends="a")
-add_command(command % ('d', "d depends on b and c"), title="d", depends=["b", "c"])
+add_command(command % ('a', "a"), identifier="a")
+add_command(command % ('b', "b depends on a"), identifier="b", depends="a")
+add_command(command % ('c', "c depends on a"), identifier="c", depends="a")
+add_command(command % ('d', "d depends on b and c"), identifier="d", depends=["b", "c"])
 
