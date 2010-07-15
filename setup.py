@@ -11,7 +11,6 @@ import subprocess
 import sys
 import lunch
 
-
 setup(
     name="lunch",
     version=lunch.__version__,
@@ -25,9 +24,8 @@ setup(
 
 if sys.argv[1] == "build":
     commands = [
-        #'convert -geometry 48x48 -background none lunch.svg lunch.png',
-        'help2man --no-info --include=man_lunch.txt --name="The Lunch Distributed Process Manager" ./scripts/lunch --output=lunch.1',
-        'help2man --no-info --include=man_lunch-slave.txt --name="Lunch Slave" ./scripts/lunch-slave --output=lunch-slave.1'
+        'help2man --no-info --include=man_lunch.txt --name="Distributed process launcher" ./scripts/lunch --output=lunch.1',
+        'help2man --no-info --include=man_lunch-slave.txt --name="Process launcher" ./scripts/lunch-slave --output=lunch-slave.1'
         ]
     for c in commands:
         print("$ %s" % (c))
