@@ -400,6 +400,9 @@ class Master(object):
                 log.info("All child processes are successfully stopped.")
             if time.time() >= (data["shutdown_time"]):
                 log.info("Max shutdown time expired.", logging.ERROR)
+                for c in self._get_all():
+                    if c.child_state != STATE_STOPPED:
+                        log.critical("CHILD PROCESS %s IS IN STATE %s." % (c.identifier, c.child_state))
                 again = False
             # -------------------- Finally:
             if again:

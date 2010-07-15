@@ -9,3 +9,4 @@ Version 0.3.3 - 2010-07-15
         * Fixed #34: Make sure the log dir is a directory, not a file
         * Increased time before sending SIGKILL
         * #74: Dependees must be restarted their dependency is stopped
+        * #77: Make sure all children are dead when we quit
