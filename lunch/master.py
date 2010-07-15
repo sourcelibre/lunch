@@ -108,6 +108,7 @@ class Master(object):
         """
         Sets the master so that it starts all the slaves.
         """
+        log.debug("Using %s" % (__file__))
         for c in self.commands.values():
             c.enabled = True
         self.prepare_all_commands()
@@ -371,6 +372,7 @@ class Master(object):
         """
         Called before Twisted's shutdown. (end of master process)
         """
+        MAXIMUM_TIME_TO_WAIT = 10.0
         if self.pid_file is not None:
             log.info("Will now erase the %s PID file" % (self.pid_file))
             try:
@@ -382,7 +384,7 @@ class Master(object):
         now = time.time()
         _shutdown_data = {
                 "shutdown_started" : now,
-                "shutdown_time": now + 1.0
+                "shutdown_time": now + MAXIMUM_TIME_TO_WAIT
             }
         deferred = defer.Deferred()
         def _later(self, data):

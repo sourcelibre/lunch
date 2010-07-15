@@ -155,7 +155,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None, delay_before_kill=5.0):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param depends: Commands to which this command depends on. List of strings.
@@ -167,6 +167,7 @@ class Command(object):
         @param minimum_lifetime_to_respawn: Minimum time a process must have lasted to be respawned.
         @param respawn: Set to False if this is a command that must be ran only once.
         @param sleep_after: How long to wait before launching next command after this one.
+        @param delay_before_kill: Time to wait between sending SIGTERM and SIGKILL signals when it's time to stop the child process.
         @param user: User name, if spawned over SSH.
         @param verbose: Prints more information if set to True.
         @type command: str
@@ -181,6 +182,7 @@ class Command(object):
         @type sleep_after: float
         @type user: str
         @type verbose: bool
+        @type delay_before_kill: float
         """
         #TODO:
         #@param try_again_delay: Time to wait before trying again if it crashes at startup.
@@ -204,6 +206,7 @@ class Command(object):
         self.depends = depends
         self.how_many_times_run = 0
         self.how_many_times_tried = 0
+        self.delay_before_kill = delay_before_kill
         self.verbose = verbose
         self.retval = 0
         self.gave_up = False
@@ -556,7 +559,7 @@ class Command(object):
         If called for a second time, send kill -9 to slave.
         @rtype: L{twisted.internet.defer.Deferred}
         """
-        DELAY_BETWEEN_EACH_SIGNAL = 0.1
+        DELAY_BETWEEN_EACH_SIGNAL = self.delay_before_kill
         if self._quit_slave_deferred is not None:
             raise RuntimeError("Slave seems to be already quitting.")
         self._quit_slave_deferred = defer.Deferred()
