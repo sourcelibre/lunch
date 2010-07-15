@@ -1,3 +1,19 @@
+Version 0.3.3 - 2010-07-15
+    
+    New features: 
+        * #76: Added the enabled keyword in the Command class.
+        * Changed the title keyword for identifier
+        * #61: GUI features for kill/retry (done in 0.3.2)
+
+    Bug fixes: 
+        * Fixed #34: Make sure the log dir is a directory, not a file
+        * Increased time before sending SIGKILL
+        * #74: Dependees must be restarted their dependency is stopped
+        * #77: Make sure all children are dead when we quit
+        * #60: Try to restart children more than once (done in 0.3.2)
+        * #17: Validate format of identifiers
+
+
 Version 0.3.2 - 2010-06-23
 
     * Respawn after a little while instead of giving up
