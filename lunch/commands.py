@@ -155,10 +155,11 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param depends: Commands to which this command depends on. List of strings.
+        @param enabled: Whether it's enabled or not.
         @param env: dict with environment variables to set for the process to run.
         @param host: Host name or IP address, if spawned over SSH.
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
@@ -170,6 +171,7 @@ class Command(object):
         @param verbose: Prints more information if set to True.
         @type command: str
         @type depends: list
+        @type enabled: bool
         @type env: dict
         @type host: str
         @type identifier: str
@@ -196,6 +198,8 @@ class Command(object):
         self.sleep_after = sleep_after
         self.respawn = respawn
         self.enabled = True 
+        if enabled is not None:
+            self.enabled = enabled
         self.to_be_deleted = False
         self.depends = depends
         self.how_many_times_run = 0
