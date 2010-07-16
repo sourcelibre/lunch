@@ -238,6 +238,7 @@ class Command(object):
         # Some attributes might be changed by the master, namely identifier and host.
         # That's why we sait until start() is called to initiate the slave_logger.
         self.slave_logger = None
+        self.child_pid = None
 
     def is_ready_to_be_started(self):
         # self.enabled
@@ -398,6 +399,17 @@ class Command(object):
         """
         pass
 
+    def recv_child_pid(self, mess):
+        """
+        Callback for the "child_pid" message from the slave.
+        
+        The arg is the child's PID
+        """
+        self.log("%s->Master: child_pid %s" % (self.identifier, mess))
+        words = mess.split(" ")
+        self.child_pid = int(words[0])
+        self.log("%s: PID of child is %s" % (self.identifier, self.child_pid), logging.INFO)
+
     def recv_msg(self, mess):
         """
         Callback for the "msg" message from the slave.
@@ -521,6 +533,8 @@ class Command(object):
         """
         Called when it is time to change the state of the child of the slave.
         """
+        if new_state == STATE_STOPPED:
+            self.child_pid = None
         if self.child_state != new_state:
             if new_state == STATE_RUNNING:
                 self.how_many_times_run += 1

@@ -178,6 +178,8 @@ class LunchApp(object):
     
     Defines the main window
     """
+    IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
+
     def __init__(self, master=None):
         self.master = master
         self.confirm_close = True # should we ask if the user is sure to close the app?
@@ -224,13 +226,26 @@ class LunchApp(object):
         self.tree_view_widget = gtk.TreeView(self.model_sort)
         self._setup_treeview()
         
+        self.tree_view_widget.set_property("has-tooltip", True)
         self.tree_view_widget.get_selection().connect("changed", self.on_selected_command_changed)
+        #self.tree_view_widget.connect("query-tooltip", self.on_treeview_tooltip_queried)
         scroller.add(self.tree_view_widget)
         for command in _commands:
             self._add_command_in_tree(command)
 
         self.master.command_added_signal.connect(self.on_command_added)
         self.master.command_removed_signal.connect(self.on_command_removed)
+        
+        # text view for the details
+        scroller2 = gtk.ScrolledWindow()
+        scroller2.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        scroller2.set_shadow_type(gtk.SHADOW_IN)
+        scroller2.set_size_request(-1, 50)
+        viewport = gtk.Viewport()
+        vbox.pack_start(scroller2, expand=True, fill=True)
+        self.textview_widget = gtk.TextView()
+        scroller2.add(viewport)
+        viewport.add(self.textview_widget)
         
         # Box with buttons.
         hbox = gtk.HBox(homogeneous=True)
@@ -247,30 +262,46 @@ class LunchApp(object):
         self.start_command_button_widget = gtk.Button(_("Start child process"))
         self.start_command_button_widget.connect("clicked", self.on_start_command_clicked)
         hbox.pack_start(self.start_command_button_widget)
+
         
         self.window.show_all()
+    
+    def set_textview_text(self, text):
+        textview_buffer = self.textview_widget.get_buffer()
+        textview_buffer.set_text(text)
 
-    #def _create_buttons(self): 
-        #TODO: open log
-        #TODO: disable/enable/restart
-        #self.stopall_button = gtk.Button("Stop All")
-        #self.stopall_button.connect("clicked", self.on_stopall_clicked)
-        #self.table.attach(self.stopall_button, 0, 2, num_rows - 1, num_rows)
-        #self.stopall_button.show()
+    def _update_text_in_textview(self):
+        command = self._get_currently_selected_command(False)
+        if command is None:
+            txt = _("Select a command to view information about it.")
+        else:
+            txt = ""
+            txt += "%s: %s\n"% (_("Command"), command.command)
+            txt += "%s: %s\n"% (_("Environement variables"), command.env)
+            txt += "%s: %s\n"% (_("PID of the child process: "), command.child_pid)
+        self.set_textview_text(txt)
 
-    IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
+    def _update_text_in_textview_if_command_is_selected(self, command):
+        if command == self._get_currently_selected_command(False):
+            self._update_text_in_textview()
+
+    def on_treeview_tooltip_queried(self, *args):
+        log.debug("on_treeview_tooltip_queried %s" % (str(args)))
 
     def on_command_added(self, command):
         log.debug("on_command_added")
         self._add_command_in_tree(command)
+        self._update_text_in_textview()
         
     def on_command_removed(self, command):
         log.debug("on_command_removed")
         self._remove_command_from_tree(command)
+        self._update_text_in_textview()
 
     def on_selected_command_changed(self, *args):
         log.debug("on_selected_command_changed")
         self._update_buttons_according_to_selected_contact()
+        self._update_text_in_textview()
     
     def _update_buttons_according_to_selected_contact(self):
         command = self._get_currently_selected_command(False)
@@ -514,9 +545,6 @@ class LunchApp(object):
         if command is not None:
             command.start()
 
-    #def on_stopall_clicked(self, widget): # index as info
-    #    print("Stop All")
-
     def on_command_status_changed(self, command, new_state):
         """
         Called when the child_state_changed_signal of the command is triggered.
@@ -529,6 +557,7 @@ class LunchApp(object):
         log.debug("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
         self._update_row(command)
         self._update_buttons_according_to_selected_contact()
+        self._update_text_in_textview_if_command_is_selected(command)
 
     def destroy_app(self, widget, data=None):
         """

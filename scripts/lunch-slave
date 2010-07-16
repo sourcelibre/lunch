@@ -24,7 +24,7 @@ The lunch-slave command is a single file, to ease portability.
 It is an interactive process launcher that can only launch a single process.
 """
 #TODO: allow to launch more than one process.
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 DESCRIPTION = "The lunch slave utility is an interactive process launcher. It is intended to be run by the lunch master process through an encrypted SSH connection. It launches a single process at a time and allows to specify its environment and to log its standard output and error to a file. Launch it, type \"help\" and press enter to know more about how it works."
 
 import os
@@ -290,6 +290,7 @@ class Slave(object):
         self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
         self.pid = self._process_transport.pid
         self.log("Spawned child %s with pid %s." % (self.identifier, self.pid))
+        self.io_protocol.send_child_pid(self.pid)
     
     def _on_connection_made(self):
         if not STATE_STARTING:
@@ -412,6 +413,9 @@ class SlaveIO(basic.LineReceiver):
     
     def send_ready(self):
         self.sendLine("ready")
+    
+    def send_child_pid(self, pid):
+        self.sendLine("child_pid %s" % (pid))
     
     def send_retval(self, exit_code):
         self.sendLine("retval %s" % (exit_code))
