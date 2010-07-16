@@ -280,6 +280,7 @@ class LunchApp(object):
             keyval = {
                 _("command"): "\n".join(textwrap.wrap(command.command)),
                 _("depends"): command.depends,
+                _("enabled"): command.enabled,
                 _("user"): command.user,
                 _("host"): command.host,
                 _("child_pid"): command.child_pid,
