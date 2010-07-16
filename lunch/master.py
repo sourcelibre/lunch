@@ -391,7 +391,7 @@ class Master(object):
             again = False
             for c in self._get_all():
                 if c.child_state == STATE_RUNNING:
-                    log.info("Slave %s is still running. Stopping it." % (c.identifier))
+                    log.info("Please wait... Slave %s is still running." % (c.identifier))
                     again = True
                     c.enabled = False
                     if c.slave_state == STATE_RUNNING:
