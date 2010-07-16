@@ -32,6 +32,7 @@ from twisted.python import procutils
 import gtk
 import sys
 import os
+import textwrap
 import webbrowser
 from lunch import __version__
 from lunch import dialogs
@@ -276,9 +277,28 @@ class LunchApp(object):
             txt = _("Select a command to view information about it.")
         else:
             txt = ""
-            txt += "%s: %s\n"% (_("Command"), command.command)
+            txt += textwrap.wrap("%s: %s\n"% (_("Command"), command.command))
             txt += "%s: %s\n"% (_("Environement variables"), command.env)
             txt += "%s: %s\n"% (_("PID of the child process: "), command.child_pid)
+
+        #all = {
+        #    (command.command, _("Command")),
+        #    (command.env, _("Environment variables")),
+        #    _("PID of the child process: "), command.child_pid
+        #    
+        #command: Shell string. The first item is the name of the name of the executable.
+        #depends: Commands to which this command depends on. List of strings.
+        #enabled: Whether it's enabled or not.
+        #env: dict with environment variables to set for the process to run.
+        #host: Host name or IP address, if spawned over SSH.
+        #identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
+        #log_dir: Full path to the directory to save log files in.
+        #minimum_lifetime_to_respawn: Minimum time a process must have lasted to be respawned.
+        #respawn: Set to False if this is a command that must be ran only once.
+        #sleep_after: How long to wait before launching next command after this one.
+        #delay_before_kill: Time to wait between sending SIGTERM and SIGKILL signals when it's time to stop the child process.
+        #user: User name, if spawned over SSH.
+        #verbose: Prints more information if set to True.
         self.set_textview_text(txt)
 
     def _update_text_in_textview_if_command_is_selected(self, command):
