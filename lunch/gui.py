@@ -38,6 +38,10 @@ from lunch import dialogs
 from lunch.states import *
 from lunch import logger
 
+#TODO: i18nize
+def _(value):
+    return value
+
 log = logger.start(name="lunch-gui")
 
 __license__ = """Lunch
@@ -138,9 +142,9 @@ class About(object):
         self.about_dialog.set_name('Lunch')
         self.about_dialog.set_role('about')
         self.about_dialog.set_version(__version__)
-        commentlabel = 'Simple Process Launcher for Complex Launching Setup.'
+        commentlabel = _('Simple Process Launcher for Complex Launching Setup.')
         self.about_dialog.set_comments(commentlabel)
-        self.about_dialog.set_copyright("Copyright 2009 Society for Arts and Technology")
+        self.about_dialog.set_copyright(_("Copyright 2009-2010 Society for Arts and Technology"))
         self.about_dialog.set_license(__license__)
         self.about_dialog.set_authors([
             'Alexandre Quessy <alexandre@quessy.net>'
@@ -232,15 +236,15 @@ class LunchApp(object):
         hbox = gtk.HBox(homogeneous=True)
         vbox.pack_start(hbox, expand=False)
         
-        self.openlog_button_widget = gtk.Button("Open child process log file")
+        self.openlog_button_widget = gtk.Button(_("Open child process log file"))
         self.openlog_button_widget.connect("clicked", self.on_openlog_clicked)
         hbox.pack_start(self.openlog_button_widget)
         
-        self.stop_command_button_widget = gtk.Button("Stop child process")
+        self.stop_command_button_widget = gtk.Button(_("Stop child process"))
         self.stop_command_button_widget.connect("clicked", self.on_stop_command_clicked)
         hbox.pack_start(self.stop_command_button_widget)
 
-        self.start_command_button_widget = gtk.Button("Start child process")
+        self.start_command_button_widget = gtk.Button(_("Start child process"))
         self.start_command_button_widget.connect("clicked", self.on_start_command_clicked)
         hbox.pack_start(self.start_command_button_widget)
         
@@ -299,11 +303,11 @@ class LunchApp(object):
         NUM_COLUMNS = 5
         columns = [None] * NUM_COLUMNS
         # Set column title
-        columns[0] = gtk.TreeViewColumn("Title")
-        columns[1] = gtk.TreeViewColumn("Command")
-        columns[2] = gtk.TreeViewColumn("Host")
-        columns[3] = gtk.TreeViewColumn("Executions") # How many times
-        columns[4] = gtk.TreeViewColumn("State") # str
+        columns[0] = gtk.TreeViewColumn(_("Identifier"))
+        columns[1] = gtk.TreeViewColumn(_("Command"))
+        columns[2] = gtk.TreeViewColumn(_("Host"))
+        columns[3] = gtk.TreeViewColumn(_("Executions")) # How many times
+        columns[4] = gtk.TreeViewColumn(_("State")) # str
         
         # Set default properties for each column
         cells = [None] * NUM_COLUMNS
@@ -326,15 +330,52 @@ class LunchApp(object):
         cells[4].set_property("width-chars", 8) # State
         #cells[4].set_property("foreground", 'green')
 
+    def _get_iter_for_command_row(self, looking_for):
+        """
+        @param looking_for: identifier to look for
+        @return: tree path - or None
+        @rtype: gti.Iter
+        """
+        list_store = self.model_sort.get_model()
+        row_number = 0
+        found_it = False
+        for row in iter(list_store):
+            identifier = row[self.IDENTIFIER_COLUMN]
+            if identifier == looking_for:
+                found_it = True
+                break
+            row_number += 1
+        if found_it:
+            return list_store.get_iter(row_number)
+        else:
+            return None
+
     def _add_command_in_tree(self, command):
         """
         adds a row with the data of the command.
         """
+        # TODO: update it every time it changes. (the PID, etc)
         list_store = self.model_sort.get_model()
         list_store.append(self._format_command(command))
+        
+        self._set_tooltip_for_command(command)
+        
         #self.commands[command.identifier] = command
         #print("Connecting state changed signal to GUI.")
         command.child_state_changed_signal.connect(self.on_command_status_changed)
+
+    # FIXME: did not get this to work yet
+    def _set_tooltip_for_command(self, command):
+        # trying to add a tooltip
+        tree_iter = self._get_iter_for_command_row(command.identifier)
+        tooltip = gtk.Tooltip()
+        txt = _("<b>Command</b>: %(command)s\n") % {"command": command.command}
+        tooltip.set_markup(txt)
+        log.debug("getting tree iter %s for command %s" % (tree_iter, command.identifier))
+        tree_path = self.model_sort.get_model().get_path(tree_iter)  # path in the list_store
+        log.debug("Adding tooltip %s in tree: %s" % (txt, tree_path))
+        # (GtkTreeView *tree_view, GtkTooltip *tooltip, GtkTreePath *path);
+        self.tree_view_widget.set_tooltip_row(tooltip, tree_path)
 
     def _remove_command_from_tree(self, command):
         """
@@ -401,6 +442,8 @@ class LunchApp(object):
         tail_master_log(self.master)
 
     def _create_main_menu(self, window):
+        #TODO: i18nize:
+        #FIXME: this way of doing it is deprecated
         menu_items = (
             ( "/_File", None, None, 0, "<Branch>" ),
             #( "/File/_New", "<control>N", self.print_hello, 0, None),
@@ -445,7 +488,7 @@ class LunchApp(object):
         if rows is None:
             ret = None
             if show_error_if_none:
-                msg = "Please select a process in the list."
+                msg = _("Please select a process in the list.")
                 d = defer.Deferred()
                 dialog = dialogs.ErrorDialog(d, msg)
         else:
@@ -521,8 +564,7 @@ class LunchApp(object):
             else:
                 log.info("Not quitting.")
         if self.confirm_close and still_some_running:
-            #TODO: Do not ask if there are no more processes running.
-            d = dialogs.YesNoDialog.create("Really quit ?\nAll launched processes will quit as well.")
+            d = dialogs.YesNoDialog.create(_("Really quit ?\nAll launched processes will quit as well."))
             d.addCallback(_cb)
             return True
         else:
