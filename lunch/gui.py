@@ -277,7 +277,7 @@ class LunchApp(object):
             txt = _("Select a command to view information about it.")
         else:
             txt = ""
-            txt += textwrap.wrap("%s: %s\n"% (_("Command"), command.command))
+            txt += "\n".join(textwrap.wrap("%s: %s\n" % (_("Command"), command.command)))
             txt += "%s: %s\n"% (_("Environement variables"), command.env)
             txt += "%s: %s\n"% (_("PID of the child process: "), command.child_pid)
 
