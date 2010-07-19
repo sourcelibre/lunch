@@ -372,7 +372,7 @@ class Master(object):
         """
         Called before Twisted's shutdown. (end of master process)
         """
-        MAXIMUM_TIME_TO_WAIT = 10.0
+        MAXIMUM_TIME_TO_WAIT = 20.0
         if self.pid_file is not None:
             log.info("Will now erase the %s PID file" % (self.pid_file))
             try:
@@ -395,7 +395,8 @@ class Master(object):
                     again = True
                     c.enabled = False
                     if c.slave_state == STATE_RUNNING:
-                        c.quit_slave()
+                        # c.quit_slave()
+                        c.send_stop()
             if not again:
                 log.info("All child processes are successfully stopped.")
             if time.time() >= (data["shutdown_time"]):

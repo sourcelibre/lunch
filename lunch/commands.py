@@ -155,7 +155,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None, delay_before_kill=5.0):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None, delay_before_kill=8.0):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param depends: Commands to which this command depends on. List of strings.
@@ -588,7 +588,7 @@ class Command(object):
                 self._quit_slave_deferred.callback(None)
             return result
         
-        def _cl_sigint():
+        def _cl_sigterm():
             # sends a sigterm
             # and later a sigkill
             self._process_transport.signalProcess(15) # signal.SIGTERM
@@ -611,9 +611,9 @@ class Command(object):
             if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
                 if self.child_state in [STATE_RUNNING, STATE_STARTING]:
                     self.stop() # self.send_stop()
-                    reactor.callLater(DELAY_BETWEEN_EACH_SIGNAL, _cl_sigint)
+                    reactor.callLater(DELAY_BETWEEN_EACH_SIGNAL, _cl_sigterm)
                 elif self.child_state == STATE_STOPPED:
-                    _cl_sigint()
+                    _cl_sigterm()
             elif self.slave_state == STATE_STOPPING:
                 # second time this is called, force-quitting:
                 self._process_transport.signalProcess(9) # signal.SIGKILL

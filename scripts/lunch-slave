@@ -161,7 +161,7 @@ class Slave(object):
         self.command = command # string
         self.options = {
             "clear-old-logs": True,
-            "delay_kill": 5.0, # seconds
+            "delay_kill": 8.0, # seconds # TODO: use the attr of the lunch.commands.Command
             }
         self.identifier = identifier # title
         self.env = {} # environment variables for the child process
@@ -317,7 +317,8 @@ class Slave(object):
         if self.state in [STATE_RUNNING, STATE_STARTING]:
             self.set_child_state(STATE_STOPPING)
             self.log('Will stop process using SIGTERM.')
-            signal_to_send = 15 #"TERM"
+            #TODO: first send signal 2 (SIGINT)
+            signal_to_send = 2 # Used to be 15 #"TERM"
             # closing files handles in _on_process_ended
             self._delayed_kill = reactor.callLater(self.options["delay_kill"], _later_check, self, self.pid) # XXX important.
         elif self.state == STATE_STOPPING:
