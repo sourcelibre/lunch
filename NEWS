@@ -1,3 +1,20 @@
+Version 0.3.4 - 2010-07-19
+
+This release introduces critical bugfixes with stopping child processes. 
+There is a new text view in the user interface that displays more information 
+about the child processes.
+    
+    New features: 
+        * Better message at shutdown time
+        * Added a textview to show command details 
+        * Storing the PID of the child 
+
+    Bug fixes: 
+        * #81: To kill a child, need to send the signal to the child, not the slave, otherwise, the slave crashes, and the child crashes with it.
+        * Using SIGTERM, not SIGINT. 
+        * #80: Make sure we log until the process is dead.
+        * #78: Increase delay between each signal when stopping a process.
+
 Version 0.3.3 - 2010-07-15
     
     New features: 
