@@ -449,6 +449,7 @@ class LunchApp(object):
         #self.commands[command.identifier] = command
         #print("Connecting state changed signal to GUI.")
         command.child_state_changed_signal.connect(self.on_command_status_changed)
+        command.child_pid_changed_signal.connect(self.on_command_child_pid_changed)
 
 #    # FIXME: did not get this to work yet
 #    def _set_tooltip_for_command(self, command):
@@ -482,6 +483,7 @@ class LunchApp(object):
         list_store.remove(list_store.get_iter(row_number))
         #log.debug("Removing GUI's slot for state changed signal.")
         command.child_state_changed_signal.disconnect(self.on_command_status_changed)
+        command.child_pid_changed_signal.disconnect(self.on_command_child_pid_changed)
 
     def _update_row(self, command):
         list_store = self.model_sort.get_model()
@@ -612,13 +614,23 @@ class LunchApp(object):
         @param command L{lunch.commands.Command} 
         @param new_state str
         """
-        #txt = "%s\n<small>(ran %d times)</small>" % (new_state, command.how_many_times_run)
-        #i = self.commands.index(command)
-        #self.state_labels[i].set_markup(txt)
         log.debug("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
+        self._update_command(command)
+
+    def on_command_child_pid_changed(self, command, new_pid):
+        """
+        Called when the child_pid_changed_signal of the command is triggered.
+        @param command L{lunch.commands.Command} 
+        @param new_pid int
+        """
+        log.debug("GUI: Child %s PID changed to %s" % (command.identifier, new_pid))
+        self._update_command(command)
+
+    def _update_command(self, command):
         self._update_row(command)
         self._update_buttons_according_to_selected_contact()
         self._update_text_in_textview_if_command_is_selected(command)
+        
 
     def destroy_app(self, widget, data=None):
         """

@@ -236,6 +236,7 @@ class Command(object):
         self.child_state = STATE_STOPPED # state of the child process that the lunch-slave handles.
         self.slave_state_changed_signal = sig.Signal() # param: self, new_state
         self.child_state_changed_signal = sig.Signal() # param: self, new_state
+        self.child_pid_changed_signal = sig.Signal() # param: self, new_pid
         if command is None:
             raise RuntimeError("You must provide a command to be run.")
         log.info("Creating command %s ($ %s) on %s@%s" % (self.identifier, self.command, self.user, self.host))
@@ -421,6 +422,7 @@ class Command(object):
         words = mess.split(" ")
         self.child_pid = int(words[0])
         self.log("%s: PID of child is %s" % (self.identifier, self.child_pid), logging.INFO)
+        self.child_state_changed_signal(self, self.child_pid)
 
     def recv_msg(self, mess):
         """

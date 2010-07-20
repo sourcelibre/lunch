@@ -218,7 +218,7 @@ class Slave(object):
         else:
             return False
     
-    def start(self):
+    def start_child(self):
         """
         Starts the child process
         """
@@ -559,7 +559,7 @@ class SlaveIO(basic.LineReceiver):
         """
         run: Starts the process.
         """
-        self.slave.start()
+        self.slave.start_child()
     
     def recv_stop(self, line):
         """
