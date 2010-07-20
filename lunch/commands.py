@@ -162,7 +162,7 @@ class Command(object):
     #TODO: move send_* and recv_* methods to the SlaveProcessProtocol.
     #TODO: add wait_returned attribute. (commands after which we should wait them to end before calling next)
     
-    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None, delay_before_kill=8.0):
+    def __init__(self, command=None, identifier=None, env=None, user=None, host=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, depends=None, verbose=False, try_again_delay=0.25, give_up_after=0, enabled=None, delay_before_kill=8.0, ssh_port=None):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
         @param depends: Commands to which this command depends on. List of strings.
@@ -177,6 +177,7 @@ class Command(object):
         @param delay_before_kill: Time to wait between sending SIGTERM and SIGKILL signals when it's time to stop the child process.
         @param user: User name, if spawned over SSH.
         @param verbose: Prints more information if set to True.
+        @param ssh_port: SSH port to use. 
         @type command: str
         @type depends: list
         @type enabled: bool
@@ -190,6 +191,7 @@ class Command(object):
         @type user: str
         @type verbose: bool
         @type delay_before_kill: float
+        @type ssh_port: int
         """
         #TODO:
         #@param try_again_delay: Time to wait before trying again if it crashes at startup.
@@ -203,6 +205,7 @@ class Command(object):
             self.env.update(env)
         self.user = user
         self.host = host
+        self.ssh_port = ssh_port
         self.order = order
         self.sleep_after = sleep_after
         self.respawn = respawn
@@ -300,6 +303,8 @@ class Command(object):
                     self.log("We will use SSH since host is %s" % (self.host))
                     is_remote = True # using SSH
                     _command = ["ssh"]
+                    if self.ssh_port is not None:
+                        _command.extend(["-p", str(self.ssh_port)])
                     if self.user is not None:
                         _command.extend(["-l", self.user])
                     _command.extend([self.host])
@@ -418,7 +423,7 @@ class Command(object):
         
         The arg is the child's PID
         """
-        self.log("%s->Master: child_pid %s" % (self.identifier, mess))
+        self.log("lunch-slave %s> child_pid %s" % (self.identifier, mess))
         words = mess.split(" ")
         self.child_pid = int(words[0])
         self.log("%s: PID of child is %s" % (self.identifier, self.child_pid), logging.INFO)
@@ -434,7 +439,7 @@ class Command(object):
         """
         Callback for the "retval" message from the lunch-slave.
         """
-        self.log("%s->Master: retval %s" % (self.identifier, mess))
+        self.log("lunch-slave %s> retval %s" % (self.identifier, mess))
         words = mess.split(" ")
         self.retval = int(words[0])
         self.log("%s: Return value of child is %s" % (self.identifier, self.retval), logging.INFO)
@@ -443,13 +448,13 @@ class Command(object):
         """
         Callback for the "log" message from the lunch-slave.
         """
-        self.log("%s->Master: log %s" % (self.identifier, mess))
+        self.log("lunch-slave %s> log %s" % (self.identifier, mess))
 
     def recv_error(self, mess):
         """
         Callback for the "error" message from the lunch-slave.
         """
-        self.log("%s->Master: %s" % (self.identifier, mess), logging.ERROR)
+        self.log("lunch-slave %s> error %s" % (self.identifier, mess), logging.ERROR)
     
     def recv_pong(self, mess):
         """
@@ -461,7 +466,7 @@ class Command(object):
         """
         Callback for the "bye" message from the lunch-slave.
         """
-        self.log("%s->Master: %s" % (self.identifier, "BYE (slave quits)"), logging.ERROR)
+        self.log("lunch-slave %s> %s" % (self.identifier, "BYE (slave quits)"), logging.ERROR)
     
     def get_state_info(self):
         """
@@ -510,7 +515,7 @@ class Command(object):
         previous_state = self.child_state
         new_state = words[0]
         #print("%s's child state: %s" % (self.identifier, new_state))
-        self.log("%s->Master: child STATE is %s" % (self.identifier, new_state))
+        self.log("lunch-child %s> Its state changed to %s" % (self.identifier, new_state))
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:

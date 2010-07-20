@@ -562,7 +562,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
                 log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
-    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0):
+    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
         """
         This is the only function that users use from within the configuration file.
         It adds a Command instance to the list of commands to run. 
@@ -581,7 +581,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
             sleep_after = sleep
         #if priority is not None:
         #    warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
-        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after)
+        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after, ssh_port=ssh_port)
         lunch_master.add_command(c)
     # -------------------------------------
     #global _commands # is this necessary?

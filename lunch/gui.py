@@ -614,7 +614,7 @@ class LunchApp(object):
         @param command L{lunch.commands.Command} 
         @param new_state str
         """
-        log.debug("GUI: Child %s changed its state to %s" % (command.identifier, new_state))
+        log.debug("lunch-child %s> Its state changed to %s" % (command.identifier, new_state))
         self._update_command(command)
 
     def on_command_child_pid_changed(self, command, new_pid):
@@ -623,7 +623,7 @@ class LunchApp(object):
         @param command L{lunch.commands.Command} 
         @param new_pid int
         """
-        log.debug("GUI: Child %s PID changed to %s" % (command.identifier, new_pid))
+        log.debug("lunch-child %s> Its PID changed to %s" % (command.identifier, new_pid))
         self._update_command(command)
 
     def _update_command(self, command):
