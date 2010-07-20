@@ -19,13 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
-The lunch-slave command is a single file, to ease portability.
+The lunch-slave script is an interactive process launcher. 
 
-It is an interactive process launcher that can only launch a single process.
+It that can only launch a single process.
+This file is a stand-alone script. It does not depend on any library, except Twisted and the standard Python modules.
 """
-#TODO: allow to launch more than one process.
+#FIXME: still need to edit this version string by hand
 __version__ = "0.3.5"
+
 DESCRIPTION = "The lunch slave utility is an interactive process launcher. It is intended to be run by the lunch master process through an encrypted SSH connection. It launches a single process at a time and allows to specify its environment and to log its standard output and error to a file. Launch it, type \"help\" and press enter to know more about how it works."
+
+#TODO: allow to launch more than one process.
+#TODO: spend more time looking at twisted.runner.procmon 
 
 import os
 import sys
@@ -41,6 +46,7 @@ from twisted.internet import stdio
 from twisted.protocols import basic
 from twisted.python import procutils
 
+# Those constants are redefined here to avoid the need to import the lunch module.
 STATE_STARTING = "STARTING"
 STATE_RUNNING = "RUNNING" # success
 STATE_STOPPING = "STOPPING"
@@ -55,13 +61,15 @@ class SlaveError(Exception):
 def call_callbacks(callbacks, *args, **kwargs):
     """
     Calls each callable in the list of callbacks with the arguments and keyword-arguments provided.
+
+    Simplified implementation of the signal-slot pattern.
     """
     for c in callbacks:
         c(*args, **kwargs)
 
 class ChildProcess(protocol.ProcessProtocol):
     """
-    Process managed by a Lunch Slave.
+    Process managed by a lunch-slave.
  
     Its stdout and stderr streams are logged to a file.    
     """
@@ -143,7 +151,6 @@ class Slave(object):
     
     The command, identifier and env can be set after object creation.
     """
-    # TODO: check twisted.runner.procmon !!!
     def __init__(self, command=None, identifier=None, env=None):
         """
         @param command: Shell string. The first item is the name of the name of the executable.
@@ -156,7 +163,7 @@ class Slave(object):
         self._child_running_time = None
         self._stdout_file = None
         self.must_flush_stdout_file = False
-        self.state = STATE_STOPPED
+        self.child_state = STATE_STOPPED
         self.io_protocol = None # this attribute is set directly to the SlaveIO instance once created.
         self.command = command # string
         self.options = {
@@ -182,8 +189,8 @@ class Slave(object):
         Called before twisted's reactor shutdown.
         to make sure that the process is dead before quitting.
         """
-        if self.state in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
-            msg = "Child still %s. Stopping it before shutdown." % (self.state)
+        if self.child_state in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
+            msg = "Child still %s. Stopping it before shutdown." % (self.child_state)
             self.log(msg)
             self.stop()
 
@@ -198,7 +205,7 @@ class Slave(object):
         Checks if the child is alive.
         """
         #TODO Use this
-        if self.state == STATE_RUNNING:
+        if self.child_state == STATE_RUNNING:
             proc = self._process_transport
             try:
                 proc.signalProcess(0)
@@ -215,12 +222,12 @@ class Slave(object):
         """
         Starts the child process
         """
-        if self.state in [STATE_RUNNING, STATE_STARTING]:
-            msg = "Child is already %s. Cannot start it." % (self.state)
+        if self.child_state in [STATE_RUNNING, STATE_STARTING]:
+            msg = "Child is already %s. Cannot start it." % (self.child_state)
             self.io_protocol.send_error(msg)
             return
-        elif self.state == STATE_STOPPING:
-            msg = "Child is %s. Please try again to start it when it will be stopped." % (self.state)
+        elif self.child_state == STATE_STOPPING:
+            msg = "Child is %s. Please try again to start it when it will be stopped." % (self.child_state)
             self.io_protocol.send_error(msg)
             # TODO: The Master should try again later.
             return
@@ -303,30 +310,29 @@ class Slave(object):
         """
         def _later_check(self, pid):
             if self.pid == pid:
-                if self.state in [STATE_STOPPING]:
+                if self.child_state in [STATE_STOPPING]:
                     self.io_protocol.send_error("Child process not dead.")
                     self.stop() # KILL
-                elif self.state in [STATE_STOPPED]:
-                    msg = "Successfully killed process after least than the %f seconds. State is %s." % (self.options["delay_kill"], self.state)
+                elif self.child_state in [STATE_STOPPED]:
+                    msg = "Successfully killed process after least than the %f seconds. State is %s." % (self.options["delay_kill"], self.child_state)
                     self.log(msg)
             self._delayed_kill = None
         
         # TODO: do callLater calls to check if the process is still running or not.
         #see twisted.internet.process._BaseProcess.reapProcess
         signal_to_send = None
-        if self.state in [STATE_RUNNING, STATE_STARTING]:
+        if self.child_state in [STATE_RUNNING, STATE_STARTING]:
             self.set_child_state(STATE_STOPPING)
-            self.log('Will stop process using SIGTERM.')
-            #TODO: first send signal 2 (SIGINT)
+            self.log('Will stop the child process using SIGINT.')
             signal_to_send = 2 # Used to be 15 #"TERM"
             # closing files handles in _on_process_ended
             self._delayed_kill = reactor.callLater(self.options["delay_kill"], _later_check, self, self.pid) # XXX important.
-        elif self.state == STATE_STOPPING:
-            self.log('Trying to kill again the child process using SIGKILL.')
+        elif self.child_state == STATE_STOPPING:
+            self.log('Will stop the child process using SIGKILL since it\'s not dead.')
             signal_to_send = 9 #"KILL"
             # _on_process_ended will probably be called, this time.
         else: # STOPPED
-            msg = "Process is already stopped."
+            msg = "The child process is already stopped."
             self.set_child_state(STATE_STOPPED)
             self.io_protocol.send_error(msg)
             return
@@ -334,17 +340,17 @@ class Slave(object):
             try:
                 self._process_transport.signalProcess(signal_to_send)
             except OSError, e:
-                msg = "Error sending signal %s. %s" % (signal_to_send, e)
+                msg = "Error sending signal %s to the child process. %s" % (signal_to_send, e)
                 self.io_protocol.send_error(msg)
             except error.ProcessExitedAlready:
-                if signal_to_send == "TERM":
-                    msg = "Process had already exited while trying to send signal %s." % (signal_to_send)
-                    self.io_protocol.send_error(msg)
+                #if signal_to_send == "TERM":
+                msg = "The child process had already exited while trying to send signal %s." % (signal_to_send)
+                self.io_protocol.send_error(msg)
             #TODO: later, make sure it is correctly killed.
 
     def log(self, msg, level=logging.DEBUG):
         """
-        Logs to Master.
+        Sends some logging string to the Master. 
         (through stdout)
         """
         if level >= self.log_level:
@@ -352,15 +358,15 @@ class Slave(object):
 
     def _on_process_ended(self, exit_code):
         self._child_running_time = time.time() - self._time_child_started
-        if self.state == STATE_STOPPING:
+        if self.child_state == STATE_STOPPING:
             self.log('Child process exited as expected.')
             if self._delayed_kill is not None:
                 if self._delayed_kill.active:
                     self._delayed_kill.cancel()
                 self._delayed_kill = None
-        elif self.state == STATE_STARTING:
+        elif self.child_state == STATE_STARTING:
             self.log('Child process exited while trying to start it.')
-        elif self.state == STATE_RUNNING:
+        elif self.child_state == STATE_RUNNING:
             if exit_code == 0:
                 self.log('Child process exited.')
             else:
@@ -376,7 +382,7 @@ class Slave(object):
         """
         Handles state changes.
         """
-        if self.state != new_state:
+        if self.child_state != new_state:
             if new_state == STATE_STOPPED:
                 self.log("Child lived for %s seconds." % (self._child_running_time))
                 self.io_protocol.send_state(new_state, self._child_running_time)
@@ -385,7 +391,7 @@ class Slave(object):
             self.log("child state: %s" % (new_state))
         else:
             self.log("State is same as before: %s" % (new_state))
-        self.state = new_state
+        self.child_state = new_state
         
 class SlaveIO(basic.LineReceiver):
     """
@@ -407,7 +413,7 @@ class SlaveIO(basic.LineReceiver):
         slave.io_protocol = self
     
     def connectionMade(self):
-        self.send_message("Welcome to the Lunch slave console. Type 'help' for help.")
+        self.send_message("Welcome to the lunch-slave console. Type 'help' for help.")
         if self._on_log not in self.slave.log_callbacks:
             self.slave.log_callbacks.append(self._on_log)
         self.send_ready()
@@ -469,27 +475,28 @@ class SlaveIO(basic.LineReceiver):
             commands = [cmd[len(self._COMMAND_PREFIX) + 1:] for cmd in dir(self) if cmd.startswith(self._COMMAND_PREFIX)]
             self.send_message("(help) Valid commands: %s" %  (" ".join(commands)))
 
-    def send_state(self, state, child_running_time=None):
+    def send_state(self, child_state, child_running_time=None):
+        # TODO: could be more verbose - it's the child state, not the lunch-slave state.
         if child_running_time is not None:
-            self.sendLine("%s %s %s" % ("state", state, child_running_time))
+            self.sendLine("%s %s %s" % ("state", child_state, child_running_time))
         else:
-            self.sendLine("%s %s" % ("state", state))
+            self.sendLine("%s %s" % ("state", child_state))
     
     def recv_quit(self, line):
         """
-        quit: Quit this session
+        quit: Quits this session
         """
-        if self.slave.state == STATE_RUNNING:
-            self.send_log("Slave is still running. Need to stop it.") # XXX
+        if self.slave.child_state == STATE_RUNNING:
+            self.send_log("The lunch-slave is still running. Need to stop it.") # XXX
             self.slave.stop()
         self.send_bye()
         self.transport.loseConnection() # close this process' stdin and stdout
 
     def send_bye(self):
         """
-        Confirms that we will stop this slave.
+        Confirms that we will stop this lunch-slave.
         """
-        self.sendLine('%s Exiting slave.' % ("bye"))
+        self.sendLine('%s Exiting lunch-slave.' % ("bye"))
 
     def recv_logdir(self, line):
         """
@@ -618,12 +625,12 @@ class SlaveIO(basic.LineReceiver):
 
     def recv_status(self, line):
         """
-        status: prints the state of the slave.
+        status: ask the lunch-slave to print the state of the child process.
         """
         self.send_status()
 
     def send_status(self):
-        self.sendLine("%s %s" % ("status", self.slave.state))
+        self.sendLine("%s %s" % ("status", self.slave.child_state))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
@@ -631,7 +638,7 @@ class SlaveIO(basic.LineReceiver):
             self.slave.log_callbacks.remove(self._on_log) # XXX !
         except ValueError, e:
             pass
-        if self.slave.state != STATE_STOPPED:
+        if self.slave.child_state != STATE_STOPPED:
             try:
                 self.slave.stop()
             except SlaveError, e:
