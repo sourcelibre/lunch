@@ -545,12 +545,12 @@ class LunchApp(object):
         ag = gtk.ActionGroup('WindowActions')
         actions = [
             ('FileMenu', None, '_File'),
-            ('OpenLoggingDir',     None, '_OpenLoggingDir', None, _('Open Logging Directory'), self.on_menu_open_logs),
-            ('OpenMasterLog',     None, '_OpenMasterLog', None, _('Open the master log file'), self.on_menu_view_master_log),
+            ('OpenLoggingDir', None, '_OpenLoggingDir', None, _('Open Logging Directory'), self.on_menu_open_logs),
+            ('OpenMasterLog', None, '_OpenMasterLog', None, _('Open the master log file'), self.on_menu_view_master_log),
             ('Quit',     gtk.STOCK_QUIT, '_Quit', '<control>Q', _('Quit'), self.destroy_app),
             ('HelpMenu', None, '_Help'),
-            ('About',    None, '_About', None, _('About the application'), self.on_about),
-            ('Manual',    None, '_Manual', None, _('Manual'), self.on_man_page),
+            ('About',    gtk.STOCK_ABOUT, '_About', None, _('About the application'), self.on_about),
+            ('Manual',    gtk.STOCK_HELP, '_Manual', None, _('Manual'), self.on_man_page),
             ]
         ag.add_actions(actions)
         self.ui_manager = gtk.UIManager()
