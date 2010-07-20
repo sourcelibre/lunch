@@ -30,6 +30,7 @@ from twisted.internet import utils
 from twisted.python import procutils
 
 import gtk
+import pango
 import sys
 import os
 import textwrap
@@ -45,7 +46,7 @@ def _(value):
 
 log = logger.start(name="lunch-gui")
 
-__license__ = """Lunch
+__license__ = _("""Lunch
 Copyright (C) 2009 Society for Arts and Technology (SAT)
 http://www.sat.qc.ca
 All rights reserved.
@@ -61,7 +62,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Lunch.  If not, see <http://www.gnu.org/licenses/>."""
+along with Lunch.  If not, see <http://www.gnu.org/licenses/>.""")
 
 def run_once(executable, *args):
     """
@@ -186,7 +187,8 @@ class LunchApp(object):
         self.confirm_close = True # should we ask if the user is sure to close the app?
         _commands = master.get_all_commands()
 
-        # Window and framework
+        # ------------------------------------------------------
+        # Window and its icon
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_title("Lunch")
         self.window.connect("delete-event", self.destroy_app)
@@ -204,21 +206,27 @@ class LunchApp(object):
             self.window.set_icon_list(icon)
         
         # Vertical Box
-        vbox = gtk.VBox(False)
+        vbox = gtk.VBox(homogeneous=False)
         self.window.add(vbox)
         
+        # ------------------------------------------------------
         # Menu bar
         self.menubar = self._create_main_menu(self.window)
         vbox.pack_start(self.menubar, expand=False, fill=False)
         self.menubar.show()
 
-        # Scrollable
+        vpaned = gtk.VPaned()
+        vbox.pack_start(vpaned, expand=True, fill=True)
+
+        # ------------------------------------------------------
+        # Scrollable with a TreeView
         scroller = gtk.ScrolledWindow()
         scroller.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         scroller.set_shadow_type(gtk.SHADOW_IN)
-        vbox.pack_start(scroller, expand=True, fill=True)
-        #vbox.add(scroller)
-
+        frame1 = gtk.Frame(label=_("Processes"))
+        frame1.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        frame1.add(scroller)
+        vpaned.add1(frame1)
         # The ListStore contains the data.
         list_store = gtk.ListStore(str, str, str, int, str)
         # The TreeModelSort sorts the data
@@ -226,8 +234,7 @@ class LunchApp(object):
         # The TreeView displays the sorted data in the GUI.
         self.tree_view_widget = gtk.TreeView(self.model_sort)
         self._setup_treeview()
-        
-        self.tree_view_widget.set_property("has-tooltip", True)
+        # self.tree_view_widget.set_property("has-tooltip", True)
         self.tree_view_widget.get_selection().connect("changed", self.on_selected_command_changed)
         #self.tree_view_widget.connect("query-tooltip", self.on_treeview_tooltip_queried)
         scroller.add(self.tree_view_widget)
@@ -237,20 +244,27 @@ class LunchApp(object):
         self.master.command_added_signal.connect(self.on_command_added)
         self.master.command_removed_signal.connect(self.on_command_removed)
         
-        # text view for the details
+        # ------------------------------------------------------
+        # TextView for the details
         scroller2 = gtk.ScrolledWindow()
         scroller2.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroller2.set_shadow_type(gtk.SHADOW_IN)
+        scroller2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         scroller2.set_size_request(-1, 50)
         viewport = gtk.Viewport()
-        vbox.pack_start(scroller2, expand=True, fill=True)
+        frame2 = gtk.Frame(label=_("Details"))
+        frame2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        frame2.add(scroller2)
+        vpaned.add(frame2)
+        #vbox.pack_start(scroller2, expand=False, fill=True)
         self.textview_widget = gtk.TextView()
+        self._set_textview_appearance()
         scroller2.add(viewport)
         viewport.add(self.textview_widget)
-        
+
+        # ------------------------------------------------------
         # Box with buttons.
         hbox = gtk.HBox(homogeneous=True)
-        vbox.pack_start(hbox, expand=False)
+        vbox.pack_start(hbox, expand=False, fill=False)
         
         self.openlog_button_widget = gtk.Button(_("Open child process log file"))
         self.openlog_button_widget.connect("clicked", self.on_openlog_clicked)
@@ -263,13 +277,18 @@ class LunchApp(object):
         self.start_command_button_widget = gtk.Button(_("Start child process"))
         self.start_command_button_widget.connect("clicked", self.on_start_command_clicked)
         hbox.pack_start(self.start_command_button_widget)
-
         
         self.window.show_all()
     
+    def _set_textview_appearance(self):
+        textview_buffer = self.textview_widget.get_buffer()
+        textview_buffer.create_tag("font", family="Monospace", scale=pango.SCALE_SMALL)
+
     def set_textview_text(self, text):
         textview_buffer = self.textview_widget.get_buffer()
-        textview_buffer.set_text(text)
+        textview_buffer.delete(*textview_buffer.get_bounds())
+        textview_buffer.insert_with_tags_by_name(textview_buffer.get_start_iter(), text, "font")
+        #textview_buffer.set_text(text)
 
     def _update_text_in_textview(self):
         command = self._get_currently_selected_command(False)
@@ -278,7 +297,7 @@ class LunchApp(object):
         else:
             txt = ""
             keyval = {
-                _("command"): "\n".join(textwrap.wrap(command.command)),
+                _("command"): "$ " + str("\n".join(textwrap.wrap(command.command))),
                 _("depends"): command.depends,
                 _("enabled"): command.enabled,
                 _("user"): command.user,
@@ -299,8 +318,8 @@ class LunchApp(object):
         if command == self._get_currently_selected_command(False):
             self._update_text_in_textview()
 
-    def on_treeview_tooltip_queried(self, *args):
-        log.debug("on_treeview_tooltip_queried %s" % (str(args)))
+    #def on_treeview_tooltip_queried(self, *args):
+    #    log.debug("on_treeview_tooltip_queried %s" % (str(args)))
 
     def on_command_added(self, command):
         log.debug("on_command_added")
@@ -368,12 +387,11 @@ class LunchApp(object):
             columns[i].pack_start(cells[i], False) #True)
             columns[i].set_attributes(cells[i], text=i)
         # Set some custom properties
-        cells[0].set_property("width-chars", 14) # Title
-        cells[1].set_property("width-chars", 20) # Lifetime
-        cells[2].set_property("width-chars", 12) # host
+        cells[0].set_property("width-chars", 14) # Identifier
+        cells[1].set_property("width-chars", 20) # Command
+        cells[2].set_property("width-chars", 12) # Host
         cells[3].set_property("width-chars", 8) # Executions
         cells[4].set_property("width-chars", 8) # State
-        #cells[4].set_property("foreground", 'green')
 
     def _get_iter_for_command_row(self, looking_for):
         """
@@ -403,24 +421,24 @@ class LunchApp(object):
         list_store = self.model_sort.get_model()
         list_store.append(self._format_command(command))
         
-        self._set_tooltip_for_command(command)
+        #self._set_tooltip_for_command(command)
         
         #self.commands[command.identifier] = command
         #print("Connecting state changed signal to GUI.")
         command.child_state_changed_signal.connect(self.on_command_status_changed)
 
-    # FIXME: did not get this to work yet
-    def _set_tooltip_for_command(self, command):
-        # trying to add a tooltip
-        tree_iter = self._get_iter_for_command_row(command.identifier)
-        tooltip = gtk.Tooltip()
-        txt = _("<b>Command</b>: %(command)s\n") % {"command": command.command}
-        tooltip.set_markup(txt)
-        log.debug("getting tree iter %s for command %s" % (tree_iter, command.identifier))
-        tree_path = self.model_sort.get_model().get_path(tree_iter)  # path in the list_store
-        log.debug("Adding tooltip %s in tree: %s" % (txt, tree_path))
-        # (GtkTreeView *tree_view, GtkTooltip *tooltip, GtkTreePath *path);
-        self.tree_view_widget.set_tooltip_row(tooltip, tree_path)
+#    # FIXME: did not get this to work yet
+#    def _set_tooltip_for_command(self, command):
+#        # trying to add a tooltip
+#        tree_iter = self._get_iter_for_command_row(command.identifier)
+#        tooltip = gtk.Tooltip()
+#        txt = _("<b>Command</b>: %(command)s\n") % {"command": command.command}
+#        tooltip.set_markup(txt)
+#        log.debug("getting tree iter %s for command %s" % (tree_iter, command.identifier))
+#        tree_path = self.model_sort.get_model().get_path(tree_iter)  # path in the list_store
+#        log.debug("Adding tooltip %s in tree: %s" % (txt, tree_path))
+#        # (GtkTreeView *tree_view, GtkTooltip *tooltip, GtkTreePath *path);
+#        self.tree_view_widget.set_tooltip_row(tooltip, tree_path)
 
     def _remove_command_from_tree(self, command):
         """
