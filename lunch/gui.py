@@ -229,6 +229,7 @@ class LunchApp(object):
         
         # ------------------------------------------------------
         # Menu bar
+        self.ui_manager = None
         self.menubar = self._create_main_menu(self.window)
         vbox.pack_start(self.menubar, expand=False, fill=False)
         self.menubar.show()
@@ -515,51 +516,57 @@ class LunchApp(object):
                 executions,
                 state
             ]
-    
 
-    def on_menu_open_logs(self, widget, data):
+    def on_menu_open_logs(self, *args):
         #TODO:
         if hasattr(self.master, "log_dir"):
             open_path(self.master.log_dir)
         #log.debug("open logs")
 
-    def on_menu_view_master_log(self, widget, data):
+    def on_menu_view_master_log(self, *args):
         tail_master_log(self.master)
 
     def _create_main_menu(self, window):
-        #TODO: i18nize:
-        #FIXME: this way of doing it is deprecated
-        menu_items = (
-            ( "/_File", None, None, 0, "<Branch>" ),
-            #( "/File/_New", "<control>N", self.print_hello, 0, None),
-            ( "/File/_Open Logging Directory", "<control>O", self.on_menu_open_logs, 0, None),
-            ( "/File/_View Master Log File", None, self.on_menu_view_master_log, 0, None),
-            #( "/File/Save _As", None, None, 0, None),
-            #( "/File/sep1", None, None, 0, "<Separator>"),
-            ( "/File/Quit", "<control>Q", self.destroy_app, 0, None),
-            #( "/_Options", None, None, 0, "<Branch>"),
-            #( "/Options/Test",  None, None, 0, None),
-            ( "/_Help", None, None, 0, "<LastBranch>"),
-            ( "/_Help/About", None, self.on_about, 0, None),
-            ( "/_Help/Manual", None, self.on_man_page, 0, None),
-            )
-        accel_group = gtk.AccelGroup()
-        #FIXME: the following line causes a exceptions.DeprecationWarning: use gtk.UIManager
-        item_factory = gtk.ItemFactory(gtk.MenuBar, "<main>", accel_group)
-        item_factory.create_items(menu_items)
-        window.add_accel_group(accel_group)
-        # need to keep a reference to item_factory to prevent its destruction
-        self.item_factory = item_factory
-        return item_factory.get_widget("<main>")
+        ui_string = """<ui>
+          <menubar name='Menubar'>
+            <menu action='FileMenu'>
+              <menuitem action='OpenLoggingDir'/>
+              <menuitem action='OpenMasterLog'/>
+              <separator/>
+              <menuitem action='Quit'/>
+            </menu>
+            <menu action='HelpMenu'>
+              <menuitem action='About'/>
+              <menuitem action='Manual'/>
+            </menu>
+          </menubar>
+          </ui>
+          """
+        ag = gtk.ActionGroup('WindowActions')
+        actions = [
+            ('FileMenu', None, '_File'),
+            ('OpenLoggingDir',     None, '_OpenLoggingDir', None, _('Open Logging Directory'), self.on_menu_open_logs),
+            ('OpenMasterLog',     None, '_OpenMasterLog', None, _('Open the master log file'), self.on_menu_view_master_log),
+            ('Quit',     gtk.STOCK_QUIT, '_Quit', '<control>Q', _('Quit'), self.destroy_app),
+            ('HelpMenu', None, '_Help'),
+            ('About',    None, '_About', None, _('About the application'), self.on_about),
+            ('Manual',    None, '_Manual', None, _('Manual'), self.on_man_page),
+            ]
+        ag.add_actions(actions)
+        self.ui_manager = gtk.UIManager()
+        self.ui_manager.insert_action_group(ag, 0)
+        self.ui_manager.add_ui_from_string(ui_string)
+        window.add_accel_group(self.ui_manager.get_accel_group())
+        return self.ui_manager.get_widget('/Menubar')
 
-    def on_about(self, widget, data):
+    def on_about(self, *args):
         #print "on about"
         self.show_about_dialog()
     
     def show_about_dialog(self):
         About().show_about_dialog()
 
-    def on_man_page(self, widget, data):
+    def on_man_page(self, *args):
         #print "on man page menu item chosen"
         man_lunch()
     
