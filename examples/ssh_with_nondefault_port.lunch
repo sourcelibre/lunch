@@ -1,2 +1,4 @@
+# How course, you should change the user, host options, as well the the XAUTHORITY environment variable to suit your setup.
+
 add_command("xeyes", identifier="xeyes", env={"DISPLAY": ":0.0", "XAUTHORITY": "/var/run/gdm3/auth-for-aalex-ijt1LA/database"}, user="aalex", host="192.168.1.4", ssh_port=23)
 

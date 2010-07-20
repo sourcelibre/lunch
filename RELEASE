@@ -9,4 +9,5 @@ Version 0.3.5 - 2010-0?-??
     Bug fixes: 
         * Got of a deprecation warning for the GTK menu
         * #82: Child pid is not updated the second time a child is started
+        * #47: Many SSH errors could be handled properly
 
