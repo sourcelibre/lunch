@@ -418,6 +418,8 @@ class Command(object):
             #TODO: give up
         elif "ssh_exchange_identification" in line: #FIXME: what is that?
             ret = "Some SSH problem occurred exchanging the identification on host %s." % (self.host)
+        elif "Could not resolve hostname" in line:
+            ret = "Could not resolve hostname %s." % (self.host)
         if ret is not None:
             log.error(line)
             log.error(ret)
