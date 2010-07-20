@@ -19,7 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
 """
-Commands and slaves that run them.
+A L{lunch.commands.Command} is the interface to what command line the user wants to starts. 
+
+Once given to a L{lunch.master.Master}, each command starts a lunch-slave process, communicating with it via its stdin and stdout. 
+The lunch-slave is then told which command to launch and asked to launch it, and stop it, on-demand. 
+
 Author: Alexandre Quessy <alexandre@quessy.net>
 """
 import os
@@ -70,7 +74,7 @@ def run_and_wait(executable, *arguments):
 
 class SlaveProcessProtocol(protocol.ProcessProtocol):
     """
-    Process of a Lunch Slave. (probably through SSH)
+    Process of a lunch-slave. (through SSH, or directly bash)
  
     The Lunch Master controls it by its stdin and monitors it with its stdout.
     """
@@ -88,7 +92,8 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
 
     def outReceived(self, data):
         """
-        Called when text is received from the managed process stdout
+        Called when text is received from the lunch-slave process stdout
+
         Twisted will not splitlines, it gives an arbitrary amount of
         data at a time. This way, our manager only gets one line at 
         a time.
@@ -99,7 +104,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
 
     def errReceived(self, data):
         """
-        Called when text is received from the managed process stderr
+        Called when text is received from the lunch-slave process stderr
         """
         for line in data.splitlines().strip():
             if line != "":
@@ -107,7 +112,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
 
     def processEnded(self, reason):
         """
-        Called when the managed process has exited.
+        Called when the lunch-slave process has exited.
         status is probably a twisted.internet.error.ProcessTerminated
         "A process has ended with a probable error condition: process ended by signal 1"
         
@@ -131,7 +136,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
 
     def processExited(self, reason):
         """
-        This is called when the child process has been reaped, and receives 
+        This is called when the lunch-slave process has been reaped, and receives 
         information about the process' exit status. The status is passed in the form 
         of a Failure instance, created with a .value that either holds a ProcessDone 
         object if the process terminated normally (it died of natural causes instead 
@@ -143,12 +148,14 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
     
 class Command(object):
     """
-    Command that a slave needs to run.
-    Handles a SlaveProcessProtocol, which controls a lunch-slave process.
+    Manages a lunch-slave process, telling it which child process to start.
+
+    Uses a SlaveProcessProtocol, which in turn controls a lunch-slave process.
+    This is also what the programmer uses to control a child process.
     """
     #TODO: add gid
-    #TODO: add uid
-    #TODO: add delay_kill
+    #TODO: allow to switch uid (when running on localhost)
+    #TODO: add delay_kill (to the add_command "private" function)
     #TODO: add clear_old_logs
     #TODO: add time_started
     #TODO: add enabled. (for respawning or not a process, without changing its respawn attribute.
@@ -222,11 +229,11 @@ class Command(object):
             # XXX: used to be something like:
             #SLAVE_LOG_SUBDIR = "lunch_log"
             #slave_log_dir = os.path.join(os.getcwd(), SLAVE_LOG_SUBDIR)
-        self.child_log_dir = log_dir # for both slave and child. If not set, defaults to $PWD/lunch_log
+        self.child_log_dir = log_dir # for both lunch-slave and child. If not set, defaults to $PWD/lunch_log
         self.slave_log_dir = self.child_log_dir
         # ------- private attributes:
-        self.slave_state = STATE_STOPPED # state of the Slave, not the process the slave handles
-        self.child_state = STATE_STOPPED # state of the child process of the slave.
+        self.slave_state = STATE_STOPPED # state of the lunch-slave process, not the child process that the lunch-slave handles
+        self.child_state = STATE_STOPPED # state of the child process that the lunch-slave handles.
         self.slave_state_changed_signal = sig.Signal() # param: self, new_state
         self.child_state_changed_signal = sig.Signal() # param: self, new_state
         if command is None:
@@ -247,10 +254,10 @@ class Command(object):
     
     def _start_logger(self):
         """
-        Creates a log file for the slave's stdout.
+        Creates a log file for the lunch-slave's stdout.
         """
         if self.slave_logger is None:
-            # the slave log file
+            # the lunch-slave log file
             slave_log_file = "slave-%s.log" % (self.identifier)
             if not os.path.exists(self.slave_log_dir):
                 try:
@@ -261,7 +268,9 @@ class Command(object):
     
     def start(self):
         """
-        Starts the slave Lunch and its child if not started. If started, starts its child.
+        Starts the lunch-slave process and its child if they are not running. 
+        
+        If the lunch-slave is already started, starts its child.
         """
         self.enabled = True
         self.gave_up = False
@@ -273,14 +282,14 @@ class Command(object):
             self.log("%s: Child is already running." % (self.identifier))
             return
         if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
-            self.send_all_startup_commands()
+            self._send_all_startup_commands()
         elif self.child_state in [STATE_STOPPING, STATE_STARTING]:
             self.log("Cannot start child %s that is %s." % (self.identifier, self.child_state))
         else:
             if self.slave_state in [STATE_STARTING, STATE_STOPPING]:
-                self.log("Cannot start slave %s that is %s." % (self.identifier, self.slave_state))
+                self.log("Cannot start a lunch-slave %s that is %s." % (self.identifier, self.slave_state))
                 return # XXX
-            else: # slave is STOPPED
+            else: # lunch-slave is STOPPED
                 if self.host is None:
                     # if self.user is not None:
                         # TODO: Set gid if user is not None...
@@ -308,11 +317,14 @@ class Command(object):
                 environ = {}
                 environ.update(os.environ) # passing the whole env (for SSH keys and more)
                 self.set_slave_state(STATE_STARTING)
-                self.log("Starting slave: %s" % (self.identifier))
+                self.log("Starting lunch-slave: %s" % (self.identifier))
                 self._previous_launching_time = time.time()
                 self._process_transport = reactor.spawnProcess(self._process_protocol, proc_path, args, environ, usePTY=True)
     
     def _format_env(self):
+        """
+        Format the environment variables to send them to the lunch-slave as a series of key-value pairs.
+        """
         txt = ""
         for k, v in self.env.iteritems():
             txt += "%s=%s " % (k, v)
@@ -322,12 +334,12 @@ class Command(object):
         if self.slave_state == STATE_STARTING:
             self.set_slave_state(STATE_RUNNING)
         else:
-            msg = "Connection made with slave %s, even if not expecting it." % (self.identifier)
+            msg = "Connection made with lunch-slave %s, even if not expecting it." % (self.identifier)
             self.log(msg, logging.ERROR)
 
     def send_do(self):
         """
-        Send to the slave the command line to launch its child.
+        Send to the lunch-slave the command line to launch its child.
         """
         self.send_message("do", self.command) 
     
@@ -346,7 +358,7 @@ class Command(object):
 
     def send_message(self, key, data=""):
         """
-        Sends a command to the slave.
+        Sends a command to the lunch-slave.
         @param key: string
         @param data: string
         """
@@ -356,22 +368,22 @@ class Command(object):
         self._process_transport.write(msg)
     
     def __del__(self):
+        #TODO: send "stop" and SIGKILL if the lunch-slave and the child processes are stil running.
         if self.slave_logger is not None:
             self.slave_logger.close()
         
     def _received_message(self, line):
         """
-        Received one line of text from the slave through its stdout.
+        Received one line of text from the lunch-slave through its stdout.
         """
         #self.log("%8s: %s" % (self.identifier, line))
-        
         try:
             words = line.split(" ")
             key = words[0]
             mess = line[len(key) + 1:]
         except IndexError, e:
-            #self.log("Index error parsing message from slave. %s" % (e), logging.ERROR)
-            self.log('IndexError From slave %s: %s' % (self.identifier, line), logging.ERROR)
+            #self.log("Index error parsing message from lunch-slave. %s" % (e), logging.ERROR)
+            self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
         else:
             try:
                 if words[1] == "password:":
@@ -382,26 +394,26 @@ class Command(object):
                 pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
-            if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin slave !!!
-                pass #warnings.warn("We receive from the slave's stdout what we send to its stdin !")
+            if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin lunch-slave !!!
+                pass #warnings.warn("We receive from the lunch-slave's stdout what we send to its stdin !")
             else:
                 try:
                     method = getattr(self, 'recv_' + key)
                 except AttributeError, e:
-                    self.log('AtributeError: From slave %s: %s' % (self.identifier, line), logging.ERROR)
+                    self.log('AtributeError: From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
                     #self.log(line)
                 else:
                     method(mess)
 
     def recv_ok(self, mess):
         """
-        Callback for the "ok" message from the slave.
+        Callback for the "ok" message from the lunch-slave.
         """
         pass
 
     def recv_child_pid(self, mess):
         """
-        Callback for the "child_pid" message from the slave.
+        Callback for the "child_pid" message from the lunch-slave.
         
         The arg is the child's PID
         """
@@ -412,13 +424,13 @@ class Command(object):
 
     def recv_msg(self, mess):
         """
-        Callback for the "msg" message from the slave.
+        Callback for the "msg" message from the lunch-slave.
         """
         pass
     
     def recv_retval(self, mess):
         """
-        Callback for the "retval" message from the slave.
+        Callback for the "retval" message from the lunch-slave.
         """
         self.log("%s->Master: retval %s" % (self.identifier, mess))
         words = mess.split(" ")
@@ -427,25 +439,25 @@ class Command(object):
     
     def recv_log(self, mess):
         """
-        Callback for the "log" message from the slave.
+        Callback for the "log" message from the lunch-slave.
         """
         self.log("%s->Master: log %s" % (self.identifier, mess))
 
     def recv_error(self, mess):
         """
-        Callback for the "error" message from the slave.
+        Callback for the "error" message from the lunch-slave.
         """
         self.log("%s->Master: %s" % (self.identifier, mess), logging.ERROR)
     
     def recv_pong(self, mess):
         """
-        Callback for the "pong" message from the slave.
+        Callback for the "pong" message from the lunch-slave.
         """
         pass #self.log("pong from %s" % (self.identifier))
 
     def recv_bye(self, mess):
         """
-        Callback for the "bye" message from the slave.
+        Callback for the "bye" message from the lunch-slave.
         """
         self.log("%s->Master: %s" % (self.identifier, "BYE (slave quits)"), logging.ERROR)
     
@@ -503,25 +515,25 @@ class Command(object):
                 self.log("Child running time of %s has been shorter than its minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
                 self._give_up_if_we_should()
             #else:
-            #    self.send_all_startup_commands()
+            #    self._send_all_startup_commands()
         elif new_state == STATE_RUNNING:
             self.log("Child %s is running." % (self.identifier))
-        self.set_child_state(new_state) # IMPORTANT !
+        self._set_child_state(new_state) # IMPORTANT !
 
     def recv_ready(self, mess):
         """
-        Callback for the "ready" message from the slave.
+        Callback for the "ready" message from the lunch-slave.
         
-        The slave sends that to the master when launched.
+        The lunch-slave sends that to the master when launched.
         It means it is ready to received commands.
         """
         if self.enabled:
-            self.send_all_startup_commands()
+            self._send_all_startup_commands()
 
-    def send_all_startup_commands(self):
+    def _send_all_startup_commands(self):
         """
-        Tells the slave to launch its child process.
-        Sets up the environment and command so that the slave can launch the child.
+        Tells the lunch-slave to launch its child process.
+        Sets up the environment and command so that the lunch-slave can launch the child.
         """
         self.send_do()
         self.send_logdir()
@@ -529,9 +541,9 @@ class Command(object):
         #self.send_ping()
         self.send_run()
 
-    def set_child_state(self, new_state):
+    def _set_child_state(self, new_state):
         """
-        Called when it is time to change the state of the child of the slave.
+        Called when it is time to change the state of the child process.
         """
         if new_state == STATE_STOPPED:
             self.child_pid = None
@@ -553,7 +565,7 @@ class Command(object):
     
     def stop(self):
         """
-        Tells the slave to stop its child.
+        Tells the lunch-slave to stop its child.
         """
         self.reset()
         self.enabled = False
@@ -569,8 +581,13 @@ class Command(object):
     
     def quit_slave(self):
         """
-        Stops the slave Lunch
-        If called for a second time, send kill -9 to slave.
+        Stops the lunch-slave process by sending it SIGTERM. (15) 
+
+        If called for a second time, sends it SIGKILL (9).
+
+        One should first make sure the child process has quit before doing this, 
+        otherwise they are likely to become zombie processes, with no parent. 
+
         @rtype: L{twisted.internet.defer.Deferred}
         """
         DELAY_BETWEEN_EACH_SIGNAL = self.delay_before_kill
@@ -580,7 +597,7 @@ class Command(object):
         _sigkill_delayed_call = None
         
         def _on_ended(result):
-            # cancels the call fo _cl_sigkill if the slave died.
+            # cancels the call fo _cl_sigkill if the lunch-slave died.
             if _sigkill_delayed_call is not None:
                 if _sigkill_delayed_call.active():
                     _sigkill_delayed_call.cancel()
@@ -593,19 +610,19 @@ class Command(object):
             # and later a sigkill
             self._process_transport.signalProcess(15) # signal.SIGTERM
             self.set_slave_state(STATE_STOPPING)
-            self.log('Master will stop slave %s.' % (self.identifier))
+            self.log('Will stop lunch-slave %s.' % (self.identifier))
             _sigkill_delayed_call = reactor.callLater(DELAY_BETWEEN_EACH_SIGNAL, _cl_sigkill)
             # ---------------------------------------
         def _cl_sigkill():
-            # sends sigkill if the slave is still running
+            # sends sigkill if the lunch-slave is still running
             if self.slave_state == STATE_STOPPING:
                 self.log("kill -9 Slave %s" % (self.identifier))
                 self._process_transport.signalProcess(9) # signal.SIGKILL
             # ---------------------------------------
         
-        self._quit_slave_deferred.addCallback(_on_ended)
+        self._quit_slave_deferred.addCallback(_on_ended) # XXX: could also be done with a signal/slot
         if self.slave_state == STATE_STOPPED:
-            self.log("The slave process %s is already in \"%s\" state." % (self.identifier, self.slave_state), logging.WARNING)
+            self.log("The lunch-slave process %s is already in \"%s\" state." % (self.identifier, self.slave_state), logging.WARNING)
             self._quit_slave_deferred.callback(None)
         else:
             if self.slave_state in [STATE_RUNNING, STATE_STARTING]:
@@ -622,7 +639,7 @@ class Command(object):
 
     def _on_process_ended(self, exit_code):
         """
-        The slave died ! Its child is probably dead too.
+        The lunch-slave died ! Its child is probably dead too. (otherwise, it's a zombie with no parent)
         """
         #TODO: add a signal slot for this event?
         #self.log("Exit code: " % (exit_code))
@@ -638,15 +655,15 @@ class Command(object):
             self.log('Slave exited as expected.')
         self.set_slave_state(STATE_STOPPED)
         self._process_transport.loseConnection()
-        #if self.respawn and self.enabled:
-        #    self.log("Restarting the slave %s." % (self.identifier), logging.INFO)
+        #if self.respawn and self.enabled: #No! The master will take care of that.
+        #    self.log("Restarting the lunch-slave %s." % (self.identifier), logging.INFO)
         #    self.start()
         if self._quit_slave_deferred is not None:
             self._quit_slave_deferred.callback(None)
         
     def log(self, msg, level=logging.DEBUG):
         """
-        Logs both to the slave's log file, and to the main app log. 
+        Logs both to the lunch-slave's log file, and to the main app log. 
         """
         if self.slave_logger is not None:
             prefix = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -673,6 +690,9 @@ class Command(object):
         #log.msg(msg, logLevel=level)
 
     def set_slave_state(self, new_state):
+        """
+        Trigger the slave_state_changed_signal when the state of the lunch-slave process changes.
+        """
         msg = "Slave %s is %s." % (self.identifier, new_state)
         self.log(msg)
         if self.slave_state != new_state:
