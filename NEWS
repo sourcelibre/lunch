@@ -15,6 +15,7 @@ about the child processes.
         * #80: Make sure we log until the process is dead.
         * #78: Increase delay between each signal when stopping a process.
 
+
 Version 0.3.3 - 2010-07-15
     
     New features: 
@@ -99,4 +100,9 @@ Version 0.1.10 - 2010-01-13
     * Using the multiprocessing Python module
     * Set up the basics of the lunch file
     * PID file for the master
+
+
+Initial draft - 2009-07-22
+
+    * Working proof of concept
 
