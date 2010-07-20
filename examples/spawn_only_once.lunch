@@ -1,5 +1,6 @@
 #!/usr/bin/env lunch 
 # In this example, some commands are ran only once.
-add_command("ls -l", respawn=False)
-add_command("xeyes", respawn=False)
+add_command("ls -l", identifer="ls", respawn=False)
+add_command("xeyes", identifier="xeyes", respawn=False)
+add_command("ps aux | grep -v PID | awk '{print $2}' | uniq | xargs -ia ls -l /proc/a/fd 2>&1 | grep -v 'total' | wc -l", identifier="total_num_file_descriptors_open", respawn=False)
 
