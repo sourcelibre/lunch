@@ -64,6 +64,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Lunch.  If not, see <http://www.gnu.org/licenses/>.""")
 
+PADDING_IN_TEXTVIEW = 18 # number of spaces before text contents in the textview
+
 def run_once(executable, *args):
     """
     Runs a command, without looking at its output or return value.
@@ -131,6 +133,22 @@ def man_lunch():
     log.info("$ %s" % (" ".join(cmd)))
     run_once(*cmd)
     
+def _format_command_line(text):
+    """
+    Formats the text of a command in order to display it in a gtk.TextView
+    """
+    global PADDING_IN_TEXTVIEW
+    padding = PADDING_IN_TEXTVIEW + 2
+    width = 70
+    lines = textwrap.wrap(text, width)
+    for i in range(len(lines)):
+        if i == 0:
+            lines[i] = "$ " + lines[i]
+        else:
+            lines[i] = "%s%s" % (" " * padding, lines[i]) # padding some spaces before the subsequent lines
+    log.debug("_format_command_line %s" % (lines))
+    return "\n".join(lines)
+
 class About(object):
     """
     About dialog
@@ -223,6 +241,7 @@ class LunchApp(object):
         scroller = gtk.ScrolledWindow()
         scroller.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         scroller.set_shadow_type(gtk.SHADOW_IN)
+        scroller.set_size_request(-1, 250)
         frame1 = gtk.Frame(label=_("Processes"))
         frame1.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         frame1.add(scroller)
@@ -291,27 +310,30 @@ class LunchApp(object):
         #textview_buffer.set_text(text)
 
     def _update_text_in_textview(self):
+
         command = self._get_currently_selected_command(False)
         if command is None:
             txt = _("Select a command to view information about it.")
         else:
             txt = ""
-            keyval = {
-                _("command"): "$ " + str("\n".join(textwrap.wrap(command.command))),
-                _("depends"): command.depends,
-                _("enabled"): command.enabled,
-                _("user"): command.user,
-                _("host"): command.host,
-                _("child_pid"): command.child_pid,
-                _("env"): command.env,
-                #_("log_dir"): command.log_dir,
-                _("respawn"): command.respawn,
-                _("sleep_after"): command.sleep_after,
-                _("delay_before_kill"): command.delay_before_kill,
-                _("verbose"): command.verbose,
-                }
-            for key, val in keyval.iteritems():
-                txt += "%s: %s\n" % (key, val)
+            keyval = [
+                (_("indentifier"), command.identifier),
+                (_("command"), _format_command_line(command.command)),
+                (_("child_pid"), command.child_pid),
+                (_("depends"), command.depends),
+                (_("enabled"), command.enabled),
+                (_("user"), command.user),
+                (_("host"), command.host),
+                (_("env"), command.env),
+                #(_("log_dir"), command.log_dir),
+                (_("respawn"), command.respawn),
+                (_("sleep_after"), command.sleep_after),
+                (_("delay_before_kill"), command.delay_before_kill),
+                (_("verbose"), command.verbose),
+                ]
+            for key, val in keyval:
+                _format = "%" + ("%ds" % PADDING_IN_TEXTVIEW) + ": %s\n"
+                txt += _format % (key, val)
         self.set_textview_text(txt)
 
     def _update_text_in_textview_if_command_is_selected(self, command):
