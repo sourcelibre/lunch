@@ -146,7 +146,7 @@ def _format_command_line(text):
             lines[i] = "$ " + lines[i]
         else:
             lines[i] = "%s%s" % (" " * padding, lines[i]) # padding some spaces before the subsequent lines
-    log.debug("_format_command_line %s" % (lines))
+    # log.debug("_format_command_line %s" % (lines))
     return "\n".join(lines)
 
 class About(object):
@@ -367,7 +367,7 @@ class LunchApp(object):
             self.start_command_button_widget.set_sensitive(False)
             self.openlog_button_widget.set_sensitive(False)
         else:
-            log.debug("command: %s" % (command.identifier))
+            # log.debug("command: %s" % (command.identifier))
             if command.get_state_info() in [STATE_STARTING, STATE_RUNNING, STATE_STOPPING]:
                 self.stop_command_button_widget.set_sensitive(True)
                 self.start_command_button_widget.set_sensitive(False)
@@ -450,6 +450,7 @@ class LunchApp(object):
         #print("Connecting state changed signal to GUI.")
         command.child_state_changed_signal.connect(self.on_command_status_changed)
         command.child_pid_changed_signal.connect(self.on_command_child_pid_changed)
+        command.ssh_error_signal.connect(self.on_ssh_error)
 
 #    # FIXME: did not get this to work yet
 #    def _set_tooltip_for_command(self, command):
@@ -484,6 +485,11 @@ class LunchApp(object):
         #log.debug("Removing GUI's slot for state changed signal.")
         command.child_state_changed_signal.disconnect(self.on_command_status_changed)
         command.child_pid_changed_signal.disconnect(self.on_command_child_pid_changed)
+        command.ssh_error_signal.disconnect(self.on_ssh_error)
+
+    def on_ssh_error(self, command, error_message):
+        log.debug("on_ssh_error %s" % (command))
+        dialogs.ErrorDialog.create(error_message)
 
     def _update_row(self, command):
         list_store = self.model_sort.get_model()
@@ -586,10 +592,10 @@ class LunchApp(object):
                 d = defer.Deferred()
                 dialog = dialogs.ErrorDialog(d, msg)
         else:
-            log.debug('getting the currently selected row in the tree view.')
+            # log.debug('getting the currently selected row in the tree view.')
             row = rows # only one row selected at a time in this version
             identifier = model.get_value(row, self.IDENTIFIER_COLUMN)
-            log.debug('id %s' % (identifier))
+            # log.debug('id %s' % (identifier))
             ret = self.master.commands[identifier]
         return ret
         

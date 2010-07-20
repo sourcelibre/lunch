@@ -259,6 +259,8 @@ class Master(object):
                 pass #command.stop()
             else:
                 start_it = True
+                if not command.is_ready_to_be_started():
+                    start_it = False
                 if not command.respawn and command.how_many_times_run >= 1:
                     start_it = False # already ran this once
                 #

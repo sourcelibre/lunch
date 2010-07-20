@@ -220,9 +220,12 @@ class Command(object):
         self.verbose = verbose
         self.retval = 0
         self.gave_up = False
+        self.number_of_lines_received_from_slave = 0
+        self._has_shown_ssh_error = False 
         self.try_again_delay = try_again_delay
         self._current_try_again_delay = try_again_delay # doubles up each time we try
         self._next_try_time = 0
+        self._received_ready = False
         self._previous_launching_time = 0
         self.give_up_after = give_up_after # 0 means infinity of times
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
@@ -237,9 +240,10 @@ class Command(object):
         # ------- private attributes:
         self.slave_state = STATE_STOPPED # state of the lunch-slave process, not the child process that the lunch-slave handles
         self.child_state = STATE_STOPPED # state of the child process that the lunch-slave handles.
-        self.slave_state_changed_signal = sig.Signal() # param: self, new_state
-        self.child_state_changed_signal = sig.Signal() # param: self, new_state
-        self.child_pid_changed_signal = sig.Signal() # param: self, new_pid
+        self.slave_state_changed_signal = sig.Signal() # params: self, new_state
+        self.child_state_changed_signal = sig.Signal() # params: self, new_state
+        self.child_pid_changed_signal = sig.Signal() # params: self, new_pid
+        self.ssh_error_signal = sig.Signal() # params: self, error_message
         if command is None:
             raise RuntimeError("You must provide a command to be run.")
         log.info("Creating command %s ($ %s) on %s@%s" % (self.identifier, self.command, self.user, self.host))
@@ -253,7 +257,11 @@ class Command(object):
 
     def is_ready_to_be_started(self):
         # self.enabled
-        ret = self._next_try_time <= time.time()
+        ret = self._next_try_time <= time.time() and self.child_state == STATE_STOPPED
+        if ret and self.slave_state == STATE_RUNNING:
+            if not self._received_ready:
+                # log.debug("Not ready to start child %s since we did not receive the ready message." % (self))
+                ret = False
         return ret
     
     def _start_logger(self):
@@ -277,23 +285,30 @@ class Command(object):
         If the lunch-slave is already started, starts its child.
         """
         self.enabled = True
+        self._has_shown_ssh_error = False
         self.gave_up = False
         if self.how_many_times_tried == 0:
             self._current_try_again_delay = self.try_again_delay
         self.how_many_times_tried += 1
         self._start_logger()
+        # If the lunch-slave is already running, we only need to tell it to start the child
         if self.child_state == STATE_RUNNING:
             self.log("%s: Child is already running." % (self.identifier))
             return
         if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
             self._send_all_startup_commands()
+            return
         elif self.child_state in [STATE_STOPPING, STATE_STARTING]:
             self.log("Cannot start child %s that is %s." % (self.identifier, self.child_state))
+            return
         else:
             if self.slave_state in [STATE_STARTING, STATE_STOPPING]:
                 self.log("Cannot start a lunch-slave %s that is %s." % (self.identifier, self.slave_state))
                 return # XXX
             else: # lunch-slave is STOPPED
+                # --------------- start the lunch-slave, and then its child
+                self.number_of_lines_received_from_slave = 0
+                self._received_ready = False
                 if self.host is None:
                     # if self.user is not None:
                         # TODO: Set gid if user is not None...
@@ -315,7 +330,7 @@ class Command(object):
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
                     raise RuntimeError("Could not find path of executable %s." % (_command[0]))
-                log.info("%s: $ %s" % (self.identifier, " ".join(_command)))
+                log.info("lunch-slave %s> $ %s" % (self.identifier, " ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:
                 proc_path = _command[0]
@@ -354,7 +369,7 @@ class Command(object):
 
     def send_run(self):
         self.send_message("run")
-        self.log("%s: $ %s" % (self.identifier, self.command), logging.INFO)
+        self.log("lunch-child %s> $ %s" % (self.identifier, self.command), logging.INFO)
         
     def send_env(self):
         self.send_message("env", self._format_env())
@@ -370,7 +385,7 @@ class Command(object):
         """
         msg = "%s %s\n" % (key, data)
         if self.verbose:
-            self.log("Master->%s: %s" % (self.identifier, msg.strip()))
+            self.log("lunch-slave %s> Sending %s" % (self.identifier, msg.strip()))
         self._process_transport.write(msg)
     
     def __del__(self):
@@ -378,11 +393,53 @@ class Command(object):
         if self.slave_logger is not None:
             self.slave_logger.close()
         
+    def _looks_like_ssh_error(self, line):
+        """
+        Checks the string received to see if it looks like a SSH error message.
+        @return: An error message if there is a problem, or None otherwise.
+        @rtype: C{str}
+        """
+        ret = None
+        # log.debug("Checking if it looks like a SSH error: %s" % (line))
+        if "password:" in line:
+            ret = "The SSH server asks for a password. Make sure you use the right user name and that your public SSH key is installed on the remote host %s." % (self.host)
+            #TODO: give up
+        elif "Connection refused" in line:
+            port = 22
+            if self.ssh_port is not None:
+                port = self.ssh_port
+            ret = "The SSH server is not running on port %d of host %s or not available." % (port, self.host)
+            #TODO: try to reconnect
+        elif "No route to host" in line:
+            ret = "We cannot find host %s." % (self.host)
+            #TODO: try to reconnect
+        elif "command not found" in line:
+            ret = "The lunch-slave command is not installed on the host %s." % (self.host)
+            #TODO: give up
+        elif "ssh_exchange_identification" in line: #FIXME: what is that?
+            ret = "Some SSH problem occurred exchanging the identification on host %s." % (self.host)
+        if ret is not None:
+            log.error(line)
+            log.error(ret)
+        return ret
+
     def _received_message(self, line):
         """
         Received one line of text from the lunch-slave through its stdout.
         """
         #self.log("%8s: %s" % (self.identifier, line))
+        # FIXME: right now, we check all the output from that guy
+        if True: #self.number_of_lines_received_from_slave == 0:
+            ssh_error = self._looks_like_ssh_error(line)
+            if ssh_error is not None: # It's a str
+                log.error("SSH PROBLEM: " + ssh_error)
+                self.enabled = False
+                if not self._has_shown_ssh_error:
+                    self._has_shown_ssh_error = True
+                    self.ssh_error_signal(self, ssh_error)
+                return
+                #TODO: handle this
+        self.number_of_lines_received_from_slave += 1
         try:
             words = line.split(" ")
             key = words[0]
@@ -391,13 +448,6 @@ class Command(object):
             #self.log("Index error parsing message from lunch-slave. %s" % (e), logging.ERROR)
             self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
         else:
-            try:
-                if words[1] == "password:":
-                    self.log(line, logging.ERROR)
-                    self.log("SSH ERROR: Trying to connect using SSH, but the SSH server is asking for a password.", logging.ERROR)
-                    return
-            except IndexError:
-                pass
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
             if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin lunch-slave !!!
@@ -406,7 +456,7 @@ class Command(object):
                 try:
                     method = getattr(self, 'recv_' + key)
                 except AttributeError, e:
-                    self.log('AtributeError: From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
+                    self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
                     #self.log(line)
                 else:
                     method(mess)
@@ -519,12 +569,12 @@ class Command(object):
         if new_state == STATE_STOPPED and self.enabled and self.respawn:
             child_running_time = float(words[1])
             if child_running_time < self.minimum_lifetime_to_respawn:
-                self.log("Child running time of %s has been shorter than its minimum of %s." % (child_running_time, self.minimum_lifetime_to_respawn))
+                self.log("lunch-child %s> Its running time of %s has been shorter than its minimum of %s." % (self.identifier, child_running_time, self.minimum_lifetime_to_respawn))
                 self._give_up_if_we_should()
             #else:
             #    self._send_all_startup_commands()
         elif new_state == STATE_RUNNING:
-            self.log("Child %s is running." % (self.identifier))
+            self.log("lunch-child %s> is running." % (self.identifier))
         self._set_child_state(new_state) # IMPORTANT !
 
     def recv_ready(self, mess):
@@ -534,6 +584,7 @@ class Command(object):
         The lunch-slave sends that to the master when launched.
         It means it is ready to received commands.
         """
+        self._received_ready = True
         if self.enabled:
             self._send_all_startup_commands()
 
