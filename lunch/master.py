@@ -460,10 +460,12 @@ def gen_id_from_config_file_name(config_file_name="lunchrc"):
     identifier = file_name.replace(".", "") # getting rid of the dot in file name
     return identifier
 
-def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
+def gen_pid_file_path(identifier="lunchrc", directory="/var/tmp/lunch"):
     """
-    Writes master's PID in a file.
-    @return: pid file name.
+    Returns a PID file name. 
+
+    Creates the directory if it does not exist.
+    @return: Full path of the PID file for that master.
     """
     file_name = "master-%s.pid" % (identifier)
     if not os.path.exists(directory):
@@ -471,8 +473,17 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     if not os.path.isdir(directory):
         raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
+    return pid_file
+
+def is_lunch_master_running(pid_file):
+    """
+    Checks if a master is running, given its PID file.
+    Removes the PID file if it's not running.
+    
+    @param pid_file: Full path of a PID file for a master.
+    @return: PID of the master if running. None if not. 
+    """
     if os.path.exists(pid_file):
-        log.warning("PID file for master %s found!" % (pid_file))
         f = open(pid_file, 'r')
         pid = f.read()
         f.close()
@@ -480,8 +491,10 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
             os.kill(int(pid), 0) # if it throws, it's dead
         except OSError: # no process with that ID
             os.remove(pid_file)
+            return None
         except ValueError: # invalid int. (pidfile did not contain an int)
             os.remove(pid_file)
+            return None
         else:
             # checks if it's really a lunch master that has this ID.
             command_check_master = "ps aux | grep %d | grep -v grep" % (int(pid))
@@ -490,17 +503,63 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
             # TODO: get rid of subprocess here.
             output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
             if "python" in output:# used to be "lunch", but changed it to "python", since lunch.master is now a livrary as well.
-                raise RuntimeError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
+                return pid
             else:
                 #print "found PID, but it's not lunch!"
                 os.remove(pid_file)
-                
+                return None
+    else:
+        return None
+
+def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
+    """
+    Writes master's PID in a file.
+    
+    Raises an error if a master with that PID already exists.
+    @return: pid file name.
+    """
+    # Check if there is already a master running
+    pid_file = gen_pid_file_path(identifier, directory)
+    if os.path.exists(pid_file):
+        log.warning("PID file for master %s found!" % (pid_file))
+        pid = is_lunch_master_running(pid_file)
+        if pid is not None:
+            raise RuntimeError("There is already a Lunch Master running using the same configuration file. Its PID is %s" % (pid))
+        else:
+            pass
+    # Write our PID file
     f = open(pid_file, 'w')
-    f.write(str(os.getpid()))
+    pid = os.getpid()
+    f.write(str(pid))
     f.close()
     os.chmod(pid_file, 0600)
-    log.info("Wrote PID %d to file %s." % (os.getpid(), pid_file))
+    log.info("Wrote master's PID %d to file %s." % (pid, pid_file))
     return pid_file
+
+def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
+    """
+    Given a lunch master identifier and a PID file directory, kills the master.
+    """
+    pid_file = gen_pid_file_path(identifier, directory)
+    deferred = defer.Deferred()
+    
+    def _kill(pid_file, is_first_time_called):
+        if os.path.exists(pid_file):
+            log.info("PID file for master %s found!" % (pid_file))
+            pid = is_lunch_master_running(pid_file)
+            if pid is not None:
+                if is_first_time_called:
+                    os.kill(signal.SIGINT)
+                    #TODO: we could check if running several time before to send it SIGKILL
+                    reactor.callLater(9.0, _kill, False)
+                else:
+                    os.kill(signal.SIGKILL)
+            else:
+                log.info("The lunch master %s is not running." % (identifier))
+                deferred.callback(None)
+    
+    reactor.callLater(0.0, _kill, pid_file, True)
+    return deferred
 
 def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_level='info'):
     """
