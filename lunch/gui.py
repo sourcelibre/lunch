@@ -328,7 +328,7 @@ class LunchApp(object):
         else:
             txt = ""
             keyval = [
-                (_("indentifier"), command.identifier),
+                (_("identifier"), command.identifier),
                 (_("command"), _format_command_line(command.command)),
                 (_("child_pid"), command.child_pid),
                 (_("depends"), command.depends),
