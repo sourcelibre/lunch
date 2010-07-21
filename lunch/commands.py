@@ -434,8 +434,8 @@ class Command(object):
         if True: #self.number_of_lines_received_from_slave == 0:
             ssh_error = self._looks_like_ssh_error(line)
             if ssh_error is not None: # It's a str
-                log.error("SSH PROBLEM: " + ssh_error)
-                self.enabled = False
+                log.error("--------- SSH PROBLEM: " + ssh_error + " -----------")
+                # FIXME: self.enabled = False
                 if not self._has_shown_ssh_error:
                     self._has_shown_ssh_error = True
                     self.ssh_error_signal(self, ssh_error)
