@@ -301,6 +301,7 @@ class LunchApp(object):
         self.window.show_all()
     
     def _set_textview_appearance(self):
+        self.textview_widget.set_editable(False)
         textview_buffer = self.textview_widget.get_buffer()
         textview_buffer.create_tag("font", family="Monospace", scale=pango.SCALE_SMALL)
 
