@@ -23,6 +23,7 @@ The Lunch master manages lunch slaves.
 Author: Alexandre Quessy <alexandre@quessy.net>
 """
 import os
+import signal
 import stat
 import time
 import sys
@@ -503,7 +504,7 @@ def is_lunch_master_running(pid_file):
             # TODO: get rid of subprocess here.
             output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
             if "python" in output:# used to be "lunch", but changed it to "python", since lunch.master is now a livrary as well.
-                return pid
+                return int(pid)
             else:
                 #print "found PID, but it's not lunch!"
                 os.remove(pid_file)
@@ -542,23 +543,37 @@ def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
     """
     pid_file = gen_pid_file_path(identifier, directory)
     deferred = defer.Deferred()
+    send_sigkill_at = time.time() + 20.0 # wait 20 seconds before to use kill -9 
+    is_first_time_called = True
     
-    def _kill(pid_file, is_first_time_called):
+    def _kill(is_first_time_called=False):
+        #we check if running several time before to send it SIGKILL
         if os.path.exists(pid_file):
             log.info("PID file for master %s found!" % (pid_file))
             pid = is_lunch_master_running(pid_file)
             if pid is not None:
                 if is_first_time_called:
-                    os.kill(signal.SIGINT)
-                    #TODO: we could check if running several time before to send it SIGKILL
-                    reactor.callLater(9.0, _kill, False)
+                    log.info("Sending SIGINT to the lunch master %s." % (identifier))
+                    os.kill(pid, signal.SIGINT)
+                    reactor.callLater(0.2, _kill)
                 else:
-                    os.kill(signal.SIGKILL)
+                    if time.time() > send_sigkill_at:
+                        log.info("Sending SIGKILL to the lunch master %s." % (identifier))
+                        os.kill(signal.SIGKILL)
+                        deferred.callback(None)
+                    else:
+                        log.debug("The lunch master %s is not dead yet." % (identifier))
+                        reactor.callLater(0.2, _kill)
             else:
-                log.info("The lunch master %s is not running." % (identifier))
+                if is_first_time_called:
+                    log.info("The lunch master %s was not running." % (identifier))
                 deferred.callback(None)
+        else:
+            if is_first_time_called:
+                log.info("Could not find a PID file for master %s." % (identifier))
+            deferred.callback(None)
     
-    reactor.callLater(0.0, _kill, pid_file, True)
+    reactor.callLater(0.01, _kill, True)
     return deferred
 
 def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_level='info'):

@@ -41,6 +41,7 @@ def run():
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
     parser.add_option("-d", "--debug", action="store_true", help="Makes the logging output very verbose.")
+    parser.add_option("-k", "--kill", action="store_true", help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -57,6 +58,7 @@ def run():
     else:
         file_logging_enabled = False
     logging_dir = options.logging_directory
+        
     # ---------- load the right reactor
     if options.graphical:
         try:
@@ -74,21 +76,31 @@ def run():
     from twisted.internet import reactor
     from twisted.internet import defer
     # --------- load the module and run
-    from lunch.master import run_master
-    from lunch.master import FileNotFoundError
+    from lunch import master
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s." % (config_file)
     else:
+        log_level = 'warning'
+        if options.verbose:
+            log_level = 'info'
+        if options.debug:
+            log_level = 'debug'
+        if options.kill:
+            def _killed_cb(result):
+                if reactor.running:
+                    reactor.stop()
+            master.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
+            identifier = master.gen_id_from_config_file_name(config_file)
+            master.log.info("Will check if lunch master %s is running and kill it if so." % (identifier))
+            deferred = master.kill_master_if_running(identifier=identifier, directory=logging_dir)
+            deferred.addCallback(_killed_cb)
+            reactor.run()
+            sys.exit(0)
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            log_level = 'warning'
-            if options.verbose:
-                log_level = 'info'
-            if options.debug:
-                log_level = 'debug'
-            master = run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
-        except FileNotFoundError, e:
+            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
+        except master.FileNotFoundError, e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "
             msg += str(e)
