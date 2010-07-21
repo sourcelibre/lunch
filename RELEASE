@@ -6,6 +6,7 @@ Version 0.3.5 - 2010-0?-??
         * Made the detailled info resizable
         * Added a lot of comments
         * #48: Create an option to kill an already running master
+        * #84: Detect when command to run doesn't exists on remote host
 
     Bug fixes: 
         * #47: Many SSH errors could be handled properly
