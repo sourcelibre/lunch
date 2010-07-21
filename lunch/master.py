@@ -24,6 +24,7 @@ Author: Alexandre Quessy <alexandre@quessy.net>
 """
 import os
 import signal
+import socket
 import stat
 import time
 import sys
@@ -81,8 +82,10 @@ class Master(object):
         # IP to which not use SSH with :
         self.local_addresses = [
             "localhost",
-            "127.0.0.1"
-            ] # TODO: check IP of each network interface.
+            "127.0.0.1",
+            ]
+        self._guess_local_ip_and_hostname_for_local_host()
+        
         # These are all useless within this class, but might be useful to be read from the GUI:
         self.log_dir = log_dir
         self.pid_file = pid_file
@@ -104,6 +107,19 @@ class Master(object):
 
     #def __del__(self):
     #    self._looping_call.stop()
+
+    def _guess_local_ip_and_hostname_for_local_host(self):
+        """
+        Lunch master guesses the hostname of the local machine, and should at least guess one IP (for one interface) 
+        It adds it to the list local_addresses so that it doesn't use SSH to launch command here, in case the 
+        programmer has added some commands on the localhost
+        """
+        # TODO: When the username is different than the current one, we should use a different uid, gid or SSH to our own host.
+        self.local_addresses.append(socket.gethostname())
+        try:
+            self.local_addresses.append(socket.gethostbyname(socket.gethostname()))
+        except socket.gaierror, e:
+            log.error("Error getting IP of the local machine: " + str(e))
 
     def start_all(self):
         """
