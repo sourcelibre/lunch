@@ -421,7 +421,8 @@ class Command(object):
         elif "Could not resolve hostname" in line:
             ret = "Could not resolve hostname %s." % (self.host)
         if ret is not None:
-            ret += "\n The line received from SSH is :\n" + line
+            ret += "\nThe line received from SSH is :\n" + line
+            ret += "\nThis error happend when trying to launch %s" % (self)
             log.error(line)
             log.error(ret)
         return ret
