@@ -202,11 +202,11 @@ class LunchApp(object):
     """
     IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
 
-    def __init__(self, master=None):
+    def __init__(self, lunch_master=None):
         global ICON_FILE
-        self.master = master
+        self.master = lunch_master
         self.confirm_close = True # should we ask if the user is sure to close the app?
-        _commands = master.get_all_commands()
+        _commands = self.master.get_all_commands()
 
         # ------------------------------------------------------
         # Window and its icon
@@ -461,6 +461,7 @@ class LunchApp(object):
         command.child_state_changed_signal.connect(self.on_command_status_changed)
         command.child_pid_changed_signal.connect(self.on_command_child_pid_changed)
         command.ssh_error_signal.connect(self.on_ssh_error)
+        command.command_not_found_signal.connect(self.on_command_not_found)
 
 #    # FIXME: did not get this to work yet
 #    def _set_tooltip_for_command(self, command):
@@ -496,6 +497,11 @@ class LunchApp(object):
         command.child_state_changed_signal.disconnect(self.on_command_status_changed)
         command.child_pid_changed_signal.disconnect(self.on_command_child_pid_changed)
         command.ssh_error_signal.disconnect(self.on_ssh_error)
+    
+    def on_command_not_found(self, command, command_txt):
+        log.debug("on_command_not_found %s" % (command))
+        error_message = "Command %s not found on host %s.\nThe command line is %s." % (command, command.host, command_txt)
+        dialogs.ErrorDialog.create(error_message)
 
     def on_ssh_error(self, command, error_message):
         log.debug("on_ssh_error %s" % (command))

@@ -222,6 +222,7 @@ class Command(object):
         self.gave_up = False
         self.number_of_lines_received_from_slave = 0
         self._has_shown_ssh_error = False 
+        self._has_shown_notfound_error = False 
         self.try_again_delay = try_again_delay
         self._current_try_again_delay = try_again_delay # doubles up each time we try
         self._next_try_time = 0
@@ -243,6 +244,7 @@ class Command(object):
         self.slave_state_changed_signal = sig.Signal() # params: self, new_state
         self.child_state_changed_signal = sig.Signal() # params: self, new_state
         self.child_pid_changed_signal = sig.Signal() # params: self, new_pid
+        self.command_not_found_signal = sig.Signal() # params: self, command
         self.ssh_error_signal = sig.Signal() # params: self, error_message
         if command is None:
             raise RuntimeError("You must provide a command to be run.")
@@ -470,6 +472,17 @@ class Command(object):
         Callback for the "ok" message from the lunch-slave.
         """
         pass
+
+    def recv_not_found(self, mess):
+        """
+        Callback for the "not_found" message from the lunch-slave.
+        
+        That's when bash complains that it didn't find the command we are trying to run.
+        """
+        log.error("lunch-slave %s> Command not found: %s" % (self, self.command))
+        if not self._has_shown_notfound_error:
+            self._has_shown_notfound_error = True
+            self.command_not_found_signal(self, self.command)
 
     def recv_child_pid(self, mess):
         """

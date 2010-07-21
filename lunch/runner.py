@@ -130,12 +130,12 @@ def run():
         sys.exit(1)
     if GUI_ENABLED:
         from lunch import gui
-        app = gui.start_gui(master)
+        app = gui.start_gui(lunch_master)
         #print("Done starting the app.")
     try:
         reactor.run()
     except KeyboardInterrupt:
         #log.msg("Ctrl-C in Master.", logging.INFO)
-        #master.quit_master()
+        #lunch_master.quit_master()
         reactor.stop()
 

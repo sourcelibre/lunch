@@ -97,6 +97,10 @@ class ChildProcess(protocol.ProcessProtocol):
             if line != "":
                 self.slave._stdout_file.write(line + "\n")
                 self.slave.must_flush_stdout_file = True
+                if self.slave._num_lines_received == 0:
+                    if ": not found" in line:
+                        self.slave.on_command_not_found()
+                self.slave._num_lines_received += 1
 
     def errReceived(self, data):
         """
@@ -105,6 +109,11 @@ class ChildProcess(protocol.ProcessProtocol):
         for line in data.splitlines().strip():
             if line != "":
                 self.slave._stdout_file.write(line + "\n")
+                if self.slave._num_lines_received == 0:
+                    if ": not found" in line:
+                        self.slave.on_command_not_found()
+                self.slave.must_flush_stdout_file = True
+                self.slave._num_lines_received += 1
 
     def processEnded(self, reason):
         """
@@ -157,6 +166,7 @@ class Slave(object):
         @param identifier: Any string. Used as a file name, so avoid spaces and exotic characters.
         """
         self.flush_log_file_every = 0.1
+        self._num_lines_received = 0
         self._process_transport = None
         self._child_process = None
         self._time_child_started = None
@@ -199,6 +209,9 @@ class Slave(object):
             if not self._stdout_file.closed:
                 self._stdout_file.flush()
             self.must_flush_stdout_file = False
+
+    def on_command_not_found(self):
+        self.io_protocol.send_not_found()
 
     def is_alive(self):
         """
@@ -273,7 +286,7 @@ class Slave(object):
             self._stdout_file.close()
             os.chmod(stdout_file_name, 0600)
             self._stdout_file = file(stdout_file_name, "a")
-            self.log("Writing to %s" % (stdout_file_name))
+            self.log("Writing %s child's output to %s" % (self.identifier, stdout_file_name))
         self.log("Slave %s will run command %s" % (self.identifier, str(self.command)))
         self._child_process = ChildProcess(self)
         proc_path = self.command[0]
@@ -294,6 +307,7 @@ class Slave(object):
         if os.path.exists("/bin/bash"):
             shell = "/bin/bash"
         self._time_child_started = time.time()
+        self._num_lines_received = 0
         self._process_transport = reactor.spawnProcess(self._child_process, shell, [shell, "-c", "exec %s" % (self.command)], environ, usePTY=True)
         self.pid = self._process_transport.pid
         self.log("Spawned child %s with pid %s." % (self.identifier, self.pid))
@@ -417,6 +431,9 @@ class SlaveIO(basic.LineReceiver):
         if self._on_log not in self.slave.log_callbacks:
             self.slave.log_callbacks.append(self._on_log)
         self.send_ready()
+    
+    def send_not_found(self):
+        self.sendLine("not_found %s" % (self.slave.command))
     
     def send_ready(self):
         self.sendLine("ready")
