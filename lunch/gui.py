@@ -65,6 +65,7 @@ You should have received a copy of the GNU General Public License
 along with Lunch.  If not, see <http://www.gnu.org/licenses/>.""")
 
 PADDING_IN_TEXTVIEW = 18 # number of spaces before text contents in the textview
+ICON_FILE = "/usr/share/pixmaps/lunch.png"
 
 def run_once(executable, *args):
     """
@@ -154,11 +155,10 @@ class About(object):
     About dialog
     """
     def __init__(self):
-        # FIXME
-        self.icon_file = "/usr/share/pixmaps/lunch.png"
         self.about_dialog = gtk.AboutDialog()
 
     def show_about_dialog(self):
+        global ICON_FILE
         self.about_dialog.set_name('Lunch')
         self.about_dialog.set_role('about')
         self.about_dialog.set_version(__version__)
@@ -175,11 +175,13 @@ class About(object):
         self.about_dialog.set_artists(['Rocket000'])
         gtk.about_dialog_set_url_hook(self.show_website)
         self.about_dialog.set_website("http://svn.sat.qc.ca/trac/lunch")
-        if not os.path.exists(self.icon_file):
-            log.warning("Could not find icon file %s." % (self.icon_file))
+        
+        if not os.path.exists(ICON_FILE):
+            log.warning("Could not find icon file %s." % (ICON_FILE))
         else:
-            large_icon = gtk.gdk.pixbuf_new_from_file(self.icon_file)
+            large_icon = gtk.gdk.pixbuf_new_from_file(ICON_FILE)
             self.about_dialog.set_logo(large_icon)
+        
         # Connect to callbacks
         self.about_dialog.connect('response', self.destroy_about)
         self.about_dialog.connect('delete_event', self.destroy_about)
@@ -201,6 +203,7 @@ class LunchApp(object):
     IDENTIFIER_COLUMN = 0 # the row in the treeview that contains the command identifier.
 
     def __init__(self, master=None):
+        global ICON_FILE
         self.master = master
         self.confirm_close = True # should we ask if the user is sure to close the app?
         _commands = master.get_all_commands()
@@ -215,13 +218,19 @@ class LunchApp(object):
         HEIGHT = 480
         self.window.set_default_size(WIDTH, HEIGHT)
 
-        #TODO: more robust icon handling.
-        icon_file = "/usr/share/pixmaps/lunch.png"
-        if not os.path.exists(icon_file):
-            log.warning("Warning: Could not find icon file %s." % (icon_file))
-        else:
-            icon = gtk.gdk.pixbuf_new_from_file(icon_file)
+        if not os.path.exists(ICON_FILE):
+            log.warning("Could not find icon file %s." % (ICON_FILE))
+            basename = os.path.basename(ICON_FILE)
+            directory = os.path.dirname(__file__)
+            parent_dir = "/".join(directory.split("/")[0:-1])
+            ICON_FILE = os.path.join(parent_dir, basename)
+            log.warning("Using icon file %s" % (ICON_FILE))
+        if os.path.exists(ICON_FILE):
+            icon = gtk.gdk.pixbuf_new_from_file(ICON_FILE)
             self.window.set_icon_list(icon)
+        else:
+            log.warning("Could not find icon file %s." % (ICON_FILE))
+            log.warning("Warning: Could not find icon file %s." % (ICON_FILE))
         
         # Vertical Box
         vbox = gtk.VBox(homogeneous=False)
