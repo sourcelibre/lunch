@@ -88,6 +88,7 @@ def run():
             log_level = 'debug'
         if options.kill:
             def _killed_cb(result):
+                #TODO: show a dialog to the user if --graphical is given.
                 if reactor.running:
                     reactor.stop()
             master.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
