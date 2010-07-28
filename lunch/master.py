@@ -343,7 +343,10 @@ class Master(object):
         _commands = self._get_all()
         self.wants_to_live = False
         for c in _commands:
-            c.stop()
+            if c.child_state in [STATE_RUNNING, STATE_STARTING]:
+                c.stop()
+            else:
+                log.info("Command %s is already stopped." % (c))
         log.info("Done stopping all commands.")
 
     def remove_command(self, identifier):
