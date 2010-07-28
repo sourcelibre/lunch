@@ -64,7 +64,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Lunch.  If not, see <http://www.gnu.org/licenses/>.""")
 
-PADDING_IN_TEXTVIEW = 18 # number of spaces before text contents in the textview
+PADDING_IN_TEXTVIEW = 22 # number of spaces before text contents in the textview
 ICON_FILE = "/usr/share/pixmaps/lunch.png"
 
 def run_once(executable, *args):
@@ -341,6 +341,9 @@ class LunchApp(object):
                 (_("sleep_after"), command.sleep_after),
                 (_("delay_before_kill"), command.delay_before_kill),
                 (_("verbose"), command.verbose),
+                (_("how_many_times_tried"), command.how_many_times_tried),
+                (_("_has_shown_ssh_error"), command._has_shown_ssh_error),
+                (_("gave_up"), command.gave_up),
                 ]
             for key, val in keyval:
                 _format = "%" + ("%ds" % PADDING_IN_TEXTVIEW) + ": %s\n"
