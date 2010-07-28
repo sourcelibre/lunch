@@ -401,11 +401,15 @@ class Command(object):
         @return: An error message if there is a problem, or None otherwise.
         @rtype: C{str}
         """
+        #XXX: if is returns a string, the master will give it up
         ret = None
         # log.debug("Checking if it looks like a SSH error: %s" % (line))
         if "password:" in line:
             ret = "The SSH server asks for a password. Make sure you use the right user name and that your public SSH key is installed on the remote host %s." % (self.host)
-            #TODO: give up
+            #giving up
+        elif "Enter passphrase for key" in line:
+            ret = "The SSH client asks for a passphrase to unlock your local private SSH key for which you have the corresponding public key on host %s. You should avoid this to be asked by providing that passphrase a first time using SSH by hand." % (self.host)
+            #giving up
         elif "Connection refused" in line:
             port = 22
             if self.ssh_port is not None:
@@ -417,9 +421,9 @@ class Command(object):
             #TODO: try to reconnect
         elif "command not found" in line:
             ret = "The lunch-slave command is not installed on the host %s." % (self.host)
-            #TODO: give up
+            #giving up
         elif "ssh_exchange_identification" in line: #FIXME: what is that?
-            ret = "Some SSH problem occurred exchanging the identification on host %s." % (self.host)
+            ret = "Some SSH problem occurred exchanging the identification on host %s. Is your host blacklisted?" % (self.host)
         elif "Could not resolve hostname" in line:
             ret = "Could not resolve hostname %s." % (self.host)
         if ret is not None:
