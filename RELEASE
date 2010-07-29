@@ -1,4 +1,4 @@
-Version 0.3.5 - 2010-0?-??
+Version 0.3.5 - 2010-07-29
 
     New features: 
         * #83: Added SSH port to the options. (named ssh_port)
