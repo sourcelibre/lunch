@@ -1,15 +1,8 @@
-Version 0.3.5 - 2010-07-29
+Version 0.3.6 - 2010-0?-??
 
     New features: 
-        * #83: Added SSH port to the options. (named ssh_port)
-        * The text view in the user interface looks nicer
-        * Made the detailled info resizable
-        * Added a lot of comments
-        * #48: Create an option to kill an already running master
-        * #84: Detect when command to run doesn't exists on remote host
+        * 
 
     Bug fixes: 
-        * #47: Many SSH errors could be handled properly
-        * #82: Child pid is not updated the second time a child is started
-        * Got rid of a deprecation warning for the GTK menu
+        * 
 
