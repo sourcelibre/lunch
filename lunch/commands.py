@@ -653,7 +653,7 @@ class Command(object):
             self.send_stop()
         else:
             msg = "Cannot stop child %s that is %s." % (self.identifier, self.child_state)
-            self.log(msg, logging.ERROR)
+            self.log(msg, logging.WARNING)
 
     def send_stop(self):
         self.send_message("stop")

@@ -77,6 +77,11 @@ Next, for each slave host, do:
 
 The latter command should display "Hello" when issued.
 
+If you start lunch via SSH, and launch from there commands other hosts, you must first make sure that the ssh-agent is running and that you have unlocked your private SSH key. It can be done like this:
+
+  $ ssh-agent bash
+  $ ssh-add
+
 [HISTORY]
 2010 - Ported from multiprocessing to Twisted
 
