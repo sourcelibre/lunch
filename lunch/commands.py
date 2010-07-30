@@ -192,12 +192,11 @@ class Command(object):
         @type verbose: bool
         @type delay_before_kill: float
         @type ssh_port: int
+        @param try_again_delay: Time to wait before trying again if it crashes at startup.
+        @type try_again_delay: C{float}
+        @param give_up_after: How many times to try again before giving up.
+        @type give_up_after: C{int}
         """
-        #TODO:
-        #@param try_again_delay: Time to wait before trying again if it crashes at startup.
-        #@type try_again_delay: C{float}
-        #@param give_up_after: How many times to try again before giving up.
-        #@type give_up_after: C{int}
         self.command = command
         self.identifier = identifier
         self.env = {}
