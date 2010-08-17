@@ -286,7 +286,8 @@ class Command(object):
         If the lunch-slave is already started, starts its child.
         """
         self.enabled = True
-        self._has_shown_ssh_error = False
+        #FIXME:2010-08-17:aalex:We won't reset the _has_shown_ssh_error state when starting, otherwise it shows the error many times.
+        # self._has_shown_ssh_error = False
         self.gave_up = False
         if self.how_many_times_tried == 0:
             self._current_try_again_delay = self.try_again_delay
