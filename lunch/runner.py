@@ -79,7 +79,7 @@ def run():
     from lunch import master
     error_message = None
     if not os.path.exists(config_file):
-        error_message = "No such file: %s." % (config_file)
+        error_message = "No such file: %s" % (config_file)
     else:
         log_level = 'warning'
         if options.verbose:
