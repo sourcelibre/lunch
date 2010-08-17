@@ -572,12 +572,12 @@ def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
             pid = is_lunch_master_running(pid_file)
             if pid is not None:
                 if is_first_time_called:
-                    log.info("Sending SIGINT to the lunch master %s." % (identifier))
+                    log.warning("Sending SIGINT to the lunch master %s." % (identifier))
                     os.kill(pid, signal.SIGINT)
                     reactor.callLater(0.2, _kill)
                 else:
                     if time.time() > send_sigkill_at:
-                        log.info("Sending SIGKILL to the lunch master %s." % (identifier))
+                        log.warning("Sending SIGKILL to the lunch master %s." % (identifier))
                         os.kill(signal.SIGKILL)
                         deferred.callback(None)
                     else:
@@ -585,7 +585,7 @@ def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
                         reactor.callLater(0.2, _kill)
             else:
                 if is_first_time_called:
-                    log.info("The lunch master %s was not running." % (identifier))
+                    log.warning("The lunch master %s was not running." % (identifier))
                 deferred.callback(None)
         else:
             if is_first_time_called:
