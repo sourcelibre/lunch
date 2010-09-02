@@ -1,4 +1,24 @@
+Version 0.4.0 - 2010-09-02
+--------------------------
+
+    This is the first stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch. 
+
+    Lunch 0.4 has an API that is slightly different than Lunch in the 0.2 series. Among the most important changes is the deprecation of the "title" keyword of the "add_command" function in favour of the "identifier" one. Same applies for "sleep" in favour of "sleep_after". The "priority", "order" and "log_file" keywords are also deprecated. 
+
+    Lunch can now be used as a library to spawn processes from a Python application. The lunch-slave script must be installed on every host on which the operator wants to launch processes.
+
+    New features: 
+        * (none)
+
+    Bug fixes: 
+        * 
+        * Fixed typo in an example
+        * Try to not show "no route to host" more than once
+        * more verbose when killing a running master
+        * Improved the doc about ssh-agent
+
 Version 0.3.5 - 2010-07-29
+--------------------------
 
     New features: 
         * #83: Added SSH port to the options. (named ssh_port)
@@ -15,6 +35,7 @@ Version 0.3.5 - 2010-07-29
 
 
 Version 0.3.4 - 2010-07-19
+--------------------------
 
     This release introduces critical bugfixes with stopping child processes. 
     There is a new text view in the user interface that displays more information 
@@ -33,6 +54,7 @@ Version 0.3.4 - 2010-07-19
 
 
 Version 0.3.3 - 2010-07-15
+--------------------------
     
     New features: 
         * #76: Added the enabled keyword in the Command class.
@@ -49,6 +71,7 @@ Version 0.3.3 - 2010-07-15
 
 
 Version 0.3.2 - 2010-06-23
+--------------------------
 
     * Respawn after a little while instead of giving up
     * Do not ask confirmation to exit when no process is running.
@@ -56,6 +79,7 @@ Version 0.3.2 - 2010-06-23
 
 
 Version 0.3.1 - 2010-06-18
+--------------------------
 
     * Modernized logging system
     * Checking for a lunch master that's a Python, not "lunch"
@@ -69,6 +93,7 @@ Version 0.3.1 - 2010-06-18
 
 
 Version 0.3.0 - 2010-06-16
+--------------------------
 
     * add/remove commands live
     * get the return value of the command once done
@@ -82,11 +107,13 @@ Version 0.3.0 - 2010-06-16
 
 
 Version 0.2.22 - 2010-06-01
+--------------------------
     
     * Lunch is now part of Debian
 
 
 Version 0.2.17 - 2010-01-25
+--------------------------
 
     * Use Trac with Mercurial
     * Split lunch in 4 files.
@@ -112,6 +139,7 @@ Version 0.2.17 - 2010-01-25
 
 
 Version 0.1.10 - 2010-01-13
+--------------------------
     
     * Using the multiprocessing Python module
     * Set up the basics of the lunch file
@@ -119,6 +147,7 @@ Version 0.1.10 - 2010-01-13
 
 
 Initial draft - 2009-07-22
+--------------------------
 
     * Working proof of concept
 

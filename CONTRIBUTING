@@ -34,6 +34,7 @@ Create the tag and a tarball:
  * hg tag 0.4.0
  * hg archive ../lunch-0.4.0
  * cd ..
+ * rm lunch-0.4.0/.hg*
  * GZIP=--best tar -cvz --owner root --group root --mode a+rX -f lunch-0.4.0.tar.gz lunch-0.4.0/
  * cd - 
 
