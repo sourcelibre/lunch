@@ -1,8 +1,18 @@
-Version 0.3.6 - 2010-0?-??
+Version 0.4.0 - 2010-09-02
+
+    This is the first stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch. 
+
+    Lunch 0.4 has an API that is slightly different than Lunch in the 0.2 series. Among the most important changes is the deprecation of the "title" keyword of the "add_command" function in favour of the "identifier" one. Same applies for "sleep" in favour of "sleep_after". The "priority", "order" and "log_file" keywords are also deprecated. 
+
+    Lunch can now be used as a library to spawn processes from a Python application. The lunch-slave script must be installed on every host on which the operator wants to launch processes.
 
     New features: 
-        * 
+        * (none)
 
     Bug fixes: 
         * 
+        * Fixed typo in an example
+        * Try to not show "no route to host" more than once
+        * more verbose when killing a running master
+        * Improved the doc about ssh-agent
 

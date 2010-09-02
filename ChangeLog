@@ -1,6 +1,272 @@
-changeset:   451:c961f9b1fd31
+changeset:   495:6cadd74a04c0
 branch:      0.3
 tag:         tip
+user:        Tristan Matthews <le.businessman@gmail.com>
+date:        Tue Aug 17 12:32:33 2010 -0400
+summary:     Fixed typo in example
+
+changeset:   494:8941839f3298
+branch:      0.3
+user:        Tristan Matthews <le.businessman@gmail.com>
+date:        Tue Aug 17 12:28:34 2010 -0400
+summary:     Critical punctuation change in runner.py
+
+changeset:   493:045ba69dd8bc
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Aug 17 12:13:02 2010 -0400
+summary:     Probably not showing no route to host error bug.
+
+changeset:   492:6b5509736d07
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Aug 17 10:32:44 2010 -0400
+summary:     more verbose when killing a running master
+
+changeset:   491:0f716d9b1f2b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Fri Jul 30 15:41:14 2010 -0400
+summary:     uncommented todos that are implemented
+
+changeset:   490:c1b155d57ff0
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jul 29 15:58:43 2010 -0400
+summary:     Improved the doc about ssh-agent
+
+changeset:   489:6a278a2bb6af
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jul 29 09:35:36 2010 -0400
+summary:     updated to version 0.3.6 - not yet released
+
+changeset:   488:a6e029bc3f36
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jul 29 09:31:51 2010 -0400
+summary:     Added tag 0.3.5 for changeset ce1c9c89f03c
+
+changeset:   487:ce1c9c89f03c
+branch:      0.3
+tag:         0.3.5
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jul 29 09:31:39 2010 -0400
+summary:     minor change
+
+changeset:   486:96e9f73fccb9
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu Jul 29 09:31:08 2010 -0400
+summary:     updated RELEASE notes
+
+changeset:   485:29fb63e85124
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 28 11:34:43 2010 -0400
+summary:     decreased verbosity in when stopping all /restarting all
+
+changeset:   484:8146e788e43c
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 28 10:29:46 2010 -0400
+summary:     handle SSH key passphrase prompt
+
+changeset:   483:6cf277263cf0
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 28 10:23:44 2010 -0400
+summary:     more info in the GUI
+
+changeset:   482:60fc3b22a046
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 16:12:08 2010 -0400
+summary:     Guessing the local hostname and LAN address.
+
+changeset:   481:c51c1d27954d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 16:01:56 2010 -0400
+summary:     updated RELEASE notes
+
+changeset:   480:8c9d2a2aa72f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 16:01:02 2010 -0400
+summary:     Displaying a command not found error to the user if it happens.
+
+changeset:   479:c14884fa2bbe
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 14:21:51 2010 -0400
+summary:     more error message in case of a SSH error
+
+changeset:   478:f916675a526e
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 14:10:28 2010 -0400
+summary:     more info when we have a ssh error
+
+changeset:   477:1b7f49611efa
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 13:53:47 2010 -0400
+summary:     not disabling commands in case of a SSH error
+
+changeset:   476:398784f198ae
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 13:25:32 2010 -0400
+summary:     fixed a typo
+
+changeset:   475:25b80f8f48d9
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:51:44 2010 -0400
+summary:     updated RELEASE notes
+
+changeset:   474:7561fdaa17c5
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:48:08 2010 -0400
+summary:     added a todo
+
+changeset:   473:23c415d26e7d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:42:45 2010 -0400
+summary:     Added the --kill option to be able to kill already running lunch masters.
+
+changeset:   472:282c0c72138f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:23:43 2010 -0400
+summary:     Fixed icon file issues
+
+changeset:   471:6c9d6f9568b1
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:01:58 2010 -0400
+summary:     set the textview to not editable !
+
+changeset:   470:4a05283f404f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Wed Jul 21 11:01:15 2010 -0400
+summary:     Created the kill_lunch_master_if_running function.
+
+changeset:   469:d78a40e799c8
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 18:27:55 2010 -0400
+summary:     updated the RELEASE notes
+
+changeset:   468:bd7d339ad202
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 18:22:52 2010 -0400
+summary:     updated RELEASE notes and added a note in an example
+
+changeset:   467:d1cfbdb183b6
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 18:20:26 2010 -0400
+summary:     added one more SSH error handling
+
+changeset:   466:54f1921a7794
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 18:19:00 2010 -0400
+summary:     Handling most SSH problems as in #47
+
+changeset:   465:253336984a2c
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 17:03:17 2010 -0400
+summary:     Added the ssh_port option
+
+changeset:   464:074b1452f550
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 16:29:09 2010 -0400
+summary:     Fixed #82 Child pid is not updated the second time a child is started
+
+changeset:   463:59fa4917080b
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 16:17:06 2010 -0400
+summary:     more icons
+
+changeset:   462:a92b384a6889
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 16:02:20 2010 -0400
+summary:     Got rid of the deprecation warning since we modernized the way the menus are created.
+
+changeset:   461:6e7503b7796f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 15:23:51 2010 -0400
+summary:     added some bash-fu in the examples
+
+changeset:   460:118bcc2f5986
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 15:22:26 2010 -0400
+summary:     improved how the text looks
+
+changeset:   459:52a9736f1ab2
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 14:20:34 2010 -0400
+summary:     Made the details info resizable - and its font monospace.
+
+changeset:   458:36a807f4eec3
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 09:53:48 2010 -0400
+summary:     Changed lunch-slave.Slave.state for child_state.
+
+changeset:   457:7625cfbb224f
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 09:28:06 2010 -0400
+summary:     heavily commented lunch/commands.py
+
+changeset:   456:dccf1cf21a25
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Tue Jul 20 08:42:58 2010 -0400
+summary:     updated NEWS with the very first draft - one year ago.
+
+changeset:   455:117e7b70bc19
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jul 19 17:17:22 2010 -0400
+summary:     updated NEWS and RELEASE notes
+
+changeset:   454:19dfae6ece1d
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jul 19 17:16:40 2010 -0400
+summary:     updated version to 0.3.5 - not yet released
+
+changeset:   453:df742e98b4b4
+branch:      0.3
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jul 19 17:15:52 2010 -0400
+summary:     Added tag 0.3.4 for changeset a1281a70d27b
+
+changeset:   452:a1281a70d27b
+branch:      0.3
+tag:         0.3.4
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Mon Jul 19 17:12:06 2010 -0400
+summary:     updated RELEASE notes and ChangeLog
+
+changeset:   451:c961f9b1fd31
+branch:      0.3
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jul 19 16:49:18 2010 -0400
 summary:     To kill a child, need to send the signal to the child, not the slave, otherwise, the slave crashes, and the child crashes with it.
@@ -684,7 +950,7 @@ summary:     Specifying the encoding in the .desktop file is deprecated
 
 changeset:   338:14ff3d32d5ee
 branch:      0.2
-parent:      322:67521f514596
+parent:      321:67521f514596
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Tue Jun 01 08:31:24 2010 -0400
 summary:     adding a very detailled ChangeLog
@@ -775,43 +1041,43 @@ summary:     changed maintainer for the Python App Package Team
 
 changeset:   323:a3e28bf70f8f
 branch:      packaging
-parent:      320:95e1c964b45c
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Fri May 28 03:27:23 2010 -0400
 summary:     now it's the correct message
 
-changeset:   322:67521f514596
-branch:      0.2
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Thu May 27 20:58:34 2010 -0400
-summary:     Added tag 0.2.21 for changeset 717965e05673
-
-changeset:   321:717965e05673
-branch:      0.2
-tag:         0.2.21
-parent:      317:2ecc9c01f731
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Thu May 27 20:37:40 2010 -0400
-summary:     updated version to 0.2.21
-
-changeset:   320:95e1c964b45c
+changeset:   322:95e1c964b45c
 branch:      packaging
+parent:      320:03f4178d2ba1
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 21:02:09 2010 -0400
 summary:     a changelog for sid
 
-changeset:   319:03f4178d2ba1
+changeset:   321:67521f514596
+branch:      0.2
+parent:      318:717965e05673
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:58:34 2010 -0400
+summary:     Added tag 0.2.21 for changeset 717965e05673
+
+changeset:   320:03f4178d2ba1
 branch:      packaging
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 20:51:22 2010 -0400
 summary:     trying to fix some lintian warnings
 
-changeset:   318:20cd6f66639e
+changeset:   319:20cd6f66639e
 branch:      packaging
 parent:      315:28dfbe392e02
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Thu May 27 20:42:24 2010 -0400
 summary:     changed for the utils debian section
+
+changeset:   318:717965e05673
+branch:      0.2
+tag:         0.2.21
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Thu May 27 20:37:40 2010 -0400
+summary:     updated version to 0.2.21
 
 changeset:   317:2ecc9c01f731
 branch:      0.2
@@ -1782,14 +2048,14 @@ summary:     fixed errors again in master
 
 changeset:   162:19571f15a542
 branch:      py
-parent:      132:1fe89ed9da01
+parent:      133:1fe89ed9da01
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Wed Jan 13 14:43:31 2010 -0500
 summary:     writing pid file in master, like in branch 0.1
 
 changeset:   161:5550c6e7895a
 branch:      py
-parent:      132:1fe89ed9da01
+parent:      133:1fe89ed9da01
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Wed Jan 13 14:39:35 2010 -0500
 summary:     Passing the whole env from master to slaves. (needed by ssh-agent)
@@ -1949,94 +2215,94 @@ summary:     updated versions to 0.2.0
 
 changeset:   135:dc1930aea90e
 branch:      py
-parent:      134:4a38c8bd1d45
-parent:      133:dffc48c94537
+parent:      122:4a38c8bd1d45
+parent:      134:dffc48c94537
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Tue Jan 12 08:03:24 2010 -0500
 summary:     merging with remote changes
 
-changeset:   134:4a38c8bd1d45
-branch:      py
-parent:      121:4839dcddbd88
-user:        Alexandre Quessy <alexandre@quessy.net>
-date:        Sat Jan 09 03:16:54 2010 -0500
-summary:     changed lunch executable to lunch-0.1 in lunch-0.1
-
-changeset:   133:dffc48c94537
+changeset:   134:dffc48c94537
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 17:32:51 2010 -0500
 summary:     Added tag 0.2 for changeset 1fe89ed9da01
 
-changeset:   132:1fe89ed9da01
+changeset:   133:1fe89ed9da01
 branch:      py
 tag:         0.2.0
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 16:52:32 2010 -0500
 summary:     Huge progress in asynchronous iterating of groups at startup.
 
-changeset:   131:b197739bbfa0
+changeset:   132:b197739bbfa0
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 15:18:17 2010 -0500
 summary:     mucho progress before i scrap this all for more improvements.
 
-changeset:   130:1b116e68924b
+changeset:   131:1b116e68924b
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 14:04:33 2010 -0500
 summary:     Major changes and fixes in master.
 
-changeset:   129:83ccf79774b7
+changeset:   130:83ccf79774b7
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:09:11 2010 -0500
 summary:     removing lunch/constants.py
 
-changeset:   128:cda24db07b25
+changeset:   129:cda24db07b25
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:08:39 2010 -0500
 summary:     Constants cleanup in master.
 
-changeset:   127:ac77d866597b
+changeset:   128:ac77d866597b
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 13:00:13 2010 -0500
 summary:     changed callbacks from do_* to recv_* in slave.
 
-changeset:   126:98ce9c6d9f31
+changeset:   127:98ce9c6d9f31
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 12:57:50 2010 -0500
 summary:     splitted callbacks in master. Messages to lowercase.
 
-changeset:   125:48dc2632a82f
+changeset:   126:48dc2632a82f
 branch:      py
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 11:10:36 2010 -0500
 summary:     making sure process is dead after 5.0 seconds.
 
-changeset:   124:653d3ac04943
+changeset:   125:653d3ac04943
 branch:      py
-parent:      123:55aff2084f26
-parent:      122:652cb86339b1
+parent:      124:55aff2084f26
+parent:      123:652cb86339b1
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 10:07:13 2010 -0500
 summary:     Merged recent changes together.
 
-changeset:   123:55aff2084f26
+changeset:   124:55aff2084f26
 branch:      py
 parent:      116:0d8e482610ae
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Mon Jan 11 10:06:42 2010 -0500
 summary:     Added small comments. Things todo in Command
 
-changeset:   122:652cb86339b1
+changeset:   123:652cb86339b1
 branch:      py
+parent:      121:4839dcddbd88
 user:        Alexandre Quessy <alexandre@quessy.net>
 date:        Sun Jan 10 10:18:49 2010 -0500
 summary:     lunch-master add lunch-slave in its $PATH when in devel mode.
+
+changeset:   122:4a38c8bd1d45
+branch:      py
+user:        Alexandre Quessy <alexandre@quessy.net>
+date:        Sat Jan 09 03:16:54 2010 -0500
+summary:     changed lunch executable to lunch-0.1 in lunch-0.1
 
 changeset:   121:4839dcddbd88
 branch:      py

@@ -20,7 +20,7 @@ Here is the simplest example possible for the contents of a ~/.lunchrc file. It 
 
   add_command("xeyes")
 
-If you add more calls to add_command in this file, it will add more processes tobe launched by Lunch. The add_command is the Python function you need to call from your Lunch configuration file in order to add commands to be called by Lunch. If you add more than one command, they will be called in the order you add them in the file.
+If you add more calls to add_command in this file, it will add more processes to be launched by Lunch. The add_command is the Python function you need to call from your Lunch configuration file in order to add commands to be called by Lunch. If you add more than one command, they will be called in the order you add them in the file.
 
 Here is a more complex example of a configuration file. It creates three processes, with dependencies between processes.
 
@@ -30,7 +30,7 @@ Here is a more complex example of a configuration file. It creates three process
 
 The configuration file above will first start xeyes, and next xlogo, and finally xclock. If xeyes quits, all three processes will be stopped and restarted. If the xlogo process quits, the xclock will be stopped and restarted again when the xlogo is running. The "depends" keyword argument of the "add_command" function needs a list of strings as argument. Those string must match the "identifier" keyword argument of an already added command. 
  
-In the next example, we use SSH to launch processes on a remote host.
+In the next example, we use SSH to launch processes on a remote host. Note that the lunch-slave script must be installed on each of the hosts on which to launch child processes.
 
   add_command("xeyes")
   add_command("xeyes", user="johndoe", host="example.org")

@@ -2,7 +2,7 @@ INSTALLATION
 ============
 You will need a few software. On Ubuntu or Debian GNU/Linux, install them using the following command ::
 
-  sudo apt-get install openssh-client openssh-server python-setuptools help2man python-twisted-core
+  sudo apt-get install openssh-client openssh-server python-setuptools help2man python-twisted-core python-gtk2
 
 Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
