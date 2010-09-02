@@ -1,0 +1,43 @@
+Some development notes about the Lunch project
+
+The release process
+-------------------
+
+Update the documentation if needed:
+
+ * scripts/lunch
+ * scripts/lunch-slave
+ * man_lunch.txt
+ * README
+
+Make sure the version number is the next release's:
+
+ * scripts/lunch-slave
+ * lunch/__init__.py
+
+Run the unit tests:
+
+ * trial lunch
+
+Update the release notes:
+
+ * RELEASE
+
+Update the ChangeLog:
+
+ * hg log > ChangeLog
+
+Create the tag and a tarball:
+
+ * Commit any change
+ * hg tag 0.4.0
+ * hg archive ../lunch-0.4.0
+ * cd ..
+ * GZIP=--best tar -cvz --owner root --group root --mode a+rX -f lunch-0.4.0.tar.gz lunch-0.4.0/
+ * cd - 
+
+Increase the version number (not yet released):
+
+ * scripts/lunch-slave
+ * lunch/__init__.py
+ * NEWS: move the contents of the old RELEASE file to NEWS
