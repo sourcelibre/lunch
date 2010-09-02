@@ -29,6 +29,7 @@ Update the ChangeLog:
 
 Create the tag and a tarball:
 
+ * make sure you are in the right branch. 
  * Commit any change
  * hg tag 0.4.0
  * hg archive ../lunch-0.4.0
