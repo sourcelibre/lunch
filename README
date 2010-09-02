@@ -1,7 +1,7 @@
 The Lunch distributed process launcher
 ======================================
 
-Lunch is a simple distributed process launcher and manager for GNU/Linux.
+Lunch is a distributed process launcher and manager for GNU/Linux.
 
 With Lunch, one can launch software processes on several different computers
 and make sure they keep running. This software was created to suit the needs
@@ -33,17 +33,21 @@ Start the lunch master::
 
  lunch
 
-A remote lunch as a slave is started this way::
+A remote lunch-slave is started this way::
 
- lunch -s -c "xlogo"
- lunch -s -c "xdg-open /usr/local/share/pixmaps/lunch.png"
+ lunch-slave -i "xlogo"
+ lunch-slave "xdg-open"
 
-The .lunch/config file is written in Python and the only function needed is add_command. Here are some examples::
+Next, the lunch scripts controls the lunch-slave via its standard input and output. Type "help" in lunch-slave and press enter to see how the lunch-slave prompt is used by lunch. That prompt is not meant to be used directly by an operator, but rather only through lunch.
 
- add_command(command="xlogo", env={}, title="xlogo")
- add_command(command="mplayer /usr/share/example-content/Ubuntu_Free_Culture_Showcase/StopMotionUbuntu.ogv", env={}, title="mplayer")
+The .lunch/config file is written in the Python language and the only function needed to be called there is add_command. Here are some examples::
+
+ add_command(command="xlogo", env={}, identifier="xlogo")
+ add_command(command="mplayer /usr/share/example-content/Ubuntu_Free_Culture_Showcase/StopMotionUbuntu.ogv", env={}, identifier="mplayer")
 
 Setting the user and host arguments make it be issued through SSH to a remote host::
  
- add_command(command="xlogo", env={"DISPLAY":":0.0"}, user=_user, host="example.org", title="remote_xlogo")
+ add_command(command="xlogo", env={"DISPLAY":":0.0"}, user=_user, host="example.org", identifier="remote_xlogo")
+
+See the examples for more information about this.
 
