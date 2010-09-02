@@ -1,6 +1,12 @@
 [INTERACTIVE USAGE]
 Start lunch-slave. Type "help" and press enter to learn what other commands one can type.
 
+[HISTORY]
+2010 - Ported from multiprocessing to Twisted
+
+2009 - Written by Alexandre Quessy <alexandre@quessy.net> with contributions 
+from Simon Piette <simonp@sat.qc.ca>
+
 [REPORTING BUGS]
 See http://svn.sat.qc.ca/trac/lunch for help and documentation.
 
