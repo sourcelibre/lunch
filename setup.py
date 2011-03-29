@@ -4,7 +4,7 @@ setup.py for Lunch
 Also sets up the man pages.
 
 To update the version number : 
-vim -o lunch/runner.py scripts/lunch-slave setup.py lunch/gui.py
+vim -o scripts/lunch-slave lunch/__init__.py
 """
 from setuptools import setup
 import subprocess
@@ -17,7 +17,7 @@ setup(
     description="The Lunch Distributed Process Launcher",
     author="SAT",
     author_email="alexandre@quessy.net",
-    url="https://svn.sat.qc.ca/trac/lunch",
+    url="http://code.sat.qc.ca/trac/lunch",
     packages=["lunch"],
     scripts=["scripts/lunch", "scripts/lunch-slave"]
     )
