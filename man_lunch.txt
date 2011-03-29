@@ -89,7 +89,7 @@ If you start lunch via SSH, and launch from there commands other hosts, you must
 from Simon Piette <simonp@sat.qc.ca>
 
 [REPORTING BUGS]
-See http://svn.sat.qc.ca/trac/lunch for help and documentation.
+See http://code.sat.qc.ca/trac/lunch for help and documentation.
 
 [SEE ALSO]
 lunch-slave (1)

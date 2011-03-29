@@ -174,7 +174,7 @@ class About(object):
             ])
         self.about_dialog.set_artists(['Rocket000'])
         gtk.about_dialog_set_url_hook(self.show_website)
-        self.about_dialog.set_website("http://svn.sat.qc.ca/trac/lunch")
+        self.about_dialog.set_website("http://code.sat.qc.ca/trac/lunch")
         
         if not os.path.exists(ICON_FILE):
             log.warning("Could not find icon file %s." % (ICON_FILE))
