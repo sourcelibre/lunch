@@ -51,3 +51,34 @@ Setting the user and host arguments make it be issued through SSH to a remote ho
 
 See the examples for more information about this.
 
+
+Versioning
+==========
+
+This project uses the common "Linux kernel" versioning system, where even-numbered minor versions are stable and odd-numbered minor versions are development snapshots.
+
+The micro version indicates the origin of the release: even micro numbers are only used for released archives; odd micro numbers are only used on the Git repository.
+
+A stable series means that the command-line options and the interactive keyboard controls should not change much for all tags whose version number start with the same major-minor numbers. Some new features might be developped in that branch, but each release should be backward-compatible with their ancestor. Releases from a stable series should be use for production. 
+
+In contrast, unstable branches consist of tags which are developer snapshots. They are not expected to be compatible with any other version. Some features might change between different stable branches.
+
+
+How to use Git with the https://code.sat.qc.ca/ server
+======================================================
+
+Get the certificate authority:
+
+  $ mkdir ~/.git
+  $ cd ~/.git/
+  $ wget --no-check-certificate https://secure.sat.qc.ca/certs/sat.qc.ca.crt
+
+Clone the repository without verifying the SSL certicate:
+
+  $ GIT_SSL_NO_VERIFY=1 git clone https://username@code.sat.qc.ca/git/lunch
+
+Configure this repository in order to use the certificate upon pull/push requests:
+
+  $ cd lunch
+  $ git config http.sslCAInfo ~/.git/sat.qc.ca.crt
+
