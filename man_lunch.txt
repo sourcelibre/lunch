@@ -8,9 +8,25 @@ Here is how to kill every lunch master on your system :
 
   for f in /var/tmp/lunch/master-*.pid; do kill -15 $(cat $f); done
 
-[GRAPHICAL USER INTERFACE]
+[ADDING COMMANDS]
 
-When invoked with the --graphical option, (-g) the lunch master shows a graphical user interface displaying the state of every managed process. When this window is closed, the lunch master exits and kills all its children processes.
+add_command("process", options)
+
+The add_command function is a regular python function and it is the only function that the user will use to launch processes, however it allows for a lot of flexibility. The first argument is the name of the process, as a python string, with all the command line switches that the command may require. This string can be formatted in a standard pythonesque way, using either % string substitution or the new .format function (since python 2.7).
+
+Options:
+  env - a dictionary of environment variables that may be relevant to the running function
+  depends - a list of process identifiers on which the current process depends
+  identifier - a string that will identify a current process to refer to in depends optionm in the logs and in the GUI
+  host - hostname or IP address for launching over SSH
+  user - a UID, if launching over SSH
+  ssh_port - port number of the remote SSH server if different from 22
+  sleep_afer - amount of seconds to sleep after launching the process
+  respawn - if True, lunch will relaunch the process every time it exits.  False will launch the process only once. Useful for running some process only once, to set things up (i.e. firereset, settin environment variables etc.)
+  minimum_lifetime_to_respawn - Minimum time a process must have lasted in order for it be respawned
+  log_dir - path to the directory where log files should be stored.  Default is /var/tmp/lunch
+  try_again_delay - a minimum delay to wait before relaunching the process if it crashes at startup.  The time is in seconds and the default is 0.25
+  give_up_after - How many times to try respawning before giving up.
 
 [EXAMPLES]
 
@@ -58,6 +74,10 @@ If, for some reason, it is easier for you to specify the host name for every com
   add_command("xeyes -geometry 300x400", 
     identifier="remote_xeyes", 
     user="johndoe", host="example.org")
+
+[GRAPHICAL USER INTERFACE]
+
+When invoked with the --graphical option, (-g) the lunch master shows a graphical user interface displaying the state of every managed process. When this window is closed, the lunch master exits and kills all its children processes.
 
 [SSH KEYS MANAGEMENT]
 If using for more than one host, lunch needs a SSH server installed on each 
