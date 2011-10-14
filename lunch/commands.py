@@ -295,7 +295,8 @@ class Command(object):
         self._start_logger()
         # If the lunch-slave is already running, we only need to tell it to start the child
         if self.child_state == STATE_RUNNING:
-            self.log("%s: Child is already running." % (self.identifier))
+            self.log("%s: Child is already running.\n(Ignore this error if everything is working as expected)" 
+			% (self.identifier))
             return
         if self.slave_state == STATE_RUNNING and self.child_state == STATE_STOPPED:
             self._send_all_startup_commands()
