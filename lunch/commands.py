@@ -427,6 +427,8 @@ class Command(object):
             ret = "Some SSH problem occurred exchanging the identification on host %s. Is your host blacklisted?" % (self.host)
         elif "Could not resolve hostname" in line:
             ret = "Could not resolve hostname %s." % (self.host)
+        elif "Host key verification failed" in line:
+            ret = "Host key verification failed on %s. Add correct host key" % (self.host)
         if ret is not None:
             ret += "\nThe line received from SSH is :\n" + line
             ret += "\nThis error happend when trying to launch %s" % (self)
