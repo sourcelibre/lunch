@@ -1,165 +1,161 @@
-Version 0.4.2 - 2010-??-??
+Lunch release notes
+===================
+
+
+Version 0.4.2 - 2011-12-12
 --------------------------
+This is the second stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch.
 
-    This is the second stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch.
+This release introduces a few bug fixes and little improvements in the documentation.
 
-    New features: 
-        * (none)
+New features: 
+* Explain add_command() in the man page
+* Switch to even-only micro release numbers
 
-    Bug fixes: 
-        * 
+Bug fixes: 
+* Fix project URL
+* Catch "Host key verification failed" SSH error
 
 
 Version 0.4.0 - 2010-09-02
 --------------------------
+This is the first stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch. 
 
-    This is the first stable release of the 0.4 stable branch. That means we have done a feature freeze and chosen an API that will stay througout the next releases in the 0.4 branch. 
+Lunch 0.4 has an API that is slightly different than Lunch in the 0.2 series. Among the most important changes is the deprecation of the "title" keyword of the "add_command" function in favour of the "identifier" one. Same applies for "sleep" in favour of "sleep_after". The "priority", "order" and "log_file" keywords are also deprecated. 
 
-    Lunch 0.4 has an API that is slightly different than Lunch in the 0.2 series. Among the most important changes is the deprecation of the "title" keyword of the "add_command" function in favour of the "identifier" one. Same applies for "sleep" in favour of "sleep_after". The "priority", "order" and "log_file" keywords are also deprecated. 
+Lunch can now be used as a library to spawn processes from a Python application. The lunch-slave script must be installed on every host on which the operator wants to launch processes.
 
-    Lunch can now be used as a library to spawn processes from a Python application. The lunch-slave script must be installed on every host on which the operator wants to launch processes.
+New features: 
+* (none)
 
-    New features: 
-        * (none)
+Bug fixes: 
+* Fixed typo in an example
+* Try to not show "no route to host" more than once
+* more verbose when killing a running master
+* Improved the doc about ssh-agent
 
-    Bug fixes: 
-        * 
-        * Fixed typo in an example
-        * Try to not show "no route to host" more than once
-        * more verbose when killing a running master
-        * Improved the doc about ssh-agent
 
 Version 0.3.5 - 2010-07-29
 --------------------------
+New features: 
+* #83: Added SSH port to the options. (named ssh_port)
+* The text view in the user interface looks nicer
+* Made the detailled info resizable
+* Added a lot of comments
+* #48: Create an option to kill an already running master
+* #84: Detect when command to run doesn't exists on remote host
 
-    New features: 
-        * #83: Added SSH port to the options. (named ssh_port)
-        * The text view in the user interface looks nicer
-        * Made the detailled info resizable
-        * Added a lot of comments
-        * #48: Create an option to kill an already running master
-        * #84: Detect when command to run doesn't exists on remote host
-
-    Bug fixes: 
-        * #47: Many SSH errors could be handled properly
-        * #82: Child pid is not updated the second time a child is started
-        * Got rid of a deprecation warning for the GTK menu
+Bug fixes: 
+* #47: Many SSH errors could be handled properly
+* #82: Child pid is not updated the second time a child is started
+* Got rid of a deprecation warning for the GTK menu
 
 
 Version 0.3.4 - 2010-07-19
 --------------------------
+This release introduces critical bugfixes with stopping child processes. 
+There is a new text view in the user interface that displays more information 
+about the child processes.
 
-    This release introduces critical bugfixes with stopping child processes. 
-    There is a new text view in the user interface that displays more information 
-    about the child processes.
-    
-    New features: 
-        * Better message at shutdown time
-        * Added a textview to show command details 
-        * Storing the PID of the child 
+New features: 
+* Better message at shutdown time
+* Added a textview to show command details 
+* Storing the PID of the child 
 
-    Bug fixes: 
-        * #81: To kill a child, need to send the signal to the child, not the slave, otherwise, the slave crashes, and the child crashes with it.
-        * Using SIGTERM, not SIGINT. 
-        * #80: Make sure we log until the process is dead.
-        * #78: Increase delay between each signal when stopping a process.
+Bug fixes: 
+* #81: To kill a child, need to send the signal to the child, not the slave, otherwise, the slave crashes, and the child crashes with it.
+* Using SIGTERM, not SIGINT. 
+* #80: Make sure we log until the process is dead.
+* #78: Increase delay between each signal when stopping a process.
 
 
 Version 0.3.3 - 2010-07-15
 --------------------------
-    
-    New features: 
-        * #76: Added the enabled keyword in the Command class.
-        * Changed the title keyword for identifier
-        * #61: GUI features for kill/retry (done in 0.3.2)
+New features: 
+* #76: Added the enabled keyword in the Command class.
+* Changed the title keyword for identifier
+* #61: GUI features for kill/retry (done in 0.3.2)
 
-    Bug fixes: 
-        * Fixed #34: Make sure the log dir is a directory, not a file
-        * Increased time before sending SIGKILL
-        * #74: Dependees must be restarted their dependency is stopped
-        * #77: Make sure all children are dead when we quit
-        * #60: Try to restart children more than once (done in 0.3.2)
-        * #17: Validate format of identifiers
+Bug fixes: 
+* Fixed #34: Make sure the log dir is a directory, not a file
+* Increased time before sending SIGKILL
+* #74: Dependees must be restarted their dependency is stopped
+* #77: Make sure all children are dead when we quit
+* #60: Try to restart children more than once (done in 0.3.2)
+* #17: Validate format of identifiers
 
 
 Version 0.3.2 - 2010-06-23
 --------------------------
-
-    * Respawn after a little while instead of giving up
-    * Do not ask confirmation to exit when no process is running.
-    * Double the time to wait before trying again each time.
+* Respawn after a little while instead of giving up
+* Do not ask confirmation to exit when no process is running.
+* Double the time to wait before trying again each time.
 
 
 Version 0.3.1 - 2010-06-18
 --------------------------
-
-    * Modernized logging system
-    * Checking for a lunch master that's a Python, not "lunch"
-    * Created the confirm_and_quit method in the gui.
-    * More logging for when we start processes
-    * Fixed a traceback that was there since we updated the logging.
-    * Added the show_about_dialog method
-    * Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
-    * Fixed a crash when trying to log to a file.
-    * Not using rotating log files anymore for the master
+* Modernized logging system
+* Checking for a lunch master that's a Python, not "lunch"
+* Created the confirm_and_quit method in the gui.
+* More logging for when we start processes
+* Fixed a traceback that was there since we updated the logging.
+* Added the show_about_dialog method
+* Decrease a lot the default verbosity. Use --verbose or --debug to increase it.
+* Fixed a crash when trying to log to a file.
+* Not using rotating log files anymore for the master
 
 
 Version 0.3.0 - 2010-06-16
 --------------------------
-
-    * add/remove commands live
-    * get the return value of the command once done
-    * Update GUI to allow it to detect if there are new processes added
-        * Do not copy commands in the GUI App class
-        * Use a command_added and command_removed signal
-        * Remove slot for state_change signal when a slave has been removed. 
-    * add the DONE, FAILED and GAVE UP states
-    * improve reports on the state of processes
-    * flush more often stdout/stderr to files 
+* add/remove commands live
+* get the return value of the command once done
+* Update GUI to allow it to detect if there are new processes added
+* Do not copy commands in the GUI App class
+* Use a command_added and command_removed signal
+* Remove slot for state_change signal when a slave has been removed. 
+* add the DONE, FAILED and GAVE UP states
+* improve reports on the state of processes
+* flush more often stdout/stderr to files 
 
 
 Version 0.2.22 - 2010-06-01
 --------------------------
-    
-    * Lunch is now part of Debian
+* Lunch is now part of Debian
 
 
 Version 0.2.17 - 2010-01-25
 --------------------------
-
-    * Use Trac with Mercurial
-    * Split lunch in 4 files.
-    * Port to Twisted. Drop multiprocessing. See http://twistedmatrix.com/trac/browser/tags/releases/twisted-9.0.0/twisted/runner/procmon.py
-    * Get rid of the former lunch 0.1. Split the Master. Keep the slave in one file, for easier installation.
-    * Use key=value pairs for env, drop JSON.
-    * Drop sig.Signal in slave.
-    * Split messages, use the first word as key, and the leftover as a line to pass to the right on_* method.
-    * Use bash -c exec to run commands.
-    * Remove a need for the lunch/constants file.
-    * Re-implement starting order, with weight filtering from lowest to highest.
-    * master: Make that master does not kill Slave when its child is dead. (configurable)
-    * master: Simplify master states to 4: STOPPED, STARTING, RUNNING, STOPPING.
-    * master: Use on_* callbacks style for the Slave Process Manager as well.
-    * master: Use send_* methods style for the senders on both side.
-    * master: The order of commands should be automatically ordered with calling order.
-    * master: Dependencies: when one slave dies, kill all slaves who depend on it, restart them all again - if needed.
-    * master: Wait for the greetings message, not the connection to the process stdin.
-    * slave: Make sure each process is dead. Poll with a timer and use signals if needed.
-    * slave: use a kill_delay option, with a default of 1.0 second.
-    * master: Separate log for each slave on the master's side.
-    * GTK+ GUI for the Master Lunch. 
+* Use Trac with Mercurial
+* Split lunch in 4 files.
+* Port to Twisted. Drop multiprocessing. See http://twistedmatrix.com/trac/browser/tags/releases/twisted-9.0.0/twisted/runner/procmon.py
+* Get rid of the former lunch 0.1. Split the Master. Keep the slave in one file, for easier installation.
+* Use key=value pairs for env, drop JSON.
+* Drop sig.Signal in slave.
+* Split messages, use the first word as key, and the leftover as a line to pass to the right on_* method.
+* Use bash -c exec to run commands.
+* Remove a need for the lunch/constants file.
+* Re-implement starting order, with weight filtering from lowest to highest.
+* master: Make that master does not kill Slave when its child is dead. (configurable)
+* master: Simplify master states to 4: STOPPED, STARTING, RUNNING, STOPPING.
+* master: Use on_* callbacks style for the Slave Process Manager as well.
+* master: Use send_* methods style for the senders on both side.
+* master: The order of commands should be automatically ordered with calling order.
+* master: Dependencies: when one slave dies, kill all slaves who depend on it, restart them all again - if needed.
+* master: Wait for the greetings message, not the connection to the process stdin.
+* slave: Make sure each process is dead. Poll with a timer and use signals if needed.
+* slave: use a kill_delay option, with a default of 1.0 second.
+* master: Separate log for each slave on the master's side.
+* GTK+ GUI for the Master Lunch. 
 
 
 Version 0.1.10 - 2010-01-13
 --------------------------
-    
-    * Using the multiprocessing Python module
-    * Set up the basics of the lunch file
-    * PID file for the master
+* Using the multiprocessing Python module
+* Set up the basics of the lunch file
+* PID file for the master
 
 
 Initial draft - 2009-07-22
 --------------------------
-
-    * Working proof of concept
+* Working proof of concept
 
