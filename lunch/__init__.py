@@ -1,2 +1,2 @@
 """Lunch: Distributed process launcher"""
-__version__ = "0.4.2"
+__version__ = "0.4.99"
