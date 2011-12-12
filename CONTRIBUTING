@@ -5,40 +5,48 @@ The release process
 
 Update the documentation if needed:
 
- * scripts/lunch
- * scripts/lunch-slave
- * man_lunch.txt
- * README
+* scripts/lunch
+* scripts/lunch-slave
+* man_lunch.txt
+* README
 
 Make sure the version number is the next release's:
 
- * scripts/lunch-slave
- * lunch/__init__.py
+* scripts/lunch-slave
+* lunch/__init__.py
 
 Run the unit tests:
 
- * trial lunch
+* trial lunch
 
 Update the release notes:
 
- * NEWS
+* NEWS
 
 Update the ChangeLog:
 
- * hg log > ChangeLog
+* git log --pretty=medium > ChangeLog
 
 Create the tag and a tarball:
 
- * make sure you are in the right branch. 
- * Commit any change
- * hg tag 0.4.0
- * hg archive ../lunch-0.4.0
- * cd ..
- * rm lunch-0.4.0/.hg*
- * GZIP=--best tar -cvz --owner root --group root --mode a+rX -f lunch-0.4.0.tar.gz lunch-0.4.0/
- * cd - 
+* make sure you are in the right branch. (develop)
+* Commit any change
+* git co -b release-0.4.0
+* Make any additional change
+* git tag 0.4.0
+* ./utils/make-tarball.sh 0.4.0
+* git co develop
+* git merge --no-ff release-0.4.0
+* git co master
+* git merge --no-ff release-0.4.0
+* git pull origin master:master develop:develop
+* git push --tags origin master:master develop:develop
+* git branch -d release-0.4.0
+* git co develop
 
-Increase the version number (not yet released):
+Increase the version number to the next odd micro version number (never to be released):
 
- * scripts/lunch-slave
- * lunch/__init__.py
+* scripts/lunch-slave
+* lunch/__init__.py
+* And commit with "post-release version bump" message.
+
