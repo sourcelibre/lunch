@@ -1,2 +1,16 @@
+*.1
+*.autosave
+*.egg
+*.ps
 *.pyc
+*~
+.*.swp
 _trial_temp
+build/
+debian/
+dist/
+html-slave/
+html/
+lunch-readme.html
+python-build-stamp-*
+scripts/lunch-slavec

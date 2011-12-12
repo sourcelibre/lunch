@@ -12,34 +12,40 @@ Here is how to kill every lunch master on your system :
 
 add_command("process", options)
 
-The add_command function is a regular python function and it is the only function that the user will use to launch processes, however it allows for a lot of flexibility. The first argument is the name of the process, as a python string, with all the command line switches that the command may require. This string can be formatted in a standard pythonesque way, using either % string substitution or the new .format function (since python 2.7).
+The add_command function is a regular python function and it is the function the user must call in his ~/.lunchrc file in order to launch processes with Lunch. It allows for a lot of flexibility. The first argument is the name of the process, as a python string, with all the command line switches that the command may require. This string can be formatted in a standard pythonesque way, using either % string substitution or the new .format function (since python 2.7).
 
 Options:
 
-env - a dictionary of environment variables that may be relevant to the running command
+env - (dict of str:str) a dictionary of environment variables that may be relevant to the running command
 
-depends - a list of process identifiers on which the current process depends
+depends - (list of str) a list of process identifiers on which the current process depends
 
-identifier - a string that will identify a current process to refer to in depends option in the logs and in the GUI
+identifier - (str) a string that will identify a current process to refer to in depends option in the logs and in the GUI
 
-host - hostname or IP address for launching over SSH
+host - (str) hostname or IP address for launching over SSH
 
-user - a UID, if launching over SSH
+user - (str) a UID, if launching over SSH
 
-ssh_port - port number of the remote SSH server if different from 22 (the default)
+ssh_port - (int) port number of the remote SSH server if different from 22 (the default)
 
-sleep_afer - amount of seconds to sleep after launching the process
+sleep_afer - (float) amount of seconds to sleep after launching the process
 
-respawn - if True, lunch will relaunch the process every time it exits.  False will launch the process only once. Useful for running some pr
+respawn - (bool) if True, lunch will relaunch the process every time it exits.  False will launch the process only once. Useful for running some pr
 ocess only once, to set things up (i.e. firereset, setting environment variables etc.)
 
-minimum_lifetime_to_respawn - Minimum time a process must have lasted in order for it be respawned
+minimum_lifetime_to_respawn - (float) Minimum time a process must have lasted in order for it be respawned
 
-log_dir - path to the directory where log files should be stored.  Default is /var/tmp/lunch
+log_dir - (str) path to the directory where log files should be stored.  Default is /var/tmp/lunch
 
-try_again_delay - a minimum delay to wait before relaunching the process if it crashes at startup.  The time is in seconds and the default is 0.25
+try_again_delay - (float) a minimum delay to wait before relaunching the process if it crashes at startup.  The time is in seconds and the default is 0.25
 
-give_up_after - How many times to try respawning before giving up.
+give_up_after - (float) How many times to try respawning before giving up.
+
+[SPECIFYING A LOCAL HOST]
+
+add_local_address("address")
+
+Commands launched on the local host and as the same user should not be launched over SSH. Sometimes it is easier to specify the host for all commands in the ~/.lunchrc file. One can let Lunch know which host is the local host by calling the add_local_address(address) function. One can use a domain name of an IP address. Many addresses can be set as local, since a computer might have many network interfaces.
 
 [EXAMPLES]
 
