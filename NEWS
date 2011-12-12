@@ -9,7 +9,7 @@ This is the second stable release of the 0.4 stable branch. That means we have d
 This release introduces a few bug fixes and little improvements in the documentation.
 
 New features: 
-* Explain add_command() in the man page
+* Explain add_command() and add_local_address() in the man page
 * Switch to even-only micro release numbers
 
 Bug fixes: 
