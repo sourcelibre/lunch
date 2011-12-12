@@ -21,7 +21,7 @@ Run the unit tests:
 
 Update the release notes:
 
- * RELEASE
+ * NEWS
 
 Update the ChangeLog:
 
@@ -42,4 +42,3 @@ Increase the version number (not yet released):
 
  * scripts/lunch-slave
  * lunch/__init__.py
- * NEWS: move the contents of the old RELEASE file to NEWS
