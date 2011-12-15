@@ -36,7 +36,7 @@ def run():
     """
     parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, description=DESCRIPTION)
     parser.add_option("-f", "--config-file", type="string", help="Specifies the python config file. You can also simply specify the config file as the first argument.")
-    parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/tmp/lunch")
+    parser.add_option("-l", "--logging-directory", type="string", default="/var/log/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/log/lunch")
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")

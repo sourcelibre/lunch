@@ -48,9 +48,17 @@ from lunch import graph
 from lunch.states import *
 from lunch import logger
 
-DEFAULT_LOG_DIR = "/var/tmp/lunch"
+DIR_SUFFIX = "default"
+DEFAULT_LOG_DIR = "/var/log/lunch/" + DIR_SUFFIX
+DEFAULT_PID_DIR = "/var/run/lunch/" + DIR_SUFFIX
 log = None
 LOG_NAME = 'master'
+
+def load_current_username():
+    try:
+        DIR_SUFFIX = os.environ["USER"]
+    except OSError, e:
+        log.info("Cannot get $USER because {}.".format(e))
 
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
@@ -480,7 +488,7 @@ def gen_id_from_config_file_name(config_file_name="lunchrc"):
     identifier = file_name.replace(".", "") # getting rid of the dot in file name
     return identifier
 
-def gen_pid_file_path(identifier="lunchrc", directory="/var/tmp/lunch"):
+def gen_pid_file_path(identifier="lunchrc", directory=DEFAULT_PID_DIR):
     """
     Returns a PID file name. 
 
@@ -531,7 +539,7 @@ def is_lunch_master_running(pid_file):
     else:
         return None
 
-def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
+def write_master_pid_file(identifier="lunchrc", directory=DEFAULT_PID_DIR):
     """
     Writes master's PID in a file.
     
@@ -556,7 +564,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.info("Wrote master's PID %d to file %s." % (pid, pid_file))
     return pid_file
 
-def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
+def kill_master_if_running(identifier="lunchrc", directory=DEFAULT_PID_DIR):
     """
     Given a lunch master identifier and a PID file directory, kills the master.
     """
@@ -595,7 +603,7 @@ def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
     reactor.callLater(0.01, _kill, True)
     return deferred
 
-def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_level='info'):
+def start_file_logging(identifier="lunchrc", directory=DEFAULT_LOG_DIR, log_level='info'):
     """
     Starts logging the Master infos to a file.
     @rettype: str
@@ -657,7 +665,8 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
                 log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
-    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
+    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None,
+        sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=DEFAULT_LOG_DIR, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
         """
         This is the only function that users use from within the configuration file.
         It adds a Command instance to the list of commands to run. 
@@ -706,7 +715,7 @@ def start_logging(identifier='lunchrc', log_to_file=False, log_dir=DEFAULT_LOG_D
     log.info("Started logging.")
     return log_file
 
-def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False, log_level='info'):
+def run_master(config_file, log_to_file=False, pid_dir=DEFAULT_PID_DIR, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False, log_level='info'):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -723,7 +732,7 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
     log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
-    pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
+    pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
     lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
