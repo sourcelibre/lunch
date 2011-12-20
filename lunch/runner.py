@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 Main entry point of the lunch master application.
 """
@@ -26,34 +25,22 @@ import os
 import sys
 import traceback
 from optparse import OptionParser
-from lunch import __version__
+import lunch
 
 DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch master launches lunch-slave processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
-
-DIR_SUFFIX = "default"
-DEFAULT_LOG_DIR = "/var/log/lunch/" + DIR_SUFFIX
-DEFAULT_PID_DIR = "/var/run/lunch/" + DIR_SUFFIX
-
-def load_current_username():
-    print("current user name has been called")
-    try:
-        global DIR_SUFFIX
-        DIR_SUFFIX = os.environ["USER"]
-    except OSError, e:
-        log.info("Cannot get $USER because {}.".format(e))
 
 def run():
     """
     Runs the application.
     """
     # this will set logging and PID directories to $USER
-    load_current_username()
-
-    parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, description=DESCRIPTION)
+    parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + lunch.__version__, description=DESCRIPTION)
     parser.add_option("-f", "--config-file", type="string",
                         help="Specifies the python config file. You can also simply specify the config file as the first argument.")
-    parser.add_option("-l", "--logging-directory", type="string", default="/var/log/lunch",
-                        help="Specifies the logging and pidfile directory for the master. Default is /var/log/lunch")
+    parser.add_option("-l", "--logging-directory", type="string",
+                        help="Specifies the logging directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_LOG_DIR))
+    parser.add_option("-p", "--pid-directory", type="string",
+                        help="Specifies the pidfile directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_PID_DIR))
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
@@ -75,10 +62,6 @@ def run():
         file_logging_enabled = True
     else:
         file_logging_enabled = False
-    if options.logging_directory:
-        logging_dir = options.logging_directory
-    else:
-        logging_dir = DEFAULT_LOG_DIR
     # ---------- load the right reactor
     if options.graphical:
         try:
@@ -97,6 +80,14 @@ def run():
     from twisted.internet import defer
     # --------- load the module and run
     from lunch import master
+    if options.logging_directory:
+        logging_dir = options.logging_directory
+    else:
+        logging_dir = master.get_default_log_dir_full_path()
+    if options.pid_directory:
+        pid_dir = options.logging_directory
+    else:
+        pid_dir = master.get_default_log_dir_full_path()
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s" % (config_file)
@@ -114,13 +105,13 @@ def run():
             master.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
             identifier = master.gen_id_from_config_file_name(config_file)
             master.log.info("Will check if lunch master %s is running and kill it if so." % (identifier))
-            deferred = master.kill_master_if_running(identifier=identifier, directory=logging_dir)
+            deferred = master.kill_master_if_running(identifier=identifier, directory=pid_dir)
             deferred.addCallback(_killed_cb)
             reactor.run()
             sys.exit(0)
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, pid_dir=DEFAULT_PID_DIR, log_dir=logging_dir, log_level=log_level)
+            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, pid_dir=pid_dir, log_dir=logging_dir, log_level=log_level)
         except master.FileNotFoundError, e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "

@@ -36,8 +36,8 @@ if sys.argv[1] == "build":
 
 # Finally, we create logging directories if they don't exist already
 if sys.argv[1] == "install":
-    log_dir = "/var/log/lunch"
-    pid_dir = "/var/run/lunch"
+    log_dir = lunch.DEFAULT_LOG_DIR
+    pid_dir = lunch.DEFAULT_PID_DIR
 
     if not os.path.exists(log_dir):
         try:
