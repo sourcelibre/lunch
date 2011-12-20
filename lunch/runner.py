@@ -40,7 +40,7 @@ def load_current_username():
         global DIR_SUFFIX
         DIR_SUFFIX = os.environ["USER"]
     except OSError, e:
-        log.info("Cannot get $USER because {}.".format(e))
+        log.info("Cannot get $USER because %s." % (e))
 
 def run():
     """

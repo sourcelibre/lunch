@@ -55,15 +55,11 @@ log = None
 LOG_NAME = 'master'
 
 def load_current_username():
-    print("current user name has been called")
     try:
         global DIR_SUFFIX
         DIR_SUFFIX = os.environ["USER"]
     except OSError, e:
-        log.info("Cannot get $USER because {}.".format(e))
-
-def print_default_values():
-    print("Dir suffix is: {}".format(DIR_SUFFIX))
+        log.info("Cannot get $USER because %s." % (e))
 
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
@@ -113,9 +109,6 @@ class Master(object):
         self.wants_to_live = False # The master is either trying to make every child live or die. 
         self.command_added_signal = sig.Signal() # param: Command object
         self.command_removed_signal = sig.Signal() # param: command object -- Called when actually deleted from the graph
-        print("*** inside Master instance")
-        print("Master.log_dir {}".format(self.log_dir))
-        print("Master.pid_file {}".format(self.pid_file))
         # actions:
         self.start_all()
         self._shutdown_event_id = reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
@@ -737,16 +730,12 @@ def run_master(config_file, log_to_file=False, pid_dir=DEFAULT_PID_DIR, log_dir=
     Might raise a RuntimeError or a FileNotFoundError
     """
     load_current_username()
-    print("Inside run_master()")
-    print("pid_dir is {}".format(pid_dir))
-    print("log_dir is {}".format(log_dir))
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
     log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
-    print("starting Master")
     print_default_values()
     lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
     execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
