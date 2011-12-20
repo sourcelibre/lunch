@@ -52,9 +52,6 @@ from lunch import logger
 log = None
 LOG_NAME = 'master'
 
-def print_default_values():
-    print("Dir suffix is: {}".format(DIR_SUFFIX))
-
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
     global log
