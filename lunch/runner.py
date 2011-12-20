@@ -87,7 +87,7 @@ def run():
     if options.pid_directory:
         pid_dir = options.logging_directory
     else:
-        pid_dir = master.get_default_log_dir_full_path()
+        pid_dir = master.get_default_pid_dir_full_path()
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s" % (config_file)
