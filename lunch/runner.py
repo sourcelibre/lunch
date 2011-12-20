@@ -30,18 +30,36 @@ from lunch import __version__
 
 DESCRIPTION = "Lunch is a distributed process launcher for GNU/Linux. The Lunch master launches lunch-slave processes through an encrypted SSH session if on a remote host. Those slave processes can in turn launch the desired commands on-demand."
 
+DIR_SUFFIX = "default"
+DEFAULT_LOG_DIR = "/var/log/lunch/" + DIR_SUFFIX
+DEFAULT_PID_DIR = "/var/run/lunch/" + DIR_SUFFIX
+
+def load_current_username():
+    print("current user name has been called")
+    try:
+        global DIR_SUFFIX
+        DIR_SUFFIX = os.environ["USER"]
+    except OSError, e:
+        log.info("Cannot get $USER because {}.".format(e))
+
 def run():
     """
     Runs the application.
     """
+    # this will set logging and PID directories to $USER
+    load_current_username()
+
     parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + __version__, description=DESCRIPTION)
-    parser.add_option("-f", "--config-file", type="string", help="Specifies the python config file. You can also simply specify the config file as the first argument.")
-    parser.add_option("-l", "--logging-directory", type="string", default="/var/tmp/lunch", help="Specifies the logging and pidfile directory for the master. Default is /var/tmp/lunch")
+    parser.add_option("-f", "--config-file", type="string",
+                        help="Specifies the python config file. You can also simply specify the config file as the first argument.")
+    parser.add_option("-l", "--logging-directory", type="string", default="/var/log/lunch",
+                        help="Specifies the logging and pidfile directory for the master. Default is /var/log/lunch")
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
     parser.add_option("-d", "--debug", action="store_true", help="Makes the logging output very verbose.")
-    parser.add_option("-k", "--kill", action="store_true", help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
+    parser.add_option("-k", "--kill", action="store_true",
+                        help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -57,8 +75,10 @@ def run():
         file_logging_enabled = True
     else:
         file_logging_enabled = False
-    logging_dir = options.logging_directory
-        
+    if options.logging_directory:
+        logging_dir = options.logging_directory
+    else:
+        logging_dir = DEFAULT_LOG_DIR
     # ---------- load the right reactor
     if options.graphical:
         try:
@@ -100,7 +120,7 @@ def run():
             sys.exit(0)
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, log_dir=logging_dir, log_level=log_level)
+            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, pid_dir=DEFAULT_PID_DIR, log_dir=logging_dir, log_level=log_level)
         except master.FileNotFoundError, e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "
