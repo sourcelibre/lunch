@@ -754,7 +754,6 @@ def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod
     pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
-    print_default_values()
     lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
     execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
     # TODO: return a Deferred
