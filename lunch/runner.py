@@ -38,9 +38,9 @@ def run():
     parser.add_option("-f", "--config-file", type="string",
                         help="Specifies the python config file. You can also simply specify the config file as the first argument.")
     parser.add_option("-l", "--logging-directory", type="string",
-                        help="Specifies the logging directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_LOG_DIR))
+                        help="Specifies the logging directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_LOG_DIR)) # change error message in master.run_master() if you change this
     parser.add_option("-p", "--pid-directory", type="string",
-                        help="Specifies the pidfile directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_PID_DIR))
+                        help="Specifies the pidfile directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_PID_DIR)) # change error message in master.run_master() if you change this
     parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
     parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
     parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
@@ -85,9 +85,14 @@ def run():
     else:
         logging_dir = master.get_default_log_dir_full_path()
     if options.pid_directory:
-        pid_dir = options.logging_directory
+        pid_dir = options.pid_directory
     else:
         pid_dir = master.get_default_pid_dir_full_path()
+    if pid_dir is None:
+        pid_dir = master.get_default_pid_dir_full_path() # FIXME:code duplication
+    if not master.create_dir_and_make_writable(pid_dir):
+        print("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir))
+        sys.exit(1)
     error_message = None
     if not os.path.exists(config_file):
         error_message = "No such file: %s" % (config_file)
@@ -117,14 +122,14 @@ def run():
             msg = "A configuration file is missing. Try the --help flag. "
             msg += str(e)
             error_message = msg
-            #sys.exit(1)
+            # will exit with error. see below.
         except RuntimeError, e:
-            #print(str(e))
             error_message = str(e)
-            #sys.exit(1)
+            # will exit with error. see below.
         except Exception, e:
             error_message = "There is an error in your lunch file !\n"
             error_message += traceback.format_exc()
+            # will exit with error. see below.
     if error_message is not None:
         print(error_message)
         if GUI_ENABLED:
@@ -138,7 +143,7 @@ def run():
             print("Running reactor to show error dialog.")
             reactor.run() # need it for the GTK error dialog
             print("Reactor stopped. Exiting.")
-        sys.exit(1)
+        sys.exit(1) # exits with error
     if GUI_ENABLED:
         from lunch import gui
         app = gui.start_gui(lunch_master)
