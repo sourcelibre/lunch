@@ -190,7 +190,6 @@ class Master(object):
         
         The master is set up to either keep every child alive, or keep them dead. Stopping them is done as soon as possible. Starting them is done using the sequence described above. 
 
-        
         # get children of the root
         # get time now
         # if not started give them a time to be started, if it doesn't have one
@@ -699,6 +698,10 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
             sleep_after = sleep
         #if priority is not None:
         #    warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+        if log_dir is None:
+            log_dir = lunch_master.log_dir
+        #TODO: if pid_dir is None:
+        #         pid_dir = lunch_master.pid_dir
         c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after, ssh_port=ssh_port)
         lunch_master.add_command(c)
     # -------------------------------------
