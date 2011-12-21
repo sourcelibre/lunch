@@ -231,7 +231,7 @@ class Command(object):
         self.minimum_lifetime_to_respawn = minimum_lifetime_to_respawn #FIXME: rename
         self._quit_slave_deferred = None
         if log_dir is None:
-            log_dir = "/var/tmp/lunch"# XXX Overriding the child's log dir.
+            log_dir = "/var/log/lunch"# XXX Overriding the child's log dir.
             # XXX: used to be something like:
             #SLAVE_LOG_SUBDIR = "lunch_log"
             #slave_log_dir = os.path.join(os.getcwd(), SLAVE_LOG_SUBDIR)

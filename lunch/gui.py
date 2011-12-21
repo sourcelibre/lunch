@@ -162,15 +162,16 @@ class About(object):
         self.about_dialog.set_name('Lunch')
         self.about_dialog.set_role('about')
         self.about_dialog.set_version(__version__)
-        commentlabel = _('Simple Process Launcher for Complex Launching Setup.')
+        commentlabel = _("Simple Process Launcher for Complex Launching Setup.")
         self.about_dialog.set_comments(commentlabel)
         self.about_dialog.set_copyright(_("Copyright 2009-2010 Society for Arts and Technology"))
         self.about_dialog.set_license(__license__)
         self.about_dialog.set_authors([
-            'Alexandre Quessy <alexandre@quessy.net>'
+            "Alexandre Quessy <alexandre@quessy.net>",
+            "Michal Seta <mis@artengine.ca>",
             ])
         self.about_dialog.set_documenters([
-            'Simon Piette <simonp@sat.qc.ca>'
+            "Simon Piette <simonp@sat.qc.ca>"
             ])
         self.about_dialog.set_artists(['Rocket000'])
         gtk.about_dialog_set_url_hook(self.show_website)
@@ -183,8 +184,8 @@ class About(object):
             self.about_dialog.set_logo(large_icon)
         
         # Connect to callbacks
-        self.about_dialog.connect('response', self.destroy_about)
-        self.about_dialog.connect('delete_event', self.destroy_about)
+        self.about_dialog.connect("response", self.destroy_about)
+        self.about_dialog.connect("delete_event", self.destroy_about)
         self.about_dialog.connect("delete-event", self.destroy_about)
         self.about_dialog.show_all()
      
