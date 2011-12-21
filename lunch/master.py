@@ -732,6 +732,22 @@ def start_logging(identifier='lunchrc', log_to_file=False, log_dir=None, log_lev
     log.info("Started logging.")
     return log_file
 
+def create_dir_and_make_writable(directory):
+    """
+    Creates a directory if it does not exist, and make sure it is writable by us.
+    @rtype: bool
+    @return: success
+    """
+    if not os.path.exists(directory):
+        try:
+            os.makedirs(directory)
+        except OSError, e:
+            return False
+    if os.access(directory, os.W_OK):
+        return True
+    else:
+        return False
+
 def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod_config_file=True, verbose=False, log_level="info"):
     """
     Runs the master that calls commands using ssh or so.
@@ -749,10 +765,17 @@ def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
 
+    # log dir:
     if log_dir is None:
         log_dir = get_default_log_dir_full_path()
+    if not create_dir_and_make_writable(log_dir):
+        raise RuntimeError("Logging directory is not writable: %s. Use the --logging-directory option" % (log_dir))
+    # pid dir:
     if pid_dir is None:
         pid_dir = get_default_pid_dir_full_path()
+    if not create_dir_and_make_writable(pid_dir):
+        raise RuntimeError("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir))
+
     log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
