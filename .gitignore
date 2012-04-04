@@ -3,6 +3,7 @@
 *.egg
 *.ps
 *.pyc
+*.tar.gz
 *~
 .*.swp
 _trial_temp

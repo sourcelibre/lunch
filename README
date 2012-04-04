@@ -64,8 +64,8 @@ A stable series means that the command-line options and the interactive keyboard
 In contrast, unstable branches consist of tags which are developer snapshots. They are not expected to be compatible with any other version. Some features might change between different stable branches.
 
 
-How to use Git with the https://code.sat.qc.ca/ server
-======================================================
+How to use Git with the https://codered.sat.qc.ca/ server
+=========================================================
 
 Get the certificate authority:
 
@@ -75,10 +75,16 @@ Get the certificate authority:
 
 Clone the repository without verifying the SSL certicate:
 
-  $ GIT_SSL_NO_VERIFY=1 git clone https://username@code.sat.qc.ca/git/lunch
+  $ GIT_SSL_NO_VERIFY=1 git clone git://codered.sat.qc.ca/lunch.git
 
 Configure this repository in order to use the certificate upon pull/push requests:
 
   $ cd lunch
   $ git config http.sslCAInfo ~/.git/sat.qc.ca.crt
+
+
+Logging and PID directories
+===========================
+
+Lunch stores log files and pid files respectively in /tmp/log/lunch/$USER and /tmp/run/lunch/$USER. $USER is replaced by the UNIX user name of the user. When you install lunch, it creates those directories. If you want to use lunch without installing it, you must provide the --logging-directory and --pid-directory options. Those log files are for the lunch-slave executables only. (not the lunch master) The PID file is for the lunch master to store its PID so that you can kill it with lunch --kill.
 

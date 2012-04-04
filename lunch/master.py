@@ -43,12 +43,12 @@ from twisted.python import failure
 from twisted.python import logfile
 from twisted.python import procutils
 
+import lunch
 from lunch import sig
 from lunch import graph
 from lunch.states import *
 from lunch import logger
 
-DEFAULT_LOG_DIR = "/var/tmp/lunch"
 log = None
 LOG_NAME = 'master'
 
@@ -63,13 +63,32 @@ class FileNotFoundError(Exception):
     """
     pass
 
+def _guess_user_name():
+    """
+    Guesses $USER.
+    @rtype: str
+    """
+    ret = ""
+    try:
+        ret = os.environ["USER"]
+    except OSError, e:
+        log.error("Cannot get $USER because %s" % (str(e)))
+    return ret
+
+def get_default_log_dir_full_path():
+    return os.path.join(lunch.DEFAULT_LOG_DIR, _guess_user_name())
+
+def get_default_pid_dir_full_path():
+    return os.path.join(lunch.DEFAULT_PID_DIR, _guess_user_name())
+
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
     """
-    def __init__(self, log_dir=DEFAULT_LOG_DIR, pid_file=None, log_file=None, config_file=None, verbose=False):
+    def __init__(self, log_dir=None, pid_dir=None, pid_file=None, log_file=None, config_file=None, verbose=False):
         """
         @param log_dir: str Path.
+        @param pid_dir: str Path.
         @param pid_file: str Path.
         @param log_file: str Path.
         @param config_file: str Path.
@@ -88,6 +107,11 @@ class Master(object):
         
         # These are all useless within this class, but might be useful to be read from the GUI:
         self.log_dir = log_dir
+        self.pid_dir = pid_dir
+        if self.log_dir is None:
+            self.log_dir = get_default_log_dir_full_path()
+        if self.pid_dir is None:
+            self.pid_dir = get_default_pid_dir_full_path()
         self.pid_file = pid_file
         self.log_file = log_file
         self.config_file = config_file
@@ -100,7 +124,6 @@ class Master(object):
         self.wants_to_live = False # The master is either trying to make every child live or die. 
         self.command_added_signal = sig.Signal() # param: Command object
         self.command_removed_signal = sig.Signal() # param: command object -- Called when actually deleted from the graph
-        
         # actions:
         self.start_all()
         self._shutdown_event_id = reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
@@ -167,7 +190,6 @@ class Master(object):
         
         The master is set up to either keep every child alive, or keep them dead. Stopping them is done as soon as possible. Starting them is done using the sequence described above. 
 
-        
         # get children of the root
         # get time now
         # if not started give them a time to be started, if it doesn't have one
@@ -469,7 +491,6 @@ def _validate_identifier(identifier):
     if "/" in identifier:
         raise RuntimeError("Identifier must not contain slashes: %s" % (identifier))
 
-
 def gen_id_from_config_file_name(config_file_name="lunchrc"):
     """
     Returns an identifier for the master using the config file name.
@@ -480,7 +501,7 @@ def gen_id_from_config_file_name(config_file_name="lunchrc"):
     identifier = file_name.replace(".", "") # getting rid of the dot in file name
     return identifier
 
-def gen_pid_file_path(identifier="lunchrc", directory="/var/tmp/lunch"):
+def gen_pid_file_path(identifier="lunchrc", directory=None):
     """
     Returns a PID file name. 
 
@@ -531,7 +552,7 @@ def is_lunch_master_running(pid_file):
     else:
         return None
 
-def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
+def write_master_pid_file(identifier="lunchrc", directory=None):
     """
     Writes master's PID in a file.
     
@@ -556,7 +577,7 @@ def write_master_pid_file(identifier="lunchrc", directory="/var/tmp/lunch"):
     log.info("Wrote master's PID %d to file %s." % (pid, pid_file))
     return pid_file
 
-def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
+def kill_master_if_running(identifier="lunchrc", directory=None):
     """
     Given a lunch master identifier and a PID file directory, kills the master.
     """
@@ -595,7 +616,7 @@ def kill_master_if_running(identifier="lunchrc", directory="/var/tmp/lunch"):
     reactor.callLater(0.01, _kill, True)
     return deferred
 
-def start_file_logging(identifier="lunchrc", directory="/var/tmp/lunch", log_level='info'):
+def start_file_logging(identifier="lunchrc", directory=None, log_level='info'):
     """
     Starts logging the Master infos to a file.
     @rettype: str
@@ -657,7 +678,8 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
                 log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
-    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None, sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
+    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None,
+        sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
         """
         This is the only function that users use from within the configuration file.
         It adds a Command instance to the list of commands to run. 
@@ -676,6 +698,10 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
             sleep_after = sleep
         #if priority is not None:
         #    warnings.warn("The priority keyword argument does not exist anymore. Only the order in which add_command calls are done is considered.", DeprecationWarning)
+        if log_dir is None:
+            log_dir = lunch_master.log_dir
+        #TODO: if pid_dir is None:
+        #         pid_dir = lunch_master.pid_dir
         c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after, ssh_port=ssh_port)
         lunch_master.add_command(c)
     # -------------------------------------
@@ -694,7 +720,7 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
 
-def start_logging(identifier='lunchrc', log_to_file=False, log_dir=DEFAULT_LOG_DIR, log_level='info'):
+def start_logging(identifier='lunchrc', log_to_file=False, log_dir=None, log_level='info'):
     """
     Starts logging - either to a file or not.
     """
@@ -706,7 +732,23 @@ def start_logging(identifier='lunchrc', log_to_file=False, log_dir=DEFAULT_LOG_D
     log.info("Started logging.")
     return log_file
 
-def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_config_file=True, verbose=False, log_level='info'):
+def create_dir_and_make_writable(directory):
+    """
+    Creates a directory if it does not exist, and make sure it is writable by us.
+    @rtype: bool
+    @return: success
+    """
+    if not os.path.exists(directory):
+        try:
+            os.makedirs(directory)
+        except OSError, e:
+            return False
+    if os.access(directory, os.W_OK):
+        return True
+    else:
+        return False
+
+def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod_config_file=True, verbose=False, log_level="info"):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -722,8 +764,20 @@ def run_master(config_file, log_to_file=False, log_dir=DEFAULT_LOG_DIR, chmod_co
     """
     master_identifier = gen_id_from_config_file_name(config_file)
     # TODO: make this non-blocking. (return a Deferred)
+
+    # log dir:
+    if log_dir is None:
+        log_dir = get_default_log_dir_full_path()
+    if not create_dir_and_make_writable(log_dir):
+        raise RuntimeError("Logging directory is not writable: %s. Use the --logging-directory option" % (log_dir))
+    # pid dir:
+    if pid_dir is None:
+        pid_dir = get_default_pid_dir_full_path()
+    if not create_dir_and_make_writable(pid_dir):
+        raise RuntimeError("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir))
+
     log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
-    pid_file = write_master_pid_file(identifier=master_identifier, directory=log_dir)
+    pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
     lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
