@@ -1,3 +1,189 @@
+commit b657a67d33e1d4b05f91f1d0c2da56d628b89e4e
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Apr 3 14:10:57 2012 -0400
+
+    log everything to tmp
+
+commit ddde4b1604c5a9addea16ddec5d58bc3bf73eaac
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Apr 3 14:05:13 2012 -0400
+
+    PID to /tmp
+
+commit c51eab04f4d1eebf71b419251bfab5e999461991
+Merge: d2ddfb0 3d8c4fa
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Wed Dec 21 15:09:09 2011 -0500
+
+    Merge branch 'local-log' into develop
+
+commit 3d8c4faa841e6174c01f1e0f37d5602846cbfc37
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Wed Dec 21 15:08:51 2011 -0500
+
+    update README about log/pid directories
+
+commit e0deb223c36128aa2c7324f7147842a3c4329a30
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Wed Dec 21 15:05:21 2011 -0500
+
+    Fix error with pid dir option. Handle when pid/log dir don't exist.
+
+commit a1821342414299d4086a60bae667b556ce427143
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Wed Dec 21 15:05:01 2011 -0500
+
+    make sure log/pid dir exist and are writable
+
+commit d2ddfb0e159649ce6f1170835e64eedd478e3066
+Merge: 16fd1a2 d49a029
+Author: Michal Seta <mis@artengine.ca>
+Date:   Wed Dec 21 10:33:50 2011 -0500
+
+    Merge branch 'logging' into develop
+
+commit d49a029aa0852933931888c48c2959ee909b2add
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 19:50:01 2011 -0500
+
+    log_dir is passed to slave if None set by user
+
+commit 053340ce99333961da77893435e579e13f17b031
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Dec 20 17:44:14 2011 -0500
+
+    Lunch creates a PID file in /var/run/lunch/$USER
+
+commit 2d0ed225e9377e6f4e7bb639bfbe5863d4954d0a
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Dec 20 17:03:46 2011 -0500
+
+    removed call to undefined function
+
+commit 23201f32e0e4ad62a26896deb3f4dfd232508ab6
+Merge: ffd28e1 5d8b5dd
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 17:02:50 2011 -0500
+
+    Merge branch 'logging' of github.com:sat-metalab/lunch into logging
+
+commit ffd28e1deb65aea9311a9560f7674a384369ba7f
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 17:01:28 2011 -0500
+
+    towards pid_dir and log_dir that work
+
+commit 5d8b5dd4af1aab3074b0732ba1341307c8693dbf
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Dec 20 16:55:56 2011 -0500
+
+    Removed .format string formating in favour of the older '%' way. Removed redundant print() statements.
+
+commit 89fbe1eb46859856aee0f91447e670d6906bbdf0
+Merge: 2068832 e18c5bb
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 16:34:21 2011 -0500
+
+    Merge branch 'logging' of github.com:sat-metalab/lunch into logging
+
+commit 206883267a59466abcffe4996cbe1b5b95faeed5
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 16:33:39 2011 -0500
+
+    create directories only if installing lunch
+
+commit 6dbd9c372c44d72f81bbee9947d1a597935c9ea9
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Tue Dec 20 16:33:27 2011 -0500
+
+    add Michal to authors in about dialog
+
+commit e18c5bbf5c135d052c09601ac04761177203e403
+Author: Michal Seta <mis@artengine.ca>
+Date:   Tue Dec 20 16:30:48 2011 -0500
+
+    Attempt at setting $USER dirs for PID and logging but not quite there yet.
+
+commit b2457aff301292f26892a5d17fafed5c458a3aa0
+Author: Michal Seta <mis@artengine.ca>
+Date:   Thu Dec 15 17:37:48 2011 -0500
+
+    logs to /var/log/lunch (user is default for now) and pid goes to /var/run/lunch
+
+commit 4ffd97cb212d12974cd1911cb0547debaf597d35
+Author: Michal Seta <mis@artengine.ca>
+Date:   Thu Dec 15 11:44:28 2011 -0500
+
+    setup.py build creates appropriate system directories with appropriate permissionsfor pid and logging
+
+commit 16fd1a285421512c2582a87cbb7bdcd625c45ae0
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 17:07:22 2011 -0500
+
+    update CONTRIBUTING
+
+commit 56efe8be664860eee003338d02eb6e3481370d4a
+Merge: 5804d5e 45b262b
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 16:56:26 2011 -0500
+
+    Merge branch 'make-tarball' into develop
+
+commit 45b262ba804229c22403a7af9624708d9d410dd7
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 16:55:51 2011 -0500
+
+    add utils/make-tarball.sh
+
+commit 5804d5e5c89953cbe311e4a4edaef9b7e4d0db37
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:54:11 2011 -0500
+
+    post-release version bump
+
+commit c1333a2dc73f2a6c4e982f069e2207d2bf84da72
+Merge: 1158398 3de279f
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:49:10 2011 -0500
+
+    Merge branch 'release-0.4.2' into develop
+
+commit 3de279f90a063dda09fa428d6fa8b93386793625
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:46:30 2011 -0500
+
+    update version number to 0.4.2
+
+commit 5eefd6dff5b4173961caf7c5f39df0ed4efb56c3
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:46:14 2011 -0500
+
+    fix some doc about release process in CONTRIBUTING
+
+commit 16bdea1c5a65ed2f24d623d26ffc049c321132e9
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:43:53 2011 -0500
+
+    update NEWS even more
+
+commit 72e9a269457a535831d7a89630abdbd6f28a3ef5
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:43:11 2011 -0500
+
+    improve doc about functions in man page
+
+commit 4e4a6c003918fa8f6a7d6b1200422b42d5e5ec48
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:42:56 2011 -0500
+
+    ignore more files
+
+commit 117642c6557ddca63393787f019b3a083dc86a81
+Author: Alexandre Quessy <alexandre@quessy.net>
+Date:   Mon Dec 12 15:32:23 2011 -0500
+
+    update ChangeLog
+
 commit 6e9bb899aa03f8d6577d12446bcb552766d22682
 Author: Alexandre Quessy <alexandre@quessy.net>
 Date:   Mon Dec 12 15:31:42 2011 -0500
