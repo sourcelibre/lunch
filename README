@@ -64,18 +64,12 @@ A stable series means that the command-line options and the interactive keyboard
 In contrast, unstable branches consist of tags which are developer snapshots. They are not expected to be compatible with any other version. Some features might change between different stable branches.
 
 
-How to use Git with the https://codered.sat.qc.ca/ server
-=========================================================
+How to use Git with the https://code.sat.qc.ca/ server
+======================================================
 
-Get the certificate authority:
+Clone the repository:
 
-  $ mkdir ~/.git
-  $ cd ~/.git/
-  $ wget --no-check-certificate https://secure.sat.qc.ca/certs/sat.qc.ca.crt
-
-Clone the repository without verifying the SSL certicate:
-
-  $ GIT_SSL_NO_VERIFY=1 git clone git://codered.sat.qc.ca/lunch.git
+  $ git clone git://code.sat.qc.ca/lunch.git
 
 Configure this repository in order to use the certificate upon pull/push requests:
 
