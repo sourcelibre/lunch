@@ -1,15 +1,9 @@
 Lunch release notes
 ===================
 
-Version 0.5.2 - 2012-0?-??
+Version 0.6.2 - 2012-07-25
 --------------------------
-This is a developer release in the 0.5 unstable series. That means it might introduces changes that are not backward-compatible and that its API might change in the future releases within the 0.5 series.
-
-New features: 
-* (none)
-
-Bug fixes: 
-* (none)
+This release is an official version in the 0.6 stable series. That means its interfaces and API should be compatible with every release in this series.
 
 
 Version 0.5.0 - 2012-07-25
