@@ -123,7 +123,10 @@ If you start lunch via SSH, and launch from there commands other hosts, you must
   $ ssh-add
 
 [HISTORY]
-2010 - Ported from multiprocessing to Twisted
+2012 - Serious bugs fixed by Alexandre Quessy with contributions from
+Michal Seta <mis@artengine.ca>.
+
+2010 - Ported from multiprocessing to Twisted by Alexandre Quessy.
 
 2009 - Written by Alexandre Quessy <alexandre@quessy.net> with contributions 
 from Simon Piette <simonp@sat.qc.ca>
