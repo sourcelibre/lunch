@@ -1,9 +1,20 @@
 Lunch release notes
 ===================
 
+Version 0.5.2 - 2012-0?-??
+--------------------------
+This is a developer release in the 0.5 unstable series. That means it might introduces changes that are not backward-compatible and that its API might change in the future releases within the 0.5 series.
+
+New features: 
+* (none)
+
+Bug fixes: 
+* (none)
+
+
 Version 0.5.0 - 2012-07-25
 --------------------------
-This is the first developer release in the 0.5 unstable series. That means it might introduces changes that are not backward-compatible and that its API might change in the future release s within the 0.5 series.
+This is the first developer release in the 0.5 unstable series. That means it might introduces changes that are not backward-compatible and that its API might change in the future releases within the 0.5 series.
 
 New features: 
 * add utils/make-tarball.sh
