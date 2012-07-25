@@ -132,7 +132,7 @@ Michal Seta <mis@artengine.ca>.
 from Simon Piette <simonp@sat.qc.ca>
 
 [REPORTING BUGS]
-See http://code.sat.qc.ca/trac/lunch for help and documentation.
+See http://code.sat.qc.ca/redmine/projects/lunch for help and documentation.
 
 [SEE ALSO]
 lunch-slave (1)
