@@ -78,3 +78,16 @@ Logging and PID directories
 
 Lunch stores log files and pid files respectively in /tmp/log/lunch/$USER and /tmp/run/lunch/$USER. $USER is replaced by the UNIX user name of the user. When you install lunch, it creates those directories. If you want to use lunch without installing it, you must provide the --logging-directory and --pid-directory options. Those log files are for the lunch-slave executables only. (not the lunch master) The PID file is for the lunch master to store its PID so that you can kill it with lunch --kill.
 
+
+LICENSE
+=======
+
+Lunch is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+
+
+AUTHORS
+=======
+
+Alexandre Quessy (http://alexandre.quessy.net)
+Michal Seta <djiamnot@gmail.com>
+
