@@ -13,6 +13,11 @@ There should be a Lunch icon in the Application/Other Gnome menu.
 
 Read the README file or read the lunch (1) man page to know how to use it. 
 
+Note that if you only want to install the Python libraries and scripts, simply use the setuptools script::
+
+  python setup.py build
+  sudo python setup.py install
+
 
 DOCUMENTATION
 =============
