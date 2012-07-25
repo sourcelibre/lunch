@@ -64,17 +64,13 @@ A stable series means that the command-line options and the interactive keyboard
 In contrast, unstable branches consist of tags which are developer snapshots. They are not expected to be compatible with any other version. Some features might change between different stable branches.
 
 
-How to use Git with the https://code.sat.qc.ca/ server
+How to use Git with the http://code.sat.qc.ca/ server
 ======================================================
 
 Clone the repository:
 
   $ git clone git://code.sat.qc.ca/lunch.git
 
-Configure this repository in order to use the certificate upon pull/push requests:
-
-  $ cd lunch
-  $ git config http.sslCAInfo ~/.git/sat.qc.ca.crt
 
 
 Logging and PID directories
