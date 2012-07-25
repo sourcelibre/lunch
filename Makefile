@@ -7,7 +7,7 @@ install: all
 	install scripts/lunch /usr/local/bin/lunch
 	install scripts/lunch-slave /usr/local/bin/lunch-slave
 	install lunch.desktop /usr/local/share/applications/
-	mkdir -p /usr/local/share/pixmaps/
+	install -d /usr/local/share/pixmaps/
 	install lunch.png /usr/local/share/pixmaps/
 	install lunch.1 /usr/local/share/man/man1/lunch.1
 	install lunch-slave.1 /usr/local/share/man/man1/lunch-slave.1

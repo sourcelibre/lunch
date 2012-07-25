@@ -100,7 +100,7 @@ def tail_child_log(command):
     @param command: L{lunch.commands.Command}
     """
     #TODO: really need to make a valid path in add_command and keep it.
-    child_log_path = os.path.join(command.child_log_dir, "child-%s.log" % (command.identifier))
+    child_log_path = os.path.join(command.child_log_dir, "lunch-child-%s.log" % (command.identifier))
     xterm_title = 'tail -F %s' % (command.identifier)
     cmd = []
     cmd.extend(["xterm", "-title", '%s' % (xterm_title), "-e"])

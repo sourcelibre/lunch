@@ -271,7 +271,7 @@ class Command(object):
         """
         if self.slave_logger is None:
             # the lunch-slave log file
-            slave_log_file = "slave-%s.log" % (self.identifier)
+            slave_log_file = "lunch-slave-%s.log" % (self.identifier)
             if not os.path.exists(self.slave_log_dir):
                 try:
                     os.makedirs(self.slave_log_dir)
