@@ -269,7 +269,7 @@ class Slave(object):
             else:
                 self.log("Created directory %s" % (self.log_dir))
         # remove old log file
-        stdout_file_name = os.path.join(self.log_dir, "child-%s.log" % (self.identifier))
+        stdout_file_name = os.path.join(self.log_dir, "lunch-child-%s.log" % (self.identifier))
         if self.options["clear-old-logs"]:
             try:
                 os.remove(stdout_file_name) # cleans it up from last time we ran it. TAKE CARE !

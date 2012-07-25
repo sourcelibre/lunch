@@ -76,10 +76,14 @@ def _guess_user_name():
     return ret
 
 def get_default_log_dir_full_path():
-    return os.path.join(lunch.DEFAULT_LOG_DIR, _guess_user_name())
+    # file_name = lunch.DEFAULT_LOG_PREFIX + _guess_user_name()
+    # return os.path.join(lunch.DEFAULT_LOG_DIR, file_name)
+    return lunch.DEFAULT_LOG_DIR
 
 def get_default_pid_dir_full_path():
-    return os.path.join(lunch.DEFAULT_PID_DIR, _guess_user_name())
+    # file_name = lunch.DEFAULT_PID_PREFIX + _guess_user_name()
+    # return os.path.join(lunch.DEFAULT_PID_DIR, file_name)
+    return lunch.DEFAULT_PID_DIR
 
 class Master(object):
     """
@@ -508,7 +512,7 @@ def gen_pid_file_path(identifier="lunchrc", directory=None):
     Creates the directory if it does not exist.
     @return: Full path of the PID file for that master.
     """
-    file_name = "master-%s.pid" % (identifier)
+    file_name = "lunch-pid-master-%s.pid" % (identifier)
     if not os.path.exists(directory):
         os.makedirs(directory)
     if not os.path.isdir(directory):
