@@ -15,35 +15,38 @@ Make sure the version number is the next release's:
 * scripts/lunch-slave
 * lunch/__init__.py
 
-Run the unit tests:
+Run the unit tests::
 
-* trial lunch
+  trial lunch
 
 Update the release notes:
 
 * NEWS
 
-Update the ChangeLog:
+Update the ChangeLog::
 
-* git log --pretty=medium > ChangeLog
+  git log --pretty=medium > ChangeLog
 
 Create the tag and a tarball:
 
 * Make sure you are in the right branch. (develop)
-* Commit any change
-* git co -b release-0.4.0 (in this example, we release 0.4.0)
+* Commit any change::
+
+  git co -b release-0.4.0 (in this example, we release 0.4.0)
+
 * Increase the version number to the next even micro version number (see "Files with version number")
 * Make any additional change
-* git tag 0.4.0
-* ./utils/make-tarball.sh 0.4.0
-* git co develop
-* git merge --no-ff release-0.4.0
-* git co master
-* git merge --no-ff release-0.4.0
-* git pull origin master:master develop:develop
-* git push --tags origin master:master develop:develop
-* git branch -d release-0.4.0
-* git co develop
+* Do (wisely and step by step) this::
+
+  git co master
+  git merge --no-ff release-0.4.0
+  git tag 0.4.0
+  ./utils/make-tarball.sh 0.4.0
+  git co develop
+  git merge --no-ff release-0.4.0
+  git branch -d release-0.4.0
+  git push --tags origin master:master develop:develop
+
 * Increase the version number to the next odd micro version number (never to be released) (0.4.1 in this example)
 * Commit with "post-release version bump" message.
 
