@@ -11,7 +11,6 @@ New features:
 
 Bug fixes: 
 * Change logging and PID file directory to /tmp (it was not working at all when used by many users on the same host)
-* add Michal Seta to authors in about dialog
 
 
 Version 0.4.2 - 2011-12-12
