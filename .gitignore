@@ -15,3 +15,4 @@ html/
 lunch-readme.html
 python-build-stamp-*
 scripts/lunch-slavec
+*.egg-info
