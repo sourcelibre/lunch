@@ -18,7 +18,7 @@ setup(
     description="The Lunch Distributed Process Launcher",
     author="SAT",
     author_email="alexandre@quessy.net",
-    url="http://code.sat.qc.ca/trac/lunch",
+    url="http://code.sat.qc.ca/redmine/projects/lunch",
     packages=["lunch"],
     scripts=["scripts/lunch", "scripts/lunch-slave"]
     )

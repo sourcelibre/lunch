@@ -12,7 +12,7 @@ dependencies between running processes.
 It provides the command-line lunch utility which can be invoked with a GTK+
 user interface.
 
-See http://code.sat.qc.ca/trac/lunch for more information.
+See http://code.sat.qc.ca/redmine/projects/lunch for more information.
 
 
 USING LUNCH
