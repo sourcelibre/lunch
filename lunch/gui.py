@@ -171,6 +171,7 @@ class About(object):
             "Michal Seta <mis@artengine.ca>",
             ])
         self.about_dialog.set_documenters([
+            "Alexandre Quessy <alexandre@quessy.net>",
             "Simon Piette <simonp@sat.qc.ca>"
             ])
         self.about_dialog.set_artists(['Rocket000'])
