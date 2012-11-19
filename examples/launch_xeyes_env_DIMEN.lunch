@@ -1,0 +1,8 @@
+#!/usr/bin/env lunch
+import os
+DIMEN = "100x100"
+try:
+    DIMEN=os.environ["DIMEN"]
+except:
+    pass
+add_command("xeyes -geometry %s" % (DIMEN))
