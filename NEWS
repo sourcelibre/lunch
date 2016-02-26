@@ -1,9 +1,9 @@
 Lunch release notes
 ===================
 
-Version 0.6.4 - 2012-??-??
+Version 0.8.0 - 2016-??-??
 --------------------------
-This release is an official version in the 0.6 stable series. That means its interfaces and API should be compatible with every release in this series.
+This release is an official version in the 0.8 stable series. That means its interfaces and API should be compatible with every release in this series.
 
 New features: 
 * (todo)
@@ -12,7 +12,7 @@ Bug fixes:
 * (todo)
 
 
-Version 0.6.2 - 2012-07-25
+Version 0.6.0 - 2012-07-25
 --------------------------
 This release is an official version in the 0.6 stable series. That means its interfaces and API should be compatible with every release in this series.
 
