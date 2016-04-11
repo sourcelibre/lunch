@@ -3,6 +3,7 @@
 #
 # Lunch
 # Copyright (C) 2009 Société des arts technologiques (SAT)
+# Copyright (C) 2016 Alexandre Quessy
 # http://www.sat.qc.ca
 # All rights reserved.
 #
@@ -18,44 +19,43 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Lunch.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 The Lunch master manages lunch slaves.
-Author: Alexandre Quessy <alexandre@quessy.net>
+@author: Alexandre Quessy <alexandre@quessy.net>
 """
+
+from lunch import DEFAULT_LOG_DIR
+from lunch import DEFAULT_PID_DIR
+from lunch import graph
+from lunch import logger
+from lunch import sig
+from lunch.states import STATE_RUNNING
+from lunch.states import STATE_STARTING
+from lunch.states import STATE_STOPPED
+from twisted.internet import defer
+from twisted.internet import reactor
+from twisted.internet import task
+import getpass
+import logging
 import os
 import signal
 import socket
 import stat
-import time
-import sys
-import logging
-import warnings
 import subprocess # TODO: get rid of blocking IO
+import time
 
-from twisted.internet import defer
-from twisted.internet import error
-from twisted.internet import protocol
-from twisted.internet import reactor
-from twisted.internet import task
-from twisted.internet import utils
-from twisted.python import failure
-#from twisted.python import log
-from twisted.python import logfile
-from twisted.python import procutils
 
-import lunch
-from lunch import sig
-from lunch import graph
-from lunch.states import *
-from lunch import logger
-
-log = None
+log = None # global singleton
 LOG_NAME = 'master'
+
 
 def start_stdout_logging(log_level='info'):
     #log.startLogging(sys.stdout)
     global log
-    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=False)
+    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True,
+            to_file=False)
+
 
 class FileNotFoundError(Exception):
     """
@@ -63,33 +63,40 @@ class FileNotFoundError(Exception):
     """
     pass
 
+
 def _guess_user_name():
     """
     Guesses $USER.
     @rtype: str
     """
     ret = ""
-    try:
-        ret = os.environ["USER"]
-    except OSError, e:
-        log.error("Cannot get $USER because %s" % (str(e)))
+    ret = getpass.getuser()
+    # try:
+    #     ret = os.environ["USER"]
+    # except OSError, e:
+    #     log.error("Cannot get USER name because %s" % (str(e)))
     return ret
+
 
 def get_default_log_dir_full_path():
     # file_name = lunch.DEFAULT_LOG_PREFIX + _guess_user_name()
-    # return os.path.join(lunch.DEFAULT_LOG_DIR, file_name)
-    return lunch.DEFAULT_LOG_DIR
+    # return DEFAULT_LOG_DIR
+    return os.path.join(DEFAULT_LOG_DIR, _guess_user_name())
+
 
 def get_default_pid_dir_full_path():
     # file_name = lunch.DEFAULT_PID_PREFIX + _guess_user_name()
-    # return os.path.join(lunch.DEFAULT_PID_DIR, file_name)
-    return lunch.DEFAULT_PID_DIR
+    # return os.path.join(DEFAULT_PID_DIR, file_name)
+    # return DEFAULT_PID_DIR
+    return os.path.join(DEFAULT_PID_DIR, _guess_user_name())
+
 
 class Master(object):
     """
     The Lunch Master launches slaves, which in turn launch childs.
     """
-    def __init__(self, log_dir=None, pid_dir=None, pid_file=None, log_file=None, config_file=None, verbose=False):
+    def __init__(self, log_dir=None, pid_dir=None, pid_file=None,
+            log_file=None, config_file=None, verbose=False):
         """
         @param log_dir: str Path.
         @param pid_dir: str Path.
@@ -109,7 +116,8 @@ class Master(object):
             ]
         self._guess_local_ip_and_hostname_for_local_host()
         
-        # These are all useless within this class, but might be useful to be read from the GUI:
+        # These are all useless within this class, but might be useful
+        # to be read from the GUI:
         self.log_dir = log_dir
         self.pid_dir = pid_dir
         if self.log_dir is None:
@@ -120,31 +128,40 @@ class Master(object):
         self.log_file = log_file
         self.config_file = config_file
         self.verbose = verbose
-        self.main_loop_every = 0.05 # checks process to start/stop 20 times a second.
+        self.main_loop_every = 0.05 # checks process to start/stop
+                                    # 20 times a second.
         self._time_now = time.time()
         self.launch_next_time = time.time() # time in future
         self._looping_call = task.LoopingCall(self.main_loop)
         self._looping_call.start(self.main_loop_every, False) 
-        self.wants_to_live = False # The master is either trying to make every child live or die. 
+        self.wants_to_live = False # The master is either trying to make every
+                                   # child live or die. 
         self.command_added_signal = sig.Signal() # param: Command object
-        self.command_removed_signal = sig.Signal() # param: command object -- Called when actually deleted from the graph
+        self.command_removed_signal = sig.Signal() # param: command object
+                                # -- Called when actually deleted from the graph
         # actions:
         self.start_all()
-        self._shutdown_event_id = reactor.addSystemEventTrigger("before", "shutdown", self.before_shutdown)
+        self._shutdown_event_id = reactor.addSystemEventTrigger(
+                "before", "shutdown", self.before_shutdown)
 
     #def __del__(self):
     #    self._looping_call.stop()
 
     def _guess_local_ip_and_hostname_for_local_host(self):
         """
-        Lunch master guesses the hostname of the local machine, and should at least guess one IP (for one interface) 
-        It adds it to the list local_addresses so that it doesn't use SSH to launch command here, in case the 
-        programmer has added some commands on the localhost
+        Lunch master guesses the hostname of the local machine,
+        and should at least guess one IP (for one interface) 
+
+        It adds it to the list local_addresses so that it doesn't use SSH to
+        launch command here, in case the programmer has added some commands on
+        the localhost
         """
-        # TODO: When the username is different than the current one, we should use a different uid, gid or SSH to our own host.
+        # TODO: When the username is different than the current one,
+        # we should use a different uid, gid or SSH to our own host.
         self.local_addresses.append(socket.gethostname())
         try:
-            self.local_addresses.append(socket.gethostbyname(socket.gethostname()))
+            self.local_addresses.append(
+                    socket.gethostbyname(socket.gethostname()))
         except socket.gaierror, e:
             log.error("Error getting IP of the local machine: " + str(e))
 
@@ -165,22 +182,27 @@ class Master(object):
         """    
         # check if addr is local, set it to none if so.
         if command.host in self.local_addresses:
-            log.info("Filtering out host %s since it is in list of local addresses." % (command.host))
+            log.info("Filtering out host %s since it is in list of local addresses." % (
+                    command.host))
             command.host = None    
         # set default names if they are none:
         if command.identifier is None:
-            command.identifier = "default_%d" % (self.i) #TODO: use the first word of the command
+            command.identifier = "default_%d" % (self.i)
+            #TODO: use the first word of the command
             self.i += 1
         while command.identifier in self.commands: # making sure it is unique
             command.identifier += "X"
-        self.tree.add_node(command.identifier, command.depends) # Adding it the the dependencies tree.
+        # Adding it the the dependencies tree.
+        self.tree.add_node(command.identifier, command.depends)
         self.commands[command.identifier] = command
         # calls the signal
         self.command_added_signal(command)
 
     def prepare_all_commands(self):
         """
-        Called to change some attribute of all the commands before to start them for the first time. The config file is already loaded at this time.
+        Called to change some attribute of all the commands
+        before to start them for the first time.
+        The config file is already loaded at this time.
         """
         for c in self._get_all():
             c.verbose = self.verbose
@@ -190,9 +212,13 @@ class Master(object):
         Called in a looping call.
         This is actually the main loop of the application.
         
-        Starting by the process with no dependency, starts them, in the order they were given, sleeping some time before each, as configured using their sleep_after attribute. 
+        Starting by the process with no dependency, starts them,
+        in the order they were given, sleeping some time before each,
+        as configured using their sleep_after attribute. 
         
-        The master is set up to either keep every child alive, or keep them dead. Stopping them is done as soon as possible. Starting them is done using the sequence described above. 
+        The master is set up to either keep every child alive,
+        or keep them dead. Stopping them is done as soon as possible.
+        Starting them is done using the sequence described above. 
 
         # get children of the root
         # get time now
@@ -279,11 +305,14 @@ class Master(object):
             has_unsatisfied_dependency = False
             for dependency in all_dependencies:
                 dep_command = self.commands[dependency]
-                if dep_command.child_state != STATE_RUNNING and dep_command.respawn is False and dep_command.how_many_times_run != 0:
+                if dep_command.child_state != STATE_RUNNING and \
+                        dep_command.respawn is False and \
+                        dep_command.how_many_times_run != 0:
                     has_unsatisfied_dependency = True
                     break
             if has_unsatisfied_dependency:
-                log.info("Got to stop %s since it has unsatisfied dependencies." % (command.identifier)) 
+                log.info("Got to stop %s since it has unsatisfied dependencies." % (
+                        command.identifier)) 
                 command.stop()
                         
     def _start_node_if_needed(self, node):
@@ -295,10 +324,14 @@ class Master(object):
         all_dependees = self.tree.get_all_dependees(node)
         has_dependees_to_wait_for = self._node_has_dependees_that_are_stopped(node)
         
-        # self.launch_next_time is for launching the next process... so it must be updated as 
-        # soon as we start one.
-        if self.wants_to_live and self.launch_next_time <= self._time_now and command.enabled and command.is_ready_to_be_started():
-            if has_dependees_to_wait_for: # We cannot start this node if there are nodes that depend on this one to be running.
+        # self.launch_next_time is for launching the next process...
+        # so it must be updated as soon as we start one.
+        if self.wants_to_live and \
+                self.launch_next_time <= self._time_now and \
+                command.enabled and \
+                command.is_ready_to_be_started():
+            if has_dependees_to_wait_for: # We cannot start this node if there
+                            # are nodes that depend on this one to be running.
                 pass #command.stop()
             else:
                 start_it = True
@@ -313,9 +346,11 @@ class Master(object):
                 #    start_it = False
                 for dependency in all_dependencies:
                     dep_command = self.commands[dependency]
-                    if dep_command.child_state != STATE_RUNNING and dep_command.respawn is True: 
+                    if dep_command.child_state != STATE_RUNNING and \
+                            dep_command.respawn is True: 
                         start_it = False
-                    elif dep_command.respawn is False and dep_command.how_many_times_run == 0:
+                    elif dep_command.respawn is False and \
+                            dep_command.how_many_times_run == 0:
                         start_it = False
                 # Finally, start it if we are ready to.
                 if start_it:
@@ -387,7 +422,8 @@ class Master(object):
 
     def restart_all(self):
         """
-        Stops all commands, then wait until they are all done. Starts them all when ready.
+        Stops all commands, then wait until they are all done.
+        Starts them all when ready.
         """
         # TODO: use the looping call to do stuff in the future.
         self.stop_all()
@@ -402,7 +438,8 @@ class Master(object):
         for c in _commands:
             if c.child_state != STATE_STOPPED:
                 ready_to_restart = False
-                log.debug("Not yet ready to restart all since %s is still %s." % (c, c.child_state))
+                log.debug("Not yet ready to restart all since %s is still %s." % (
+                        c, c.child_state))
         if ready_to_restart:
             self.start_all()
             log.info("Restarting all.")
@@ -439,7 +476,8 @@ class Master(object):
             again = False
             for c in self._get_all():
                 if c.child_state == STATE_RUNNING:
-                    log.info("Please wait... Slave %s is still running." % (c.identifier))
+                    log.info("Please wait... Slave %s is still running." % (
+                            c.identifier))
                     again = True
                     c.enabled = False
                     if c.slave_state == STATE_RUNNING:
@@ -451,7 +489,8 @@ class Master(object):
                 log.info("Max shutdown time expired.", logging.ERROR)
                 for c in self._get_all():
                     if c.child_state != STATE_STOPPED:
-                        log.critical("CHILD PROCESS %s IS IN STATE %s." % (c.identifier, c.child_state))
+                        log.critical("CHILD PROCESS %s IS IN STATE %s." % (
+                                c.identifier, c.child_state))
                 again = False
             # -------------------- Finally:
             if again:
@@ -481,7 +520,8 @@ class Master(object):
             self._looping_call.stop() # FIXME
             deferreds.append(d)
         return defer.DeferredList(deferreds)
-        
+
+
 def _validate_identifier(identifier):
     """
     Raises a RuntimeError if the identifier is not valid.
@@ -495,6 +535,7 @@ def _validate_identifier(identifier):
     if "/" in identifier:
         raise RuntimeError("Identifier must not contain slashes: %s" % (identifier))
 
+
 def gen_id_from_config_file_name(config_file_name="lunchrc"):
     """
     Returns an identifier for the master using the config file name.
@@ -505,6 +546,7 @@ def gen_id_from_config_file_name(config_file_name="lunchrc"):
     identifier = file_name.replace(".", "") # getting rid of the dot in file name
     return identifier
 
+
 def gen_pid_file_path(identifier="lunchrc", directory=None):
     """
     Returns a PID file name. 
@@ -514,11 +556,12 @@ def gen_pid_file_path(identifier="lunchrc", directory=None):
     """
     file_name = "lunch-pid-master-%s.pid" % (identifier)
     if not os.path.exists(directory):
-        os.makedirs(directory)
+        os.makedirs(directory, 0777) # XXX world-writable directories
     if not os.path.isdir(directory):
         raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
     return pid_file
+
 
 def is_lunch_master_running(pid_file):
     """
@@ -546,8 +589,12 @@ def is_lunch_master_running(pid_file):
             #d = run_and_wait("bash", ["-c", command_check_master])
             # blocking... it's easier to debug for now
             # TODO: get rid of subprocess here.
-            output = subprocess.Popen(command_check_master, stdout=subprocess.PIPE, shell=True).communicate()[0]
-            if "python" in output:# used to be "lunch", but changed it to "python", since lunch.master is now a livrary as well.
+            output = subprocess.Popen(command_check_master,
+                    stdout=subprocess.PIPE, shell=True).communicate()[0]
+            if "python" in output:
+                # used to be "lunch",
+                # but changed it to "python",
+                # since lunch.master is now a library as well.
                 return int(pid)
             else:
                 #print "found PID, but it's not lunch!"
@@ -555,6 +602,7 @@ def is_lunch_master_running(pid_file):
                 return None
     else:
         return None
+
 
 def write_master_pid_file(identifier="lunchrc", directory=None):
     """
@@ -580,6 +628,7 @@ def write_master_pid_file(identifier="lunchrc", directory=None):
     os.chmod(pid_file, 0600)
     log.info("Wrote master's PID %d to file %s." % (pid, pid_file))
     return pid_file
+
 
 def kill_master_if_running(identifier="lunchrc", directory=None):
     """
@@ -620,6 +669,7 @@ def kill_master_if_running(identifier="lunchrc", directory=None):
     reactor.callLater(0.01, _kill, True)
     return deferred
 
+
 def start_file_logging(identifier="lunchrc", directory=None, log_level='info'):
     """
     Starts logging the Master infos to a file.
@@ -628,7 +678,7 @@ def start_file_logging(identifier="lunchrc", directory=None, log_level='info'):
     global log
     file_name = "master-%s.log" % (identifier)
     if not os.path.exists(directory):
-        os.makedirs(directory)
+        os.makedirs(directory, 0777) # world-writable directories
     full_path = os.path.join(directory, file_name)
     f = open(full_path, 'w')
     f.close()
@@ -637,8 +687,10 @@ def start_file_logging(identifier="lunchrc", directory=None, log_level='info'):
     #_log_file = logfile.DailyLogFile(file_name, directory) #FIXME: do not use that DailyLogFile ! 
     #log.startLogging(_log_file)
     full_path = os.path.join(directory, file_name)
-    log = logger.start(level=log_level, name=LOG_NAME, to_stdout=True, to_file=True, log_file_name=full_path)
+    log = logger.start(level=log_level, name=LOG_NAME,
+            to_stdout=True, to_file=True, log_file_name=full_path)
     return full_path #_log_file.path
+
 
 def chmod_file_not_world_writable(config_file):
     """
@@ -653,6 +705,7 @@ def chmod_file_not_world_writable(config_file):
     except OSError, e:
         log.warning("WARNING: Could not chmod configuration file. %s" % (e))
 
+
 def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     """
     Reads the lunch file and execute it as Python code.
@@ -660,11 +713,13 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
     @param config_file: Path to the lunch file. (such as a .lunchrc)
     Might raise a FileNotFoundError.
     
-    The functions to which the user can access in their lunch files are defined here.
+    The functions to which the user can access in their lunch files
+    are defined here.
      * add_command
      * add_local_address
     
-    The user can also access the lunch_master variable, which is the Lunch Master.
+    The user can also access the lunch_master variable, which is
+    the Lunch Master.
     """
     from lunch import commands
     def add_local_address(address):
@@ -682,13 +737,16 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
                 log.info("Adding %s in list of local addresses." % (address))
                 lunch_master.local_addresses.append(address)
     # --------------------------------
-    def add_command(command=None, identifier=None, env=None, user=None, host=None, group=None, order=None,
-        sleep_after=0.25, respawn=True, minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None, depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
+    def add_command(command=None, identifier=None, env=None, user=None,
+            host=None, group=None, order=None, sleep_after=0.25, respawn=True,
+            minimum_lifetime_to_respawn=0.5, log_dir=None, sleep=None,
+            depends=None, try_again_delay=0.25, give_up_after=0, ssh_port=None):
         """
-        This is the only function that users use from within the configuration file.
-        It adds a Command instance to the list of commands to run. 
+        This is the only function that users use from within the configuration
+        file. It adds a Command instance to the list of commands to run. 
 
-        This function calls the Master.add_command static method, passing to it a L{lunch.commands.Command} object
+        This function calls the Master.add_command static method, passing to it
+        a L{lunch.commands.Command} object
         """
         # TODO: remove priority and sleep kwargs in a future version
         log.debug("Adding %s (%s) %s@%s" % (identifier, command, user, host))
@@ -706,7 +764,12 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
             log_dir = lunch_master.log_dir
         #TODO: if pid_dir is None:
         #         pid_dir = lunch_master.pid_dir
-        c = commands.Command(command=command, env=env, host=host, user=user, order=order, sleep_after=sleep_after, respawn=respawn, minimum_lifetime_to_respawn=minimum_lifetime_to_respawn, log_dir=log_dir, identifier=identifier, depends=depends, try_again_delay=try_again_delay, give_up_after=give_up_after, ssh_port=ssh_port)
+        c = commands.Command(command=command, env=env, host=host, user=user,
+                order=order, sleep_after=sleep_after, respawn=respawn,
+                minimum_lifetime_to_respawn=minimum_lifetime_to_respawn,
+                log_dir=log_dir, identifier=identifier, depends=depends,
+                try_again_delay=try_again_delay, give_up_after=give_up_after,
+                ssh_port=ssh_port)
         lunch_master.add_command(c)
     # -------------------------------------
     #global _commands # is this necessary?
@@ -716,13 +779,15 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         if chmod_config_file:
             chmod_file_not_world_writable(config_file)
         try:
-            execfile(config_file) # config is plain python using the globals defined here. (the add_process function)
+            execfile(config_file) # config is plain python using the
+            # globals defined here. (the add_process function)
         except Exception, e:
             log.error("ERROR: Error in user configuration file.")
             raise
     else:
         # create the directory ?
         raise FileNotFoundError("ERROR: Could not find the %s file." % (config_file))
+
 
 def start_logging(identifier='lunchrc', log_to_file=False, log_dir=None, log_level='info'):
     """
@@ -736,6 +801,7 @@ def start_logging(identifier='lunchrc', log_to_file=False, log_dir=None, log_lev
     log.info("Started logging.")
     return log_file
 
+
 def create_dir_and_make_writable(directory):
     """
     Creates a directory if it does not exist, and make sure it is writable by us.
@@ -744,7 +810,7 @@ def create_dir_and_make_writable(directory):
     """
     if not os.path.exists(directory):
         try:
-            os.makedirs(directory)
+            os.makedirs(directory, 0777) # world-writable directories
         except OSError, e:
             return False
     if os.access(directory, os.W_OK):
@@ -752,7 +818,9 @@ def create_dir_and_make_writable(directory):
     else:
         return False
 
-def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod_config_file=True, verbose=False, log_level="info"):
+
+def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None,
+        chmod_config_file=True, verbose=False, log_level="info"):
     """
     Runs the master that calls commands using ssh or so.
 
@@ -780,12 +848,13 @@ def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None, chmod
     if not create_dir_and_make_writable(pid_dir):
         raise RuntimeError("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir))
 
-    log_file = start_logging(identifier=master_identifier, log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
+    log_file = start_logging(identifier=master_identifier,
+            log_to_file=log_to_file, log_dir=log_dir, log_level=log_level)
     pid_file = write_master_pid_file(identifier=master_identifier, directory=pid_dir)
     log.debug("-------------------- Starting master -------------------")
     log.info("Using lunch master module %s" % (__file__))
-    lunch_master = Master(log_dir=log_dir, pid_file=pid_file, log_file=log_file, config_file=config_file, verbose=verbose)
+    lunch_master = Master(log_dir=log_dir, pid_file=pid_file,
+            log_file=log_file, config_file=config_file, verbose=verbose)
     execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
     # TODO: return a Deferred
     return lunch_master
-
