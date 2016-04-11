@@ -9,7 +9,8 @@ New features:
 * (todo)
 
 Bug fixes: 
-* (todo)
+* Use /tmp/$USER/ for logs/pid files
+* Make log/pid directories world-writable
 
 
 Version 0.6.0 - 2012-07-25
