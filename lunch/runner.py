@@ -3,7 +3,8 @@
 #
 # Lunch
 # Copyright (C) 2009 Société des arts technologiques (SAT)
-# http://www.sat.qc.ca
+#               http://www.sat.qc.ca
+# Copyright (C) 2016 Alexandre Quessy
 # All rights reserved.
 #
 # This file is free software: you can redistribute it and/or modify
@@ -34,19 +35,28 @@ def run():
     Runs the application.
     """
     # this will set logging and PID directories to $USER
-    parser = OptionParser(usage="%prog [config file] [options]", version="%prog " + lunch.__version__, description=DESCRIPTION)
+    parser = OptionParser(usage="%prog [config file] [options]",
+            version="%prog " + lunch.__version__, description=DESCRIPTION)
     parser.add_option("-f", "--config-file", type="string",
-                        help="Specifies the python config file. You can also simply specify the config file as the first argument.")
+            help="Specifies the python config file. You can also simply specify the config file as the first argument.")
     parser.add_option("-l", "--logging-directory", type="string",
-                        help="Specifies the logging directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_LOG_DIR)) # change error message in master.run_master() if you change this
+            help="Specifies the logging directory for the master. Default is %s/$USER/" % (
+                    lunch.DEFAULT_LOG_DIR))
+            # change error message in master.run_master() if you change this
     parser.add_option("-p", "--pid-directory", type="string",
-                        help="Specifies the pidfile directory for the master. Default is %s/$USER/" % (lunch.DEFAULT_PID_DIR)) # change error message in master.run_master() if you change this
-    parser.add_option("-q", "--log-to-file", action="store_true", help="Enables logging master infos to file and disables logging to standard output.")
-    parser.add_option("-g", "--graphical", action="store_true", help="Enables the graphical user interface.")
-    parser.add_option("-v", "--verbose", action="store_true", help="Makes the logging output verbose.")
-    parser.add_option("-d", "--debug", action="store_true", help="Makes the logging output very verbose.")
+            help="Specifies the pidfile directory for the master. Default is %s/$USER/" % (
+                    lunch.DEFAULT_PID_DIR))
+            # change error message in master.run_master() if you change this
+    parser.add_option("-q", "--log-to-file", action="store_true",
+            help="Enables logging master infos to file and disables logging to standard output.")
+    parser.add_option("-g", "--graphical", action="store_true",
+            help="Enables the graphical user interface.")
+    parser.add_option("-v", "--verbose", action="store_true",
+            help="Makes the logging output verbose.")
+    parser.add_option("-d", "--debug", action="store_true",
+            help="Makes the logging output very verbose.")
     parser.add_option("-k", "--kill", action="store_true",
-                        help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
+            help="Kills another lunch master that uses the same config file and logging directory. Exits once it's done.")
     (options, args) = parser.parse_args()
     # --------- set configuration file
     if options.config_file:
@@ -76,10 +86,12 @@ def run():
     else:
         # print("Using lunch master without the GUI.")
         GUI_ENABLED = False
+
     from twisted.internet import reactor
     from twisted.internet import defer
     # --------- load the module and run
     from lunch import master
+
     if options.logging_directory:
         logging_dir = options.logging_directory
     else:
@@ -107,16 +119,21 @@ def run():
                 #TODO: show a dialog to the user if --graphical is given.
                 if reactor.running:
                     reactor.stop()
-            master.start_stdout_logging(log_level=log_level) #FIXME: should be able to log to file too
+            #FIXME: should be able to log to file too
+            master.start_stdout_logging(log_level=log_level)
             identifier = master.gen_id_from_config_file_name(config_file)
-            master.log.info("Will check if lunch master %s is running and kill it if so." % (identifier))
-            deferred = master.kill_master_if_running(identifier=identifier, directory=pid_dir)
+            master.log.info("Will check if lunch master %s is running and kill it if so." % (
+                    identifier))
+            deferred = master.kill_master_if_running(identifier=identifier,
+                    directory=pid_dir)
             deferred.addCallback(_killed_cb)
             reactor.run()
             sys.exit(0)
         try:
             #print("DEBUG: using config_file %s" % (config_file))
-            lunch_master = master.run_master(config_file, log_to_file=file_logging_enabled, pid_dir=pid_dir, log_dir=logging_dir, log_level=log_level)
+            lunch_master = master.run_master(config_file,
+                    log_to_file=file_logging_enabled, pid_dir=pid_dir,
+                    log_dir=logging_dir, log_level=log_level)
         except master.FileNotFoundError, e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "
@@ -144,6 +161,7 @@ def run():
             reactor.run() # need it for the GTK error dialog
             print("Reactor stopped. Exiting.")
         sys.exit(1) # exits with error
+
     if GUI_ENABLED:
         from lunch import gui
         app = gui.start_gui(lunch_master)
@@ -154,4 +172,3 @@ def run():
         #log.msg("Ctrl-C in Master.", logging.INFO)
         #lunch_master.quit_master()
         reactor.stop()
-
