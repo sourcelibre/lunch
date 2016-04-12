@@ -1,0 +1,2 @@
+add_command("man man", identifier="man-man")
+add_command("man ls", identifier="man-ls")
