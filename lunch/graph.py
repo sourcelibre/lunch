@@ -236,7 +236,7 @@ def iter_from_root_to_leaves(graph):
             children = graph.get_supported_by(current)
             stack.append(iter(children))
         try:
-            current = stack[-1].next()
+            current = next(stack[-1])
         except StopIteration:
             stack.pop()
         except IndexError:

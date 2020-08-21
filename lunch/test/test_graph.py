@@ -11,18 +11,18 @@ class Test_Graph(unittest.TestCase):
         
         g.add_node("a")
         a = g.get_supported_by(root)
-        self.failUnlessEqual(a, ["a"])
+        self.assertEqual(a, ["a"])
         # a should depend on root
         
         g.add_node("b", ["a"])
         a2 = g.get_dependencies("b")
-        self.failUnlessEqual(a, ["a"])
+        self.assertEqual(a, ["a"])
         # b should depend on a
        
         g.add_node("c", ["a"])
         #print(str(g)) 
         li = g.get_supported_by("a")
-        self.failUnlessEqual(li, ["b", "c"])
+        self.assertEqual(li, ["b", "c"])
         # b and c rely on a
 
     def test_clear(self):
@@ -32,12 +32,12 @@ class Test_Graph(unittest.TestCase):
         g.add_node("z")
         root = g.get_root()
         li = g.get_supported_by(root)
-        self.failUnlessEqual(li, ["x", "y", "z"])
+        self.assertEqual(li, ["x", "y", "z"])
         li2 = g.get_all_nodes()
-        self.failUnlessEqual(li2, [root, "x", "y", "z"])
+        self.assertEqual(li2, [root, "x", "y", "z"])
         g.clear()
         li3 = g.get_all_nodes()
-        self.failUnlessEqual(li3, [root])
+        self.assertEqual(li3, [root])
         
     def test_traverse(self):
         g = graph.DirectedGraph()
@@ -48,9 +48,9 @@ class Test_Graph(unittest.TestCase):
         g.add_node("e", ["b"])
         
         li = g.get_supported_by("a")
-        self.failUnlessEqual(li, ["b", "c"])
+        self.assertEqual(li, ["b", "c"])
         li = g.get_supported_by("b")
-        self.failUnlessEqual(li, ["d", "e"])
+        self.assertEqual(li, ["d", "e"])
 
     def test_remove_dep(self):
         g = graph.DirectedGraph()
@@ -58,15 +58,15 @@ class Test_Graph(unittest.TestCase):
         g.add_node("b", "aaa")
         
         li = g.get_supported_by("aaa")
-        self.failUnlessEqual(li, ["b"])
+        self.assertEqual(li, ["b"])
         
         g.remove_dependency("b", "aaa")
         
         li = g.get_supported_by("aaa")
-        self.failUnlessEqual(li, [])
+        self.assertEqual(li, [])
 
         li = g.get_dependencies("b")
-        self.failUnlessEqual(li, [g.get_root()])
+        self.assertEqual(li, [g.get_root()])
         
     def test_detect_circularity(self):
         g = graph.DirectedGraph()
@@ -85,7 +85,7 @@ class Test_Graph(unittest.TestCase):
         # root <-- a <-- b
         try:
             g.add_dependency("a", "b")
-        except graph.GraphError, e:
+        except graph.GraphError as e:
             pass
         else:
             self.fail("Adding dep a->b should have raised an error.")
@@ -95,7 +95,7 @@ class Test_Graph(unittest.TestCase):
         
         try:
             g.add_dependency("a", "c")
-        except graph.GraphError, e:
+        except graph.GraphError as e:
             pass
         else:
             self.fail("Adding dep a->c should have raised an error.")
@@ -108,7 +108,7 @@ class Test_Graph(unittest.TestCase):
         g.add_node("d", ["b"])
         # root <-- a <-- b <-- c,d
         all = g.get_all_dependees("a")
-        self.failUnlessEqual(all, ["b", "c", "d"])
+        self.assertEqual(all, ["b", "c", "d"])
 
 class Test_Traversal(unittest.TestCase):
     """
@@ -135,25 +135,25 @@ class Test_Traversal(unittest.TestCase):
         
     def test_get_all_dependencies(self):
         li = self.g.get_all_dependencies("d")
-        self.failUnlessEqual(li, ["b", "a"])
+        self.assertEqual(li, ["b", "a"])
         
         li = self.g.get_all_dependencies("i")
-        self.failUnlessEqual(li, ["h", "j"])
+        self.assertEqual(li, ["h", "j"])
         
         li = self.g.get_all_dependencies("g")
-        self.failUnlessEqual(li, [])
+        self.assertEqual(li, [])
         
     def test_get_all_dependees(self):
         li = self.g.get_all_dependees("a")
-        self.failUnlessEqual(li, ["b", "c", "d"])
+        self.assertEqual(li, ["b", "c", "d"])
         
         li = self.g.get_all_dependees("e")
-        self.failUnlessEqual(li, ["f"])
+        self.assertEqual(li, ["f"])
 
     def test_iterator(self):
         iterator = graph.iter_from_root_to_leaves(self.g)
         visited = []
         for n in iterator:
             visited.append(n)
-        self.failUnlessEqual(visited, [self.g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
+        self.assertEqual(visited, [self.g.ROOT, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j"])
 

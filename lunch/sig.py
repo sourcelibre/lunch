@@ -30,15 +30,15 @@ class Signal(object):
         Slots must call this to register a callback method.
         :param slot: callable
         """
-        key = (slot.im_func, id(slot.im_self))
-        self._slots[key] = slot.im_self
+        key = (slot.__func__, id(slot.__self__))
+        self._slots[key] = slot.__self__
 
     def disconnect(self, slot):
         """
         They can also unregister their callbacks here.
         :param slot: callable
         """
-        key = (slot.im_func, id(slot.im_self))
+        key = (slot.__func__, id(slot.__self__))
         if key in self._slots:
             self._slots.pop(key)
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             model.changed.connect(self.model_changed)
 
         def model_changed(self):
-            print("New value: %s" % (self.model.get_value()))
+            print(("New value: %s" % (self.model.get_value())))
 
     model = Model(10)
     view1 = View(model)
