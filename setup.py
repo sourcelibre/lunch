@@ -38,7 +38,7 @@ if sys.argv[1] == "build" and BUILD_MAN:
         'help2man --no-info --include=man_lunch-slave.txt --name="Process launcher" ./scripts/lunch-slave --output=lunch-slave.1'
         ]
     for c in commands:
-        print("$ %s" % (c))
+        print(("$ %s" % (c)))
         retcode = subprocess.call(c, shell=True)
-        print("The help2man command returned %s" % (retcode))
+        print(("The help2man command returned %s" % (retcode)))
 

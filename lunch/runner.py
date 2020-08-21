@@ -80,8 +80,8 @@ def run():
             import gtk # just for a test
             GUI_ENABLED = True
             #print("Successfully loaded the GTK+ graphical user interface.")
-        except ImportError, e:
-            print("Could not load the GTK+ graphical user interface. " + str(e))
+        except ImportError as e:
+            print(("Could not load the GTK+ graphical user interface. " + str(e)))
             GUI_ENABLED = False
     else:
         # print("Using lunch master without the GUI.")
@@ -103,7 +103,7 @@ def run():
     if pid_dir is None:
         pid_dir = master.get_default_pid_dir_full_path() # FIXME:code duplication
     if not master.create_dir_and_make_writable(pid_dir):
-        print("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir))
+        print(("PID directory is not writable: %s. Use the --pid-directory option" % (pid_dir)))
         sys.exit(1)
     error_message = None
     if not os.path.exists(config_file):
@@ -134,16 +134,16 @@ def run():
             lunch_master = master.run_master(config_file,
                     log_to_file=file_logging_enabled, pid_dir=pid_dir,
                     log_dir=logging_dir, log_level=log_level)
-        except master.FileNotFoundError, e:
+        except master.FileNotFoundError as e:
             #print("Error starting lunch as master.")
             msg = "A configuration file is missing. Try the --help flag. "
             msg += str(e)
             error_message = msg
             # will exit with error. see below.
-        except RuntimeError, e:
+        except RuntimeError as e:
             error_message = str(e)
             # will exit with error. see below.
-        except Exception, e:
+        except Exception as e:
             error_message = "There is an error in your lunch file !\n"
             error_message += traceback.format_exc()
             # will exit with error. see below.

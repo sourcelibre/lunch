@@ -162,7 +162,7 @@ class Master(object):
         try:
             self.local_addresses.append(
                     socket.gethostbyname(socket.gethostname()))
-        except socket.gaierror, e:
+        except socket.gaierror as e:
             log.error("Error getting IP of the local machine: " + str(e))
 
     def start_all(self):
@@ -170,7 +170,7 @@ class Master(object):
         Sets the master so that it starts all the slaves.
         """
         log.debug("Using %s" % (__file__))
-        for c in self.commands.values():
+        for c in list(self.commands.values()):
             c.enabled = True
         self.prepare_all_commands()
         self.wants_to_live = True
@@ -374,7 +374,7 @@ class Master(object):
         """
         Returns all commands.
         """
-        return self.commands.values()
+        return list(self.commands.values())
     
     def get_command(self, identifier):
         """
@@ -414,7 +414,7 @@ class Master(object):
         """
         Removes a command
         """
-        if identifier in self.commands.keys():
+        if identifier in list(self.commands.keys()):
             command = self.commands[identifier]
             if command.get_state_info() == STATE_RUNNING: #FIXME
                 command.stop()
@@ -462,7 +462,7 @@ class Master(object):
             log.info("Will now erase the %s PID file" % (self.pid_file))
             try:
                 os.remove(self.pid_file)
-            except OSError, e:
+            except OSError as e:
                 log.error("Error removing lunch master PID file: " + str(e))
             else:
                 log.info("Erased %s" % (self.pid_file))
@@ -556,7 +556,7 @@ def gen_pid_file_path(identifier="lunchrc", directory=None):
     """
     file_name = "lunch-pid-master-%s.pid" % (identifier)
     if not os.path.exists(directory):
-        os.makedirs(directory, 0777) # XXX world-writable directories
+        os.makedirs(directory, 0o777) # XXX world-writable directories
     if not os.path.isdir(directory):
         raise RuntimeError("The path %s should be a directory, but is not." % (directory))
     pid_file = os.path.join(directory, file_name)
@@ -625,7 +625,7 @@ def write_master_pid_file(identifier="lunchrc", directory=None):
     pid = os.getpid()
     f.write(str(pid))
     f.close()
-    os.chmod(pid_file, 0600)
+    os.chmod(pid_file, 0o600)
     log.info("Wrote master's PID %d to file %s." % (pid, pid_file))
     return pid_file
 
@@ -678,11 +678,11 @@ def start_file_logging(identifier="lunchrc", directory=None, log_level='info'):
     global log
     file_name = "master-%s.log" % (identifier)
     if not os.path.exists(directory):
-        os.makedirs(directory, 0777) # world-writable directories
+        os.makedirs(directory, 0o777) # world-writable directories
     full_path = os.path.join(directory, file_name)
     f = open(full_path, 'w')
     f.close()
-    os.chmod(full_path, 0600)
+    os.chmod(full_path, 0o600)
     #_log_file = logfile.BaseLogFile(file_name, directory)
     #_log_file = logfile.DailyLogFile(file_name, directory) #FIXME: do not use that DailyLogFile ! 
     #log.startLogging(_log_file)
@@ -702,7 +702,7 @@ def chmod_file_not_world_writable(config_file):
     # 256, 128 and 64
     try:
         os.chmod(config_file, new_mode)
-    except OSError, e:
+    except OSError as e:
         log.warning("WARNING: Could not chmod configuration file. %s" % (e))
 
 
@@ -779,9 +779,10 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         if chmod_config_file:
             chmod_file_not_world_writable(config_file)
         try:
-            execfile(config_file) # config is plain python using the
+            command = compile(open(config_file, "rb").read(), config_file, 'exec')
+            exec(command, globals(), locals()) # config is plain python using the
             # globals defined here. (the add_process function)
-        except Exception, e:
+        except Exception as e:
             log.error("ERROR: Error in user configuration file.")
             raise
     else:
@@ -810,8 +811,8 @@ def create_dir_and_make_writable(directory):
     """
     if not os.path.exists(directory):
         try:
-            os.makedirs(directory, 0777) # world-writable directories
-        except OSError, e:
+            os.makedirs(directory, 0o777) # world-writable directories
+        except OSError as e:
             return False
     if os.access(directory, os.W_OK):
         return True

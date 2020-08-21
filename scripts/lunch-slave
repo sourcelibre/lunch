@@ -263,7 +263,7 @@ class Slave(object):
         if not os.path.exists(self.log_dir):
             try:
                 os.makedirs(self.log_dir)
-            except OSError, e:
+            except OSError as e:
                 self.io_protocol.send_error("Could not create log directory %s." % (self.log_dir))
                 return
             else:
@@ -273,19 +273,19 @@ class Slave(object):
         if self.options["clear-old-logs"]:
             try:
                 os.remove(stdout_file_name) # cleans it up from last time we ran it. TAKE CARE !
-            except OSError, e:
+            except OSError as e:
                 self.log("Error erasing old stdout file %s." % (stdout_file_name), logging.ERROR)
         # open log file in write mode.
         try:
-            self._stdout_file = file(stdout_file_name, "w") 
-        except OSError, e:
+            self._stdout_file = open(stdout_file_name, "w")
+        except OSError as e:
             self.io_protocol.send_error("Could not open log file %s in write mode." % (stdout_file_name))
             return
         else:
             # close, chmod and re-open it:
             self._stdout_file.close()
-            os.chmod(stdout_file_name, 0600)
-            self._stdout_file = file(stdout_file_name, "a")
+            os.chmod(stdout_file_name, 0o0600)
+            self._stdout_file = open(stdout_file_name, "a")
             self.log("Writing %s child's output to %s" % (self.identifier, stdout_file_name))
         self.log("Slave %s will run command %s" % (self.identifier, str(self.command)))
         self._child_process = ChildProcess(self)
@@ -353,7 +353,7 @@ class Slave(object):
         if signal_to_send is not None:
             try:
                 self._process_transport.signalProcess(signal_to_send)
-            except OSError, e:
+            except OSError as e:
                 msg = "Error sending signal %s to the child process. %s" % (signal_to_send, e)
                 self.io_protocol.send_error(msg)
             except error.ProcessExitedAlready:
@@ -411,7 +411,7 @@ class SlaveIO(basic.LineReceiver):
     """
     Interactive commands for the slave using its standard input and output.
     """
-    delimiter = '\n' # unix terminal style newlines. remove this line
+    delimiter = bytes('\n', 'utf-8') # unix terminal style newlines. remove this line
                      # for use with Telnet
     _COMMAND_PREFIX = "recv"
     log_keys = {
@@ -427,22 +427,22 @@ class SlaveIO(basic.LineReceiver):
         slave.io_protocol = self
     
     def connectionMade(self):
-        self.send_message("Welcome to the lunch-slave console. Type 'help' for help.")
+        self.send_message(bytes("Welcome to the lunch-slave console. Type 'help' for help.", 'utf-8'))
         if self._on_log not in self.slave.log_callbacks:
             self.slave.log_callbacks.append(self._on_log)
         self.send_ready()
     
     def send_not_found(self):
-        self.sendLine("not_found %s" % (self.slave.command))
+        self.sendLine(b"not_found %s" % (self.slave.command))
     
     def send_ready(self):
-        self.sendLine("ready")
+        self.sendLine(b"ready")
     
     def send_child_pid(self, pid):
-        self.sendLine("child_pid %s" % (pid))
+        self.sendLine(b"child_pid %s" % (pid))
     
     def send_retval(self, exit_code):
-        self.sendLine("retval %s" % (exit_code))
+        self.sendLine(b"retval %s" % (exit_code))
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)
@@ -458,14 +458,14 @@ class SlaveIO(basic.LineReceiver):
         try:
             key = line.split(" ")[0].lower()
             mess = line[len(key) + 1:]
-        except IndexError, e:
+        except IndexError as e:
             self.send_log("Index error parsing command-line. %s" % (e), logging.ERROR)
         
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another recv_* method.
         try:
             method = getattr(self, 'recv_' + key)
-        except AttributeError, e:
+        except AttributeError as e:
             self.send_error('%s no such command.')
         else:
             method(mess)
@@ -495,9 +495,9 @@ class SlaveIO(basic.LineReceiver):
     def send_state(self, child_state, child_running_time=None):
         # TODO: could be more verbose - it's the child state, not the lunch-slave state.
         if child_running_time is not None:
-            self.sendLine("%s %s %s" % ("state", child_state, child_running_time))
+            self.sendLine(bytes("%s %s %s" % ("state", child_state, child_running_time), 'utf-8'))
         else:
-            self.sendLine("%s %s" % ("state", child_state))
+            self.sendLine(bytes("%s %s" % ("state", child_state), 'utf-8'))
     
     def recv_quit(self, line):
         """
@@ -513,7 +513,7 @@ class SlaveIO(basic.LineReceiver):
         """
         Confirms that we will stop this lunch-slave.
         """
-        self.sendLine('%s Exiting lunch-slave.' % ("bye"))
+        self.sendLine(bytes('%s Exiting lunch-slave.', 'utf-8'))
 
     def recv_logdir(self, line):
         """
@@ -527,7 +527,7 @@ class SlaveIO(basic.LineReceiver):
         if not os.path.exists(dir_name):
             try:
                 os.makedirs(dir_name)
-            except OSError, e:
+            except OSError as e:
                 self.send_error("Directory %s does not exist and could not create it. %s" % (dir_name, e))
                 return
         self.slave.log_dir = dir_name
@@ -570,7 +570,7 @@ class SlaveIO(basic.LineReceiver):
                 self.slave.env[k] = v
 
     def send_ok(self):
-        self.sendLine("ok")
+        self.sendLine(bytes("ok", 'utf-8'))
 
     def recv_run(self, line):
         """
@@ -594,7 +594,7 @@ class SlaveIO(basic.LineReceiver):
         try:
             k = words[0]
             v = words[1]
-        except IndexError, e:
+        except IndexError as e:
             self.send_error("Wrong number of arguments.")
             return
         if not self.slave.options.has_key(k):
@@ -609,7 +609,7 @@ class SlaveIO(basic.LineReceiver):
                 self.slave.options[k] = cast(v)
             self.send_ok()
             return
-        except ValueError, e:
+        except ValueError as e:
             self.send_error("Wrong type of value %s for option %s." % (v, k))
             return
         # else ok?
@@ -618,7 +618,7 @@ class SlaveIO(basic.LineReceiver):
         """
         opt: lists options. 
         """
-        self.send_message("Options: %s" % (self.slave.options))
+        self.send_message(b"Options: %s" % (self.slave.options))
 
     def recv_ping(self, line):
         """
@@ -631,10 +631,14 @@ class SlaveIO(basic.LineReceiver):
         self.sendLine("%s %s" % ("error", msg))
     
     def send_message(self, msg):
-        self.sendLine("%s %s" % ("msg", msg))
+        msg = msg.decode('utf-8')
+        line = "%s %s" % ("msg", msg)
+        # print("Content of line is: {line}".format(line=line))
+
+        self.sendLine(bytes(line, 'utf-8'))
 
     def send_pong(self):
-        self.sendLine("pong")
+        self.sendLine("pong", 'utf-8')
 
     def send_log(self, msg, level=logging.DEBUG):
         key = self.log_keys[level]
@@ -653,12 +657,12 @@ class SlaveIO(basic.LineReceiver):
         # stop the reactor, only because this is meant to be run in Stdio.
         try:
             self.slave.log_callbacks.remove(self._on_log) # XXX !
-        except ValueError, e:
+        except ValueError as e:
             pass
         if self.slave.child_state != STATE_STOPPED:
             try:
                 self.slave.stop()
-            except SlaveError, e:
+            except SlaveError as e:
                 self.send_error("%s" % (e))
         if reactor.running != 0:
             reactor.stop()

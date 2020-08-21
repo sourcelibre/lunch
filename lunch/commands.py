@@ -21,7 +21,8 @@
 """
 A L{lunch.commands.Command} is the interface to what command line the user wants to starts. 
 
-Once given to a L{lunch.master.Master}, each command starts a lunch-slave process, communicating with it via its stdin and stdout. 
+Once given to a L{lunch.master.Master}, each command starts a lunch-slave process,
+communicating with it via its stdin and stdout.
 The lunch-slave is then told which command to launch and asked to launch it, and stop it, on-demand. 
 
 Author: Alexandre Quessy <alexandre@quessy.net>
@@ -39,7 +40,7 @@ from twisted.internet import reactor
 from twisted.internet import task
 from twisted.internet import utils
 from twisted.python import failure
-#from twisted.python import log
+# from twisted.python import log
 from twisted.python import logfile
 from twisted.python import procutils
 
@@ -62,15 +63,18 @@ def run_and_wait(executable, *arguments):
         msg = "Could not find executable %s" % (executable)
         return failure.Failure(RuntimeError(msg))
     d = utils.getProcessOutput(executable, arguments)
+
     def cb(result, executable, arguments):
-        print 'Call to %s %s returned.\nResult: %s\n' % (executable, arguments, result)
+        print('Call to %s %s returned.\nResult: %s\n' % (executable, arguments, result))
         return result
+
     def eb(reason, executable, arguments):
-        print 'Calling %s %s failed.\nError: %s' % (executable, arguments, reason)
+        print('Calling %s %s failed.\nError: %s' % (executable, arguments, reason))
         return reason
     d.addCallback(cb, executable, list(arguments))
     d.addErrback(eb, executable, list(arguments))
     return d
+
 
 class SlaveProcessProtocol(protocol.ProcessProtocol):
     """
@@ -275,7 +279,7 @@ class Command(object):
             if not os.path.exists(self.slave_log_dir):
                 try:
                     os.makedirs(self.slave_log_dir)
-                except OSError, e:
+                except OSError as e:
                     raise RuntimeError("You need to be able to write in the current working directory in order to write log files. %s" % (e))
             self.slave_logger = logfile.LogFile(slave_log_file, self.slave_log_dir)
     
@@ -350,7 +354,7 @@ class Command(object):
         Format the environment variables to send them to the lunch-slave as a series of key-value pairs.
         """
         txt = ""
-        for k, v in self.env.iteritems():
+        for k, v in self.env.items():
             txt += "%s=%s " % (k, v)
         return txt 
     
@@ -405,29 +409,29 @@ class Command(object):
         #XXX: if is returns a string, the master will give it up
         ret = None
         # log.debug("Checking if it looks like a SSH error: %s" % (line))
-        if "password:" in line:
+        if b"password:" in line:
             ret = "The SSH server asks for a password. Make sure you use the right user name and that your public SSH key is installed on the remote host %s." % (self.host)
             #giving up
-        elif "Enter passphrase for key" in line:
+        elif b"Enter passphrase for key" in line:
             ret = "The SSH client asks for a passphrase to unlock your local private SSH key for which you have the corresponding public key on host %s. You should avoid this to be asked by providing that passphrase a first time using SSH by hand." % (self.host)
             #giving up
-        elif "Connection refused" in line:
+        elif b"Connection refused" in line:
             port = 22
             if self.ssh_port is not None:
                 port = self.ssh_port
             ret = "The SSH server is not running on port %d of host %s or not available." % (port, self.host)
             #TODO: try to reconnect
-        elif "No route to host" in line:
+        elif b"No route to host" in line:
             ret = "We cannot find host %s." % (self.host)
             #TODO: try to reconnect
-        elif "command not found" in line:
+        elif b"command not found" in line:
             ret = "The lunch-slave command is not installed on the host %s." % (self.host)
             #giving up
-        elif "ssh_exchange_identification" in line: #FIXME: what is that?
+        elif b"ssh_exchange_identification" in line: #FIXME: what is that?
             ret = "Some SSH problem occurred exchanging the identification on host %s. Is your host blacklisted?" % (self.host)
-        elif "Could not resolve hostname" in line:
+        elif b"Could not resolve hostname" in line:
             ret = "Could not resolve hostname %s." % (self.host)
-        elif "Host key verification failed" in line:
+        elif b"Host key verification failed" in line:
             ret = "Host key verification failed on %s. Add correct host key" % (self.host)
         if ret is not None:
             ret += "\nThe line received from SSH is :\n" + line
@@ -454,10 +458,10 @@ class Command(object):
                 #TODO: handle this
         self.number_of_lines_received_from_slave += 1
         try:
-            words = line.split(" ")
+            words = line.split(b" ")
             key = words[0]
             mess = line[len(key) + 1:]
-        except IndexError, e:
+        except IndexError as e:
             #self.log("Index error parsing message from lunch-slave. %s" % (e), logging.ERROR)
             self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
         else:
@@ -467,8 +471,9 @@ class Command(object):
                 pass #warnings.warn("We receive from the lunch-slave's stdout what we send to its stdin !")
             else:
                 try:
-                    method = getattr(self, 'recv_' + key)
-                except AttributeError, e:
+                    # print("key value is {key}".format(key=key))
+                    method = getattr(self, 'recv_' + str(key))
+                except AttributeError as e:
                     self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
                     #self.log(line)
                 else:

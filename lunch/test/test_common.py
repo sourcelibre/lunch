@@ -114,7 +114,7 @@ class Test_Master_Advanced(unittest.TestCase):
 
         def _cl1():
             all = self._master.get_all_commands()
-            self.failUnlessEqual(len(all), 3)
+            self.assertEqual(len(all), 3)
             _final_cleanup()
 
         def _final_cleanup():
