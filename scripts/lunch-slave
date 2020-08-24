@@ -411,7 +411,7 @@ class SlaveIO(basic.LineReceiver):
     """
     Interactive commands for the slave using its standard input and output.
     """
-    delimiter = bytes('\n', 'utf-8') # unix terminal style newlines. remove this line
+    delimiter = bytes("\n",'ascii')  # unix terminal style newlines. remove this line
                      # for use with Telnet
     _COMMAND_PREFIX = "recv"
     log_keys = {
@@ -427,22 +427,22 @@ class SlaveIO(basic.LineReceiver):
         slave.io_protocol = self
     
     def connectionMade(self):
-        self.send_message(bytes("Welcome to the lunch-slave console. Type 'help' for help.", 'utf-8'))
+        self.send_message("Welcome to the lunch-slave console. Type 'help' for help.")
         if self._on_log not in self.slave.log_callbacks:
             self.slave.log_callbacks.append(self._on_log)
         self.send_ready()
     
     def send_not_found(self):
-        self.sendLine(b"not_found %s" % (self.slave.command))
+        self.sendLine(bytes("not_found %s" % (self.slave.command)),'ascii')
     
     def send_ready(self):
-        self.sendLine(b"ready")
+        self.sendLine(bytes("ready",'ascii'))
     
     def send_child_pid(self, pid):
-        self.sendLine(b"child_pid %s" % (pid))
+        self.sendLine(bytes("child_pid %s" % (pid),'ascii'))
     
     def send_retval(self, exit_code):
-        self.sendLine(b"retval %s" % (exit_code))
+        self.sendLine(bytes("retval %s" % (exit_code),'ascii'))
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)
@@ -464,7 +464,7 @@ class SlaveIO(basic.LineReceiver):
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another recv_* method.
         try:
-            method = getattr(self, 'recv_' + key)
+            method = getattr(self, 'recv_' + key.decode('ascii'))
         except AttributeError as e:
             self.send_error('%s no such command.')
         else:
@@ -495,16 +495,16 @@ class SlaveIO(basic.LineReceiver):
     def send_state(self, child_state, child_running_time=None):
         # TODO: could be more verbose - it's the child state, not the lunch-slave state.
         if child_running_time is not None:
-            self.sendLine(bytes("%s %s %s" % ("state", child_state, child_running_time), 'utf-8'))
+            self.sendLine("%s %s %s" % ("state", child_state, child_running_time))
         else:
-            self.sendLine(bytes("%s %s" % ("state", child_state), 'utf-8'))
+            self.sendLine("%s %s" % ("state", child_state))
     
     def recv_quit(self, line):
         """
         quit: Quits this session
         """
         if self.slave.child_state == STATE_RUNNING:
-            self.send_log("The lunch-slave is still running. Need to stop it.") # XXX
+            self.send_log("The lunch-slave is still running. Need to stop it.")
             self.slave.stop()
         self.send_bye()
         self.transport.loseConnection() # close this process' stdin and stdout
@@ -513,7 +513,7 @@ class SlaveIO(basic.LineReceiver):
         """
         Confirms that we will stop this lunch-slave.
         """
-        self.sendLine(bytes('%s Exiting lunch-slave.', 'utf-8'))
+        self.sendLine(bytes('%s Exiting lunch-slave.', 'ascii'))
 
     def recv_logdir(self, line):
         """
@@ -570,7 +570,7 @@ class SlaveIO(basic.LineReceiver):
                 self.slave.env[k] = v
 
     def send_ok(self):
-        self.sendLine(bytes("ok", 'utf-8'))
+        self.sendLine(bytes("ok", 'ascii'))
 
     def recv_run(self, line):
         """
@@ -618,7 +618,7 @@ class SlaveIO(basic.LineReceiver):
         """
         opt: lists options. 
         """
-        self.send_message(b"Options: %s" % (self.slave.options))
+        self.send_message("Options: %s" % (self.slave.options))
 
     def recv_ping(self, line):
         """
@@ -628,21 +628,20 @@ class SlaveIO(basic.LineReceiver):
         self.send_pong()
 
     def send_error(self, msg):
-        self.sendLine("%s %s" % ("error", msg))
+        self.sendLine(bytes("%s %s" % ("error", msg), 'ascii'))
     
     def send_message(self, msg):
-        msg = msg.decode('utf-8')
-        line = "%s %s" % ("msg", msg)
-        # print("Content of line is: {line}".format(line=line))
-
-        self.sendLine(bytes(line, 'utf-8'))
+        """
+        @type msg: str
+        """
+        self.sendLine(bytes("%s %s" % ("msg", msg), 'ascii'))
 
     def send_pong(self):
-        self.sendLine("pong", 'utf-8')
+        self.sendLine(bytes("pong", 'ascii'))
 
     def send_log(self, msg, level=logging.DEBUG):
         key = self.log_keys[level]
-        self.sendLine("%s %s %s" % ("log", key, msg))
+        self.sendLine(bytes("%s %s %s" % ("log", key, msg), 'ascii'))
 
     def recv_status(self, line):
         """
@@ -651,12 +650,12 @@ class SlaveIO(basic.LineReceiver):
         self.send_status()
 
     def send_status(self):
-        self.sendLine("%s %s" % ("status", self.slave.child_state))
+        self.sendLine(bytes("%s %s" % ("status", self.slave.child_state), 'ascii'))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
         try:
-            self.slave.log_callbacks.remove(self._on_log) # XXX !
+            self.slave.log_callbacks.remove(self._on_log)
         except ValueError as e:
             pass
         if self.slave.child_state != STATE_STOPPED:
