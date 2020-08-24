@@ -102,9 +102,11 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         data at a time. This way, our manager only gets one line at 
         a time.
         """
+        log.debug("data received is : " + "\n" + data.decode('ascii'))
         for line in data.splitlines():
             if line != "":
-                self.command._received_message(line)
+                log.debug("line content is : " + line.decode('ascii'))
+                self.command._received_message(line.decode('ascii'))
 
     def errReceived(self, data):
         """
@@ -376,7 +378,7 @@ class Command(object):
 
     def send_run(self):
         self.send_message("run")
-        self.log("lunch-child %s> $ %s" % (self.identifier, self.command), logging.INFO)
+        self.log("run: lunch-child %s> $ %s" % (self.identifier, self.command), logging.INFO)
         
     def send_env(self):
         self.send_message("env", self._format_env())
@@ -393,7 +395,7 @@ class Command(object):
         msg = "%s %s\n" % (key, data)
         if self.verbose:
             self.log("lunch-slave %s> Sending %s" % (self.identifier, msg.strip()))
-        self._process_transport.write(msg)
+        self._process_transport.write(bytes(msg,'ascii'))
     
     def __del__(self):
         #TODO: send "stop" and SIGKILL if the lunch-slave and the child processes are stil running.
@@ -409,29 +411,29 @@ class Command(object):
         #XXX: if is returns a string, the master will give it up
         ret = None
         # log.debug("Checking if it looks like a SSH error: %s" % (line))
-        if b"password:" in line:
+        if "password:" in line:
             ret = "The SSH server asks for a password. Make sure you use the right user name and that your public SSH key is installed on the remote host %s." % (self.host)
             #giving up
-        elif b"Enter passphrase for key" in line:
+        elif "Enter passphrase for key" in line:
             ret = "The SSH client asks for a passphrase to unlock your local private SSH key for which you have the corresponding public key on host %s. You should avoid this to be asked by providing that passphrase a first time using SSH by hand." % (self.host)
             #giving up
-        elif b"Connection refused" in line:
+        elif "Connection refused" in line:
             port = 22
             if self.ssh_port is not None:
                 port = self.ssh_port
             ret = "The SSH server is not running on port %d of host %s or not available." % (port, self.host)
             #TODO: try to reconnect
-        elif b"No route to host" in line:
+        elif "No route to host" in line:
             ret = "We cannot find host %s." % (self.host)
             #TODO: try to reconnect
-        elif b"command not found" in line:
+        elif "command not found" in line:
             ret = "The lunch-slave command is not installed on the host %s." % (self.host)
             #giving up
-        elif b"ssh_exchange_identification" in line: #FIXME: what is that?
+        elif "ssh_exchange_identification" in line: #FIXME: what is that?
             ret = "Some SSH problem occurred exchanging the identification on host %s. Is your host blacklisted?" % (self.host)
-        elif b"Could not resolve hostname" in line:
+        elif "Could not resolve hostname" in line:
             ret = "Could not resolve hostname %s." % (self.host)
-        elif b"Host key verification failed" in line:
+        elif "Host key verification failed" in line:
             ret = "Host key verification failed on %s. Add correct host key" % (self.host)
         if ret is not None:
             ret += "\nThe line received from SSH is :\n" + line
@@ -444,7 +446,7 @@ class Command(object):
         """
         Received one line of text from the lunch-slave through its stdout.
         """
-        #self.log("%8s: %s" % (self.identifier, line))
+        # self.log("_received_message line is %8s: %s" % (self.identifier, line))
         # FIXME: right now, we check all the output from that guy
         if True: #self.number_of_lines_received_from_slave == 0:
             ssh_error = self._looks_like_ssh_error(line)
@@ -458,7 +460,8 @@ class Command(object):
                 #TODO: handle this
         self.number_of_lines_received_from_slave += 1
         try:
-            words = line.split(b" ")
+            #log.info("line is : " + line)
+            words = line.split(" ")
             key = words[0]
             mess = line[len(key) + 1:]
         except IndexError as e:
@@ -470,11 +473,11 @@ class Command(object):
             if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin lunch-slave !!!
                 pass #warnings.warn("We receive from the lunch-slave's stdout what we send to its stdin !")
             else:
+                #log.info("Attribute value is recv_{key}".format(key=key))
                 try:
-                    # print("key value is {key}".format(key=key))
-                    method = getattr(self, 'recv_' + str(key))
+                    method = getattr(self, 'recv_' + key)
                 except AttributeError as e:
-                    self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
+                    self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, key), logging.ERROR)
                     #self.log(line)
                 else:
                     method(mess)
