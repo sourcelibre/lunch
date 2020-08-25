@@ -1,7 +1,6 @@
 Lunch
-Copyright (C) 2008 Société des arts technologiques (SAT)
-http://www.sat.qc.ca
-All rights reserved.
+Copyright (C) 2008 Société des arts technologiques (SAT) http://www.sat.qc.ca
+Copyright (C) 2012 Alexandre Quessy <alexandre@quessy.net>
 
 This file is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

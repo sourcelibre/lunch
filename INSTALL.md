@@ -1,13 +1,19 @@
-INSTALLATION
-============
+# Installation instructions
+
+## INSTALLATION
+
 You will need a few software. On Ubuntu or Debian GNU/Linux, install them using the following command ::
 
-  sudo apt-get install openssh-client openssh-server python-setuptools help2man python-twisted-core python-gtk2
+```
+sudo apt-get install openssh-client openssh-server python-setuptools help2man python-twisted-core python-gtk2
+```
 
 Install lunch to /usr/local/bin/lunch on both local and remote hosts::
 
- make
- sudo make install
+```
+make
+sudo make install
+```
 
 There should be a Lunch icon in the Application/Other Gnome menu.
 
@@ -15,21 +21,29 @@ Read the README file or read the lunch (1) man page to know how to use it.
 
 Note that if you only want to install the Python libraries and scripts, simply use the setuptools script::
 
-  python setup.py build
-  sudo python setup.py install
+```
+python setup.py build
+sudo python setup.py install
+```
 
 
-DOCUMENTATION
-=============
+## DOCUMENTATION
+
 You can generate HTML out of the README file using rst2html::
 
- rst2html README readme.html
+```
+rst2html README readme.html
+```
 
 Pydoc can generate HTML documentation out of the Python script::
 
- pydoc -w ./lunch
+```
+pydoc -w ./lunch
+```
 
 See the Makefile for more installation options::
 
- make doc
+```
+make doc
+```
 
