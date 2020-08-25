@@ -12,6 +12,8 @@ import sys
 import os
 import lunch
 
+BUILD_MAN = False
+
 setup(
     name="lunch",
     version=lunch.__version__,
@@ -24,7 +26,7 @@ setup(
     )
 
 # build man pages
-if sys.argv[1] == "build":
+if sys.argv[1] == "build" and BUILD_MAN:
     commands = [
         'help2man --no-info --include=man_lunch.txt --name="Distributed process launcher" ./scripts/lunch --output=lunch.1',
         'help2man --no-info --include=man_lunch-slave.txt --name="Process launcher" ./scripts/lunch-slave --output=lunch-slave.1'
