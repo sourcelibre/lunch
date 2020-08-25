@@ -23,6 +23,8 @@ setup(
     url="https://github.com/sourcelibre/lunch.git",
     packages=["lunch"],
     install_requires=[
+        'service_identity',
+        'pyasn1',
         'Twisted'
     ],
     scripts=["scripts/lunch", "scripts/lunch-slave"]
