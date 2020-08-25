@@ -18,12 +18,16 @@ setup(
     name="lunch",
     version=lunch.__version__,
     description="The Lunch Distributed Process Launcher",
-    author="SAT",
+    author="Alexandre Quessy",
     author_email="alexandre@quessy.net",
-    url="http://code.sat.qc.ca/redmine/projects/lunch",
+    url="https://github.com/sourcelibre/lunch.git",
     packages=["lunch"],
+    install_requires=[
+        'Twisted'
+    ],
     scripts=["scripts/lunch", "scripts/lunch-slave"]
     )
+
 
 # build man pages
 if sys.argv[1] == "build" and BUILD_MAN:
