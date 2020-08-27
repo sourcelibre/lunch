@@ -32,7 +32,7 @@ git log --pretty=medium > ChangeLog
 
 Create the tag and a tarball:
 
-* Make sure you are in the right branch. (develop)
+* Make sure you are in the right branch. (dev)
 * Commit any change::
 
 ```
@@ -48,10 +48,10 @@ git checkout master
 git merge --no-ff release-0.4.0
 git tag 0.4.0
 ./utils/make-tarball.sh 0.4.0
-git checkout develop
+git checkout dev
 git merge --no-ff release-0.4.0
 git branch -d release-0.4.0
-git push --tags origin master:master develop:develop
+git push --tags origin master:master dev:dev
 ```
 
 * Increase the version number to the next odd micro version number (never to be released) (0.4.1 in this example)
@@ -73,10 +73,10 @@ git merge --no-ff master
 git push origin 0.4
 ```
 
-Don't forget to go back working in the develop branch once you are done creating a release.::
+Don't forget to go back working in the dev branch once you are done creating a release.::
 
 ```
-git checkout develop
+git checkout dev
 ```
 
 
