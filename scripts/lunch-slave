@@ -52,6 +52,15 @@ STATE_RUNNING = "RUNNING" # success
 STATE_STOPPING = "STOPPING"
 STATE_STOPPED = "STOPPED" # success
 
+
+def str_to_bytes(value):
+    return bytes(value, encoding='ascii')
+
+
+def bytes_to_str(value):
+    return value.decode('ascii')
+
+
 class SlaveError(Exception):
     """
     Raised by the Slave
@@ -95,10 +104,11 @@ class ChildProcess(protocol.ProcessProtocol):
         """
         for line in data.splitlines():
             if line != "":
-                self.slave._stdout_file.write(line + "\n")
+                line_str = bytes_to_str(line)
+                self.slave._stdout_file.write(line_str + "\n")
                 self.slave.must_flush_stdout_file = True
                 if self.slave._num_lines_received == 0:
-                    if ": not found" in line:
+                    if ": not found" in line_str:
                         self.slave.on_command_not_found()
                 self.slave._num_lines_received += 1
 
@@ -108,7 +118,7 @@ class ChildProcess(protocol.ProcessProtocol):
         """
         for line in data.splitlines().strip():
             if line != "":
-                self.slave._stdout_file.write(line + "\n")
+                self.slave._stdout_file.write(str_to_bytes(line + str_to_bytes("\n")))
                 if self.slave._num_lines_received == 0:
                     if ": not found" in line:
                         self.slave.on_command_not_found()
@@ -153,7 +163,8 @@ class ChildProcess(protocol.ProcessProtocol):
         object (with an .exitCode attribute) if something went wrong.
         """
         self.slave.log("process has exited " + str(reason.value))
-    
+
+
 class Slave(object):
     """
     Slave that manages a process. 
@@ -279,7 +290,7 @@ class Slave(object):
         try:
             self._stdout_file = open(stdout_file_name, "w")
         except OSError as e:
-            self.io_protocol.send_error("Could not open log file %s in write mode." % (stdout_file_name))
+            self.io_protocol.send_error(str_to_bytes("Could not open log file %s in write mode." % (stdout_file_name)))
             return
         else:
             # close, chmod and re-open it:
@@ -297,7 +308,7 @@ class Slave(object):
         #        environ[key] = os.environ[key]
         # let's pass it all the environment variables.
         environ.update(os.environ)
-        for key, val in self.env.iteritems():
+        for key, val in self.env.items():
             environ[key] = val
         self.set_child_state(STATE_STARTING)
         #self.log("Identifier: %s" % (self.identifier))
@@ -406,12 +417,13 @@ class Slave(object):
         else:
             self.log("State is same as before: %s" % (new_state))
         self.child_state = new_state
-        
+
+
 class SlaveIO(basic.LineReceiver):
     """
     Interactive commands for the slave using its standard input and output.
     """
-    delimiter = bytes("\n",'ascii')  # unix terminal style newlines. remove this line
+    delimiter = str_to_bytes("\n")  # unix terminal style newlines. remove this line
                      # for use with Telnet
     _COMMAND_PREFIX = "recv"
     log_keys = {
@@ -433,16 +445,16 @@ class SlaveIO(basic.LineReceiver):
         self.send_ready()
     
     def send_not_found(self):
-        self.sendLine(bytes("not_found %s" % (self.slave.command)),'ascii')
+        self.sendLine(str_to_bytes("not_found %s" % (self.slave.command)))
     
     def send_ready(self):
-        self.sendLine(bytes("ready",'ascii'))
+        self.sendLine(str_to_bytes("ready"))
     
     def send_child_pid(self, pid):
-        self.sendLine(bytes("child_pid %s" % (pid),'ascii'))
+        self.sendLine(str_to_bytes("child_pid %s" % (pid)))
     
     def send_retval(self, exit_code):
-        self.sendLine(bytes("retval %s" % (exit_code),'ascii'))
+        self.sendLine(str_to_bytes("retval %s" % (exit_code)))
 
     def _on_log(self, msg, level=logging.INFO):
         self.send_log(msg, level)
@@ -456,7 +468,7 @@ class SlaveIO(basic.LineReceiver):
             return
         # Parse the command
         try:
-            tokens = line.split(bytes(" ", encoding='ascii'))
+            tokens = line.split(str_to_bytes(" "))
             first_token = tokens[0]
             key = first_token.lower()
             mess = line[len(key) + 1:]
@@ -466,7 +478,8 @@ class SlaveIO(basic.LineReceiver):
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another recv_* method.
         try:
-            method = getattr(self, 'recv_' + key.decode('ascii'))
+            key_str = bytes_to_str(key)
+            method = getattr(self, 'recv_' + key_str)
         except AttributeError as e:
             self.send_error('%s no such command.')
         else:
@@ -480,7 +493,7 @@ class SlaveIO(basic.LineReceiver):
         # If there is an argument, shows its method's __docstring__
         if len(args) == 1:
             command = args[0]
-            method_name = self._COMMAND_PREFIX + "_" + command
+            method_name = self._COMMAND_PREFIX + "_" + bytes_to_str(command)
             if hasattr(self, method_name):
                 doc = getattr(self, method_name).__doc__.strip()
                 MAX_LINE_WIDTH = 70
@@ -497,9 +510,9 @@ class SlaveIO(basic.LineReceiver):
     def send_state(self, child_state, child_running_time=None):
         # TODO: could be more verbose - it's the child state, not the lunch-slave state.
         if child_running_time is not None:
-            self.sendLine("%s %s %s" % ("state", child_state, child_running_time))
+            self.sendLine(str_to_bytes("%s %s %s" % ("state", child_state, child_running_time)))
         else:
-            self.sendLine("%s %s" % ("state", child_state))
+            self.sendLine(str_to_bytes("%s %s" % ("state", child_state)))
     
     def recv_quit(self, line):
         """
@@ -515,7 +528,7 @@ class SlaveIO(basic.LineReceiver):
         """
         Confirms that we will stop this lunch-slave.
         """
-        self.sendLine(bytes('%s Exiting lunch-slave.', 'ascii'))
+        self.sendLine(str_to_bytes('%s Exiting lunch-slave.'))
 
     def recv_logdir(self, line):
         """
@@ -572,7 +585,7 @@ class SlaveIO(basic.LineReceiver):
                 self.slave.env[k] = v
 
     def send_ok(self):
-        self.sendLine(bytes("ok", 'ascii'))
+        self.sendLine(str_to_bytes("ok"))
 
     def recv_run(self, line):
         """
@@ -630,20 +643,20 @@ class SlaveIO(basic.LineReceiver):
         self.send_pong()
 
     def send_error(self, msg):
-        self.sendLine(bytes("%s %s" % ("error", msg), 'ascii'))
+        self.sendLine(str_to_bytes("%s %s" % ("error", msg)))
     
     def send_message(self, msg):
         """
         @type msg: str
         """
-        self.sendLine(bytes("%s %s" % ("msg", msg), 'ascii'))
+        self.sendLine(str_to_bytes("%s %s" % ("msg", msg)))
 
     def send_pong(self):
-        self.sendLine(bytes("pong", 'ascii'))
+        self.sendLine(str_to_bytes("pong"))
 
     def send_log(self, msg, level=logging.DEBUG):
         key = self.log_keys[level]
-        self.sendLine(bytes("%s %s %s" % ("log", key, msg), 'ascii'))
+        self.sendLine(str_to_bytes("%s %s %s" % ("log", key, msg)))
 
     def recv_status(self, line):
         """
@@ -652,7 +665,7 @@ class SlaveIO(basic.LineReceiver):
         self.send_status()
 
     def send_status(self):
-        self.sendLine(bytes("%s %s" % ("status", self.slave.child_state), 'ascii'))
+        self.sendLine(str_to_bytes("%s %s" % ("status", self.slave.child_state)))
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
@@ -667,6 +680,7 @@ class SlaveIO(basic.LineReceiver):
                 self.send_error("%s" % (e))
         if reactor.running != 0:
             reactor.stop()
+
 
 def run_slave():
     """
@@ -688,5 +702,7 @@ def run_slave():
     except KeyboardInterrupt:
         reactor.stop()
 
+
 if __name__ == "__main__":
     run_slave()
+
