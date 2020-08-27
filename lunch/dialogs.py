@@ -89,9 +89,8 @@ class YesNoDialog(object):
         error_dialog = gtk.MessageDialog(
             parent=None, 
             flags=0, 
-            type=gtk.MESSAGE_QUESTION, 
-            buttons=gtk.BUTTONS_YES_NO, 
             message_format=message)
+        error_dialog.add_buttons(gtk.STOCK_CANCEL, gtk.ResponseType.CANCEL, gtk.STOCK_OK, gtk.ResponseType.OK)
         error_dialog.set_modal(True)
         error_dialog.connect("close", self.on_close)
         error_dialog.connect("response", self.on_response)
@@ -113,13 +112,13 @@ class YesNoDialog(object):
 
     def on_response(self, dialog, response_id, *params):
         pass # print("on_response %s %s %s" % (dialog, response_id, params))
-        if response_id == gtk.RESPONSE_DELETE_EVENT:
+        if response_id == gtk.ResponseType.DELETE_EVENT:
             pass # print("Deleted")
             self.terminate(dialog, False)
-        elif response_id == gtk.RESPONSE_NO:
+        elif response_id == gtk.ResponseType.CANCEL:
             pass # print("Cancelled")
             self.terminate(dialog, False)
-        elif response_id == gtk.RESPONSE_YES:
+        elif response_id == gtk.ResponseType.OK:
             pass # print("Accepted")
             self.terminate(dialog, True)
 
