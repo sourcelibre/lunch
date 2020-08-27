@@ -6,7 +6,7 @@ Update the documentation if needed:
 
 * scripts/lunch
 * scripts/lunch-slave
-* man_lunch.txt
+* man\_lunch.txt
 * README
 
 Make sure the version number is the next release's:
