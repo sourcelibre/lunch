@@ -30,6 +30,7 @@ from lunch import DEFAULT_PID_DIR
 from lunch import graph
 from lunch import logger
 from lunch import sig
+from lunch import convert
 from lunch.states import STATE_RUNNING
 from lunch.states import STATE_STARTING
 from lunch.states import STATE_STOPPED
@@ -44,6 +45,7 @@ import socket
 import stat
 import subprocess # TODO: get rid of blocking IO
 import time
+import py_compile
 
 
 log = None # global singleton
@@ -779,8 +781,10 @@ def execute_config_file(lunch_master, config_file, chmod_config_file=True):
         if chmod_config_file:
             chmod_file_not_world_writable(config_file)
         try:
-            command = compile(open(config_file, "rb").read(), config_file, 'exec')
-            exec(command, globals(), locals()) # config is plain python using the
+            file_contents = open(config_file, "r").read()
+            path_to_exec = compile(filename=config_file, source=file_contents, mode='exec')
+            # filename=config_file)
+            exec(path_to_exec, globals(), locals()) # config is plain python using the
             # globals defined here. (the add_process function)
         except Exception as e:
             log.error("ERROR: Error in user configuration file.")
