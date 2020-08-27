@@ -610,14 +610,15 @@ class SlaveIO(basic.LineReceiver):
         Usage: opt <key> <value> 
         Use 0 or 1 for boolean options.
         """
-        words = line.split()
+        line_str = bytes_to_str(line)
+        words = line_str.split()
         try:
             k = words[0]
             v = words[1]
         except IndexError as e:
             self.send_error("Wrong number of arguments.")
             return
-        if not self.slave.options.has_key(k):
+        if k not in self.slave.options:
             self.send_error("No such option: %s" % (k))
             return
         current = self.slave.options[k]
