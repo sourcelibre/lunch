@@ -561,12 +561,16 @@ class SlaveIO(basic.LineReceiver):
         """
         do: sets the shell command to be run.
         """
-        li = line.split() # TODO: do not split it, use bash !
-        if len(li) == 0:
+        tokens_bytes = line.split() # TODO: do not split it, use bash !
+        tokens_str = []
+        line_str = bytes_to_str(line)
+        for t in tokens_bytes:
+            tokens_str.append(bytes_to_str(t))
+        if len(tokens_str) == 0:
             self.send_error("Cannot use an empty command.")
             return
         self.send_message("Using %s as a command to run." % (line))
-        self.slave.command = line.strip()
+        self.slave.command = line_str.strip()
         self.send_ok()
 
     def recv_env(self, line):
