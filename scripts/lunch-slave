@@ -534,7 +534,8 @@ class SlaveIO(basic.LineReceiver):
         """
         logdir: sets the log directory
         """
-        words = line.split() # TODO: do not split it, use bash !
+        line_str = bytes_to_str(line)
+        words = line_str.split() # TODO: do not split it, use bash !
         if len(words) == 0:
             self.send_error("No log dir specified.")
             return
