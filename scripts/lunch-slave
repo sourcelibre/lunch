@@ -456,7 +456,9 @@ class SlaveIO(basic.LineReceiver):
             return
         # Parse the command
         try:
-            key = line.split(" ")[0].lower()
+            tokens = line.split(bytes(" ", encoding='ascii'))
+            first_token = tokens[0]
+            key = first_token.lower()
             mess = line[len(key) + 1:]
         except IndexError as e:
             self.send_log("Index error parsing command-line. %s" % (e), logging.ERROR)
