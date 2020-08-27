@@ -863,3 +863,4 @@ def run_master(config_file, log_to_file=False, pid_dir=None, log_dir=None,
     execute_config_file(lunch_master, config_file, chmod_config_file=chmod_config_file)
     # TODO: return a Deferred
     return lunch_master
+
