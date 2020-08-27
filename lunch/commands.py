@@ -153,7 +153,8 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         """
         exit_code = reason.value.exitCode
         log.info("process has exited : %s." % (str(exit_code)))
-    
+
+
 class Command(object):
     """
     Manages a lunch-slave process, telling it which child process to start.
@@ -341,7 +342,7 @@ class Command(object):
                     _command[0] = procutils.which(_command[0])[0]
                 except IndexError:
                     raise RuntimeError("Could not find path of executable %s." % (_command[0]))
-                log.info("lunch-slave %s> $ %s" % (self.identifier, " ".join(_command)))
+                log.info("lunch-slave %s> Start agent $ %s" % (self.identifier, " ".join(_command)))
                 self._process_protocol = SlaveProcessProtocol(self)
                 #try:
                 proc_path = _command[0]
@@ -397,7 +398,8 @@ class Command(object):
         msg = "%s %s\n" % (key, data)
         if self.verbose:
             self.log("lunch-slave %s> Sending %s" % (self.identifier, msg.strip()))
-        self._process_transport.write(bytes(msg,'ascii'))
+        msg_bytes = convert.str_to_bytes(msg)
+        self._process_transport.write(msg_bytes)
     
     def __del__(self):
         #TODO: send "stop" and SIGKILL if the lunch-slave and the child processes are stil running.
