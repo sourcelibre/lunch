@@ -48,6 +48,7 @@ from lunch import sig
 from lunch import graph
 from lunch.states import *
 from lunch import logger
+from lunch import convert
 
 log = logger.start(name='commands')
 
@@ -102,11 +103,12 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         data at a time. This way, our manager only gets one line at 
         a time.
         """
-        log.debug("data received is : " + "\n" + data.decode('ascii'))
+        data_str = convert.bytes_to_str(data)
+        log.debug("data received is : " + "\n" + data_str)
         for line in data.splitlines():
             if line != "":
-                log.debug("line content is : " + line.decode('ascii'))
-                self.command._received_message(line.decode('ascii'))
+                log.debug("line content is : " + data_str)
+                self.command._received_message(data_str)
 
     def errReceived(self, data):
         """
@@ -446,10 +448,11 @@ class Command(object):
         """
         Received one line of text from the lunch-slave through its stdout.
         """
+        line_str = line
         # self.log("_received_message line is %8s: %s" % (self.identifier, line))
         # FIXME: right now, we check all the output from that guy
         if True: #self.number_of_lines_received_from_slave == 0:
-            ssh_error = self._looks_like_ssh_error(line)
+            ssh_error = self._looks_like_ssh_error(line_str)
             if ssh_error is not None: # It's a str
                 log.error("--------- SSH PROBLEM: " + ssh_error + " -----------")
                 # FIXME: self.enabled = False
@@ -461,12 +464,12 @@ class Command(object):
         self.number_of_lines_received_from_slave += 1
         try:
             #log.info("line is : " + line)
-            words = line.split(" ")
+            words = line_str.split(" ")
             key = words[0]
-            mess = line[len(key) + 1:]
+            mess = line_str[len(key) + 1:]
         except IndexError as e:
             #self.log("Index error parsing message from lunch-slave. %s" % (e), logging.ERROR)
-            self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line), logging.ERROR)
+            self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line_str), logging.ERROR)
         else:
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
