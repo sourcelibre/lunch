@@ -107,7 +107,7 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         log.debug("data received is : " + "\n" + data_str)
         for line in data.splitlines():
             if line != "":
-                log.debug("line content is : " + data_str)
+                log.info("line content is : " + data_str)
                 self.command._received_message(data_str)
 
     def errReceived(self, data):
@@ -479,10 +479,12 @@ class Command(object):
                 pass #warnings.warn("We receive from the lunch-slave's stdout what we send to its stdin !")
             else:
                 #log.info("Attribute value is recv_{key}".format(key=key))
+                method = None
                 try:
                     method = getattr(self, 'recv_' + key)
                 except AttributeError as e:
                     self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, key), logging.ERROR)
+                    self.log(line_str)
                     #self.log(line)
                 else:
                     method(mess)

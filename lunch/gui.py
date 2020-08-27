@@ -174,8 +174,9 @@ class About(object):
             "Simon Piette <simonp@sat.qc.ca>"
             ])
         self.about_dialog.set_artists(['Rocket000'])
-        gtk.about_dialog_set_url_hook(self.show_website)
-        self.about_dialog.set_website("http://code.sat.qc.ca/redmine/projects/lunch")
+        # gtk.about_dialog_set_url_hook(self.show_website)
+        # self.about_dialog.set_website("http://code.sat.qc.ca/redmine/projects/lunch")
+        # self.about_dialog.set_website("http://code.sat.qc.ca/redmine/projects/lunch")
         
         if not os.path.exists(ICON_FILE):
             log.warning("Could not find icon file %s." % (ICON_FILE))
@@ -194,6 +195,7 @@ class About(object):
 
     def destroy_about(self, *args):
         self.about_dialog.destroy()
+
 
 class LunchApp(object):
     """
