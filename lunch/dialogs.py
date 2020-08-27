@@ -24,11 +24,12 @@ GTK Dialogs well integrated with Twisted.
  * Yes/No dialog
 """
 if __name__ == "__main__":
-    from twisted.internet import gtk2reactor
-    gtk2reactor.install() # has to be done before importing reactor
+    from twisted.internet import gtk3reactor
+    gtk3reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import defer
-import gtk
+from gi.repository import Gtk as gtk
+
 
 class ErrorDialog(object):
     """
@@ -44,8 +45,6 @@ class ErrorDialog(object):
         error_dialog = gtk.MessageDialog(
             parent=None, 
             flags=0, 
-            type=gtk.MESSAGE_ERROR, 
-            buttons=gtk.BUTTONS_CLOSE, 
             message_format=message)
         error_dialog.connect("close", self.on_close)
         error_dialog.connect("response", self.on_response)
@@ -67,12 +66,12 @@ class ErrorDialog(object):
 
     def on_response(self, dialog, response_id, *params):
         #print("on_response %s %s %s" % (dialog, response_id, params))
-        if response_id == gtk.RESPONSE_DELETE_EVENT:
-            pass #print("Deleted")
-        elif response_id == gtk.RESPONSE_CANCEL:
-            pass #print("Cancelled")
-        elif response_id == gtk.RESPONSE_OK:
-            pass # print("Accepted")
+        # if response_id == gtk.RESPONSE_DELETE_EVENT:
+        #     pass #print("Deleted")
+        # elif response_id == gtk.RESPONSE_CANCEL:
+        #     pass #print("Cancelled")
+        # elif response_id == gtk.RESPONSE_OK:
+        #     pass # print("Accepted")
         self.terminate(dialog)
 
     def terminate(self, dialog):
