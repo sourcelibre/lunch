@@ -75,9 +75,11 @@ def run():
     # ---------- load the right reactor
     if options.graphical:
         try:
-            from twisted.internet import gtk2reactor
-            gtk2reactor.install() # has to be done before importing reactor
-            import gtk # just for a test
+            from twisted.internet import gtk3reactor
+            gtk3reactor.install() # has to be done before importing reactor
+            import gi
+            gi.require_version('Gtk', '3.0')
+            from gi.repository import Gtk # just for a test
             GUI_ENABLED = True
             #print("Successfully loaded the GTK+ graphical user interface.")
         except ImportError as e:

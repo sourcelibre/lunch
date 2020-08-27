@@ -22,15 +22,14 @@
 Main GUI of the Lunch Master 
 """
 if __name__ == "__main__":
-    from twisted.internet import gtk2reactor
-    gtk2reactor.install() # has to be done before importing reactor
+    from twisted.internet import gtk3reactor
+    gtk3reactor.install() # has to be done before importing reactor
 from twisted.internet import reactor
 from twisted.internet import defer
 from twisted.internet import utils
 from twisted.python import procutils
 
-import gtk
-import pango
+from gi.repository import Gtk as gtk
 import sys
 import os
 import textwrap
@@ -212,7 +211,7 @@ class LunchApp(object):
 
         # ------------------------------------------------------
         # Window and its icon
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window = gtk.Window()
         self.window.set_title("Lunch")
         self.window.connect("delete-event", self.destroy_app)
         #self.window.connect("destroy", self.destroy_app)
@@ -228,8 +227,10 @@ class LunchApp(object):
             ICON_FILE = os.path.join(parent_dir, basename)
             log.warning("Using icon file %s" % (ICON_FILE))
         if os.path.exists(ICON_FILE):
-            icon = gtk.gdk.pixbuf_new_from_file(ICON_FILE)
-            self.window.set_icon_list(icon)
+            pass
+            # TODO: set icon
+            # icon = gtk.gdk.pixbuf_new_from_file(ICON_FILE)
+            # self.window.set_icon_list(icon)
         else:
             log.warning("Could not find icon file %s." % (ICON_FILE))
             log.warning("Warning: Could not find icon file %s." % (ICON_FILE))
@@ -242,20 +243,20 @@ class LunchApp(object):
         # Menu bar
         self.ui_manager = None
         self.menubar = self._create_main_menu(self.window)
-        vbox.pack_start(self.menubar, expand=False, fill=False)
+        vbox.pack_start(self.menubar, False, False, 0)
         self.menubar.show()
 
         vpaned = gtk.VPaned()
-        vbox.pack_start(vpaned, expand=True, fill=True)
+        vbox.pack_start(vpaned, False, False, 0)
 
         # ------------------------------------------------------
         # Scrollable with a TreeView
         scroller = gtk.ScrolledWindow()
-        scroller.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroller.set_shadow_type(gtk.SHADOW_IN)
+        # scroller.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        # scroller.set_shadow_type(gtk.SHADOW_IN)
         scroller.set_size_request(-1, 250)
         frame1 = gtk.Frame(label=_("Processes"))
-        frame1.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        # frame1.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         frame1.add(scroller)
         vpaned.add1(frame1)
         # The ListStore contains the data.
@@ -278,12 +279,12 @@ class LunchApp(object):
         # ------------------------------------------------------
         # TextView for the details
         scroller2 = gtk.ScrolledWindow()
-        scroller2.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroller2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        # scroller2.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        # scroller2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         scroller2.set_size_request(-1, 50)
         viewport = gtk.Viewport()
         frame2 = gtk.Frame(label=_("Details"))
-        frame2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        # frame2.set_shadow_type(gtk.SHADOW_ETCHED_IN)
         frame2.add(scroller2)
         vpaned.add(frame2)
         #vbox.pack_start(scroller2, expand=False, fill=True)
@@ -295,26 +296,26 @@ class LunchApp(object):
         # ------------------------------------------------------
         # Box with buttons.
         hbox = gtk.HBox(homogeneous=True)
-        vbox.pack_start(hbox, expand=False, fill=False)
+        vbox.pack_start(hbox, False, False, 0)
         
         self.openlog_button_widget = gtk.Button(_("Open child process log file"))
         self.openlog_button_widget.connect("clicked", self.on_openlog_clicked)
-        hbox.pack_start(self.openlog_button_widget)
+        hbox.pack_start(self.openlog_button_widget, False, False, 0)
         
         self.stop_command_button_widget = gtk.Button(_("Stop child process"))
         self.stop_command_button_widget.connect("clicked", self.on_stop_command_clicked)
-        hbox.pack_start(self.stop_command_button_widget)
+        hbox.pack_start(self.stop_command_button_widget, False, False, 0)
 
         self.start_command_button_widget = gtk.Button(_("Start child process"))
         self.start_command_button_widget.connect("clicked", self.on_start_command_clicked)
-        hbox.pack_start(self.start_command_button_widget)
+        hbox.pack_start(self.start_command_button_widget, True, True, 0)
         
         self.window.show_all()
     
     def _set_textview_appearance(self):
         self.textview_widget.set_editable(False)
         textview_buffer = self.textview_widget.get_buffer()
-        textview_buffer.create_tag("font", family="Monospace", scale=pango.SCALE_SMALL)
+        textview_buffer.create_tag("font", family="Monospace")
 
     def set_textview_text(self, text):
         textview_buffer = self.textview_widget.get_buffer()
@@ -400,7 +401,7 @@ class LunchApp(object):
         """
         # Set initial sorting column and order.
         sorting_column_number = 0
-        self.model_sort.set_sort_column_id(sorting_column_number, gtk.SORT_ASCENDING)
+        # self.model_sort.set_sort_column_id(sorting_column_number, gtk.SORT_ASCENDING)
 
         NUM_COLUMNS = 5
         columns = [None] * NUM_COLUMNS
@@ -422,7 +423,7 @@ class LunchApp(object):
 
             cells[i] = gtk.CellRendererText()
             cells[i].set_property("width-chars", 20) 
-            columns[i].pack_start(cells[i], False) #True)
+            columns[i].pack_start(cells[i], False)
             columns[i].set_attributes(cells[i], text=i)
         # Set some custom properties
         cells[0].set_property("width-chars", 14) # Identifier
