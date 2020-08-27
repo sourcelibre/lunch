@@ -103,12 +103,13 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         data at a time. This way, our manager only gets one line at 
         a time.
         """
-        data_str = convert.bytes_to_str(data)
-        log.info("data received is : " + "\n" + data_str)
-        for line in data_str.splitlines():
-            if line != "":
-                log.info("line content is : " + data_str)
-                self.command._received_message(data_str)
+        lines = data.splitlines()
+        for line in lines:
+            line_str = convert.bytes_to_str(line)
+            log.info("data received is : " + "\n" + line_str)
+            if line_str != "":
+                log.info("line content is : " + line_str)
+                self.command._received_message(line_str)
 
     def errReceived(self, data):
         """
@@ -483,7 +484,9 @@ class Command(object):
                 #log.info("Attribute value is recv_{key}".format(key=key))
                 method = None
                 try:
-                    method = getattr(self, 'recv_' + key)
+                    method_name = 'recv_' + key
+                    log.info("Method name is " + method_name)
+                    method = getattr(self, method_name)
                 except AttributeError as e:
                     self.log('AttributeError: Parsing a line from lunch-slave %s: %s' % (self.identifier, key), logging.ERROR)
                     self.log(line_str)
