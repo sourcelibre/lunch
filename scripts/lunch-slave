@@ -578,7 +578,8 @@ class SlaveIO(basic.LineReceiver):
         env: Sets the env vars for the process. 
         Must be in a string of key=value separated by spaces.
         """
-        args = line.split()
+        line_str = bytes_to_str(line)
+        args = line_str.split()
         for key_val in args:
             try:
                 k, v = key_val.split("=")
