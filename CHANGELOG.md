@@ -1,14 +1,12 @@
 Lunch release notes
 ===================
 
-Version 0.8.0 - 2016-??-??
+Version 0.8.0 - 2020-08-??
 --------------------------
-This release is an official version in the 0.8 stable series. That means its interfaces and API should be compatible with every release in this series.
-
-New features: 
-* (todo)
+This release contains a lot of fixes and improvements.
 
 Bug fixes: 
+* Support Python 3
 * Use /tmp/$USER/ for logs/pid files
 * Make log/pid directories world-writable
 
