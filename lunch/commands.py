@@ -104,8 +104,8 @@ class SlaveProcessProtocol(protocol.ProcessProtocol):
         a time.
         """
         data_str = convert.bytes_to_str(data)
-        log.debug("data received is : " + "\n" + data_str)
-        for line in data.splitlines():
+        log.info("data received is : " + "\n" + data_str)
+        for line in data_str.splitlines():
             if line != "":
                 log.info("line content is : " + data_str)
                 self.command._received_message(data_str)
@@ -464,6 +464,7 @@ class Command(object):
                 return
                 #TODO: handle this
         self.number_of_lines_received_from_slave += 1
+        key = ''
         try:
             #log.info("line is : " + line)
             words = line_str.split(" ")
@@ -473,6 +474,7 @@ class Command(object):
             #self.log("Index error parsing message from lunch-slave. %s" % (e), logging.ERROR)
             self.log('IndexError From lunch-slave %s: %s' % (self.identifier, line_str), logging.ERROR)
         else:
+            method = None
             # Dispatch the command to the appropriate method.  Note that all you
             # need to do to implement a new command is add another do_* method.
             if key in ["do", "env", "run", "logdir", "stop"]: # FIXME: receiving in stdin what we send to stdin lunch-slave !!!
